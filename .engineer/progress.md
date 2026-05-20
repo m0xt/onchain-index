@@ -26,3 +26,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: Phase C should choose the composite slate from the report; funding rate/SOPR/exchange net flow remain source-expansion gaps.
+
+## 2026-05-20T13:02:25Z — Phase C PI_score composite
+- What: Built production PI_score composite, tiered sizing backtest, cycle walk-forward report, and lock-style composite tests; sign gate passed via HODL 1Y+ 30d-change z<0 as the only on-chain holder survivor.
+- Files touched: src/onchain_index/composite.py, src/onchain_index/backtest.py, tests/test_composite.py, tests/test_backtest.py, reports/phase-c-composite-2026-05-20.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: Phase C.5 dashboard surface; exchange-flow data remains missing and Coinbase Premium is not a valid substitute.

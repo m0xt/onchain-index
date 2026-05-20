@@ -5,6 +5,7 @@ import pandas as pd
 from onchain_index.backtest import (
     BTC_CYCLES,
     backtest_signal,
+    backtest_tiered_signal,
     binary_signal_from_cross,
     binary_signal_from_zscore,
     walk_forward_by_cycle,
@@ -53,3 +54,18 @@ def test_walk_forward_by_cycle_returns_all_cycles() -> None:
 
     assert set(result) == set(BTC_CYCLES)
     assert result["2014-2017"] is not None
+
+
+def test_backtest_tiered_signal_metrics_smoke() -> None:
+    idx = pd.date_range("2024-01-01", periods=130)
+    tiers = pd.Series(["Strong"] * 65 + ["Cash"] * 65, index=idx)
+    ret = pd.Series([0.001] * 130, index=idx)
+
+    result = backtest_tiered_signal(
+        tiers, ret, {"Cash": 0.0, "Trim": 50.0, "Sized": 75.0, "Strong": 100.0}
+    )
+
+    assert result is not None
+    assert result["avg_allocation_pct"] == 50.0
+    assert result["tier_transitions_yr"] > 0
+    assert result["strat_ann"] < result["bh_ann"]

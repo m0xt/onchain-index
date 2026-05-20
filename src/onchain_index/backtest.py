@@ -208,6 +208,67 @@ def backtest_signal(
     }
 
 
+def _max_drawdown(cumulative: pd.Series) -> float:
+    """Return max drawdown in percent for a cumulative-return series."""
+    return float(((cumulative / cumulative.cummax()) - 1).min() * 100)
+
+
+def _annualized_return(cumulative: pd.Series, n_years: float) -> float:
+    """Return annualized return in percent."""
+    total = float(cumulative.iloc[-1] - 1)
+    return float(((1 + total) ** (1 / n_years) - 1) * 100) if n_years > 0 else 0.0
+
+
+def backtest_tiered_signal(
+    tier_series: pd.Series,
+    ret_series: pd.Series,
+    tier_to_pct: dict[str, float],
+) -> dict[str, float] | None:
+    """Backtest a tier-driven sizing rule against BTC daily returns.
+
+    ``tier_to_pct`` accepts allocations either as whole percentages (``75``) or
+    fractions (``0.75``). The returned metrics mirror ``backtest_signal`` where
+    possible and add tier dwell / transition diagnostics for dashboard use.
+    """
+    allocation = tier_series.astype("object").map(tier_to_pct).astype(float)
+    allocation = allocation.where(allocation <= 1.0, allocation / 100.0)
+    df = pd.DataFrame({"allocation": allocation, "tier": tier_series, "ret": ret_series}).dropna()
+    if len(df) < 100:
+        return None
+
+    n_years = len(df) / TRADING_DAYS_PER_YEAR
+    ret = cast(pd.Series, df["ret"])
+    allocation_series = cast(pd.Series, df["allocation"])
+    strat_ret = ret * allocation_series
+    bh_ret = ret
+
+    bh_cum = cast(pd.Series, bh_ret.add(1.0)).cumprod()
+    strat_cum = cast(pd.Series, strat_ret.add(1.0)).cumprod()
+
+    ann = _annualized_return(strat_cum, n_years)
+    bh_ann = _annualized_return(bh_cum, n_years)
+    realized_vol = float(strat_ret.std() * np.sqrt(TRADING_DAYS_PER_YEAR) * 100)
+
+    transitions = df["tier"].astype("object").ne(df["tier"].astype("object").shift()).fillna(False)
+    n_transitions = max(float(transitions.sum() - 1), 0.0)
+
+    return {
+        "bh_ann": float(bh_ann),
+        "strat_ann": float(ann),
+        "alpha": float(ann - bh_ann),
+        "bh_dd": _max_drawdown(bh_cum),
+        "strat_dd": _max_drawdown(strat_cum),
+        "sharpeish": float(ann / realized_vol) if realized_vol > 0 else 0.0,
+        "avg_tier_dwell_days": float(len(df) / max(n_transitions, 1.0))
+        if n_transitions
+        else float(len(df)),
+        "tier_transitions_yr": float(n_transitions / n_years),
+        "avg_allocation_pct": float(allocation_series.mean() * 100),
+        "n_years": float(n_years),
+        "n_obs": float(len(df)),
+    }
+
+
 def walk_forward_by_cycle(
     signal: pd.Series,
     ret: pd.Series,
@@ -218,4 +279,20 @@ def walk_forward_by_cycle(
     for name, (start, end) in cycles.items():
         mask = (signal.index >= pd.Timestamp(start)) & (signal.index <= pd.Timestamp(end))
         out[name] = backtest_signal(signal.loc[mask], ret.reindex(signal.index).loc[mask])
+    return out
+
+
+def walk_forward_tiered_by_cycle(
+    tier_series: pd.Series,
+    ret: pd.Series,
+    tier_to_pct: dict[str, float],
+    cycles: CycleMap = BTC_CYCLES,
+) -> dict[str, dict[str, float] | None]:
+    """Backtest a tiered sizing signal separately inside BTC cycle windows."""
+    out: dict[str, dict[str, float] | None] = {}
+    for name, (start, end) in cycles.items():
+        mask = (tier_series.index >= pd.Timestamp(start)) & (tier_series.index <= pd.Timestamp(end))
+        out[name] = backtest_tiered_signal(
+            tier_series.loc[mask], ret.reindex(tier_series.index).loc[mask], tier_to_pct
+        )
     return out
