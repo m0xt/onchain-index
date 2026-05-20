@@ -20,6 +20,8 @@ BMP_API_KEY=...
 
 The project also accepts `BMP_API_KEY` from the process environment, but the ops-secret file is the canonical machine-local location. The committed `.env.example` documents the variable only and must never contain a real value.
 
+Current ops state on this machine: the file exists and is mode `600`, but `~/ops/.gitignore` ignores `secrets/**` until git-crypt phase 2 and no `git-crypt` command is available. Do not force-add the plaintext file; finish ops git-crypt setup first.
+
 ## Validation
 
 `validate_secrets()` loads the explicit ops-secret path with `python-dotenv` and raises `RuntimeError` before network work if `BMP_API_KEY` is missing.
