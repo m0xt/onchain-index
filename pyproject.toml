@@ -1,0 +1,40 @@
+[project]
+name = "onchain-pulse-index"
+version = "0.1.0"
+description = "Raw data layer for a future BTC on-chain pulse index"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "lxml>=5.4.0",
+    "numpy>=2.2.0",
+    "pandas>=2.2.0",
+    "python-dotenv>=1.1.0",
+    "requests>=2.32.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pyright>=1.1.390",
+    "ruff>=0.11.0",
+]
+
+[tool.uv]
+package = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = []
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "basic"
+include = ["src", "tests"]
