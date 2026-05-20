@@ -1,6 +1,6 @@
 # onchain-index — theory of the framework
 
-**Status:** draft v0.2 — incorporates Martin's correction (2026-05-20): ETF and DAT flows are holder behavior, not a separate "capital flows" category. The two-dimension structure (Valuation × Holder Behavior) is preserved; holder behavior now spans on-chain positioning + institutional fund flows + corporate treasuries + exchange flow, equal-weighted within available coverage and labeled by epoch.
+**Status:** draft v0.3 — Martin's 2026-05-20 decisions locked in: additive composite (not 2×2), graded sizing tiers, strict separation from macro-framework (no macro input). Theory shape is now substantively settled; remaining open questions are calibration choices (threshold values, sizing floor, tier naming) for Phase C empirics, not framework structure.
 
 > This document encodes *why* the framework is shaped the way it is. The MRMI structure works for macro-framework because it encodes a specific causal model (growth + financial conditions drive regime; real-econ tail risk modifies it). For onchain-index to be more than "MRMI shape with BTC inputs," it needs its own causal model. That's what this doc is for.
 
@@ -63,58 +63,50 @@ The dashboard surfaces *which epoch* is currently active and which sub-cohorts a
 
 ## 3. How are the two dimensions combined?
 
-Two candidate structures. I have a lean; both should be considered.
-
-### Option A — Additive composite (MRMI-shaped)
+**Additive composite, MRMI-shaped, with diagnostic decomposition surfaced on the dashboard.** Decided 2026-05-20.
 
 ```
-score = z(valuation_composite) + z(holder_behavior_composite)
-signal = score > 0  (binary)
+PI_score = z(valuation_composite) + z(holder_behavior_composite)
 ```
 
-- **Pro:** simple, MRMI-shaped, easy to backtest, single number to chart against BTC price.
-- **Con:** hides which dimension is driving. "Cheap + distribution" averages to neutral and loses the diagnostic of *why* it's neutral.
+Where:
+- `valuation_composite` = equal-weighted z of Phase B's robust valuation winners (STH MVRV, RHODL Ratio, Puell Multiple, one-of {MVRV-Z, NUPL}).
+- `holder_behavior_composite` = equal-weighted z of the available sub-cohort signals at this epoch (on-chain holders always; corporate DAT 2020+; institutional ETF 2024+; exchange-side flow when added).
 
-### Option B — 2×2 regime matrix (hierarchical / categorical)
+The score is a single number you can chart, compare against BTC price, and reason about over time.
 
-| | LTHs accumulating | LTHs distributing |
-|---|---|---|
-| **Valuation cheap** | **ACCUMULATION** (max long) | **EARLY-BULL** (sized long, watch closely) |
-| **Valuation expensive** | **MATURE-BULL** (riding, trail) | **DISTRIBUTION** (cash / hedge) |
+**The diagnostic trade-off is solved by the dashboard, not by the math.** An additive composite alone collapses *why* you're at a given score — "cheap + distribution" averages to neutral. The dashboard fixes this by surfacing four numbers, not one:
 
-Each quadrant maps to a position size and a recommended posture. The framework's output is a regime label *plus* a suggested position size, not a single composite score.
+1. **PI_score** — the headline composite, drives the sizing tier
+2. **Valuation dimension** — current z-score
+3. **Holder Behavior dimension** — current z-score
+4. **Four holder-behavior sub-cohort scores** — on-chain / DAT / ETF / exchange-flow, so the user can see *which cohort* is moving the holder-behavior score
 
-- **Pro:** preserves the diagnostic, mirrors how a discretionary trader actually thinks about BTC, makes the framework's output decision-usable as-is rather than requiring downstream interpretation. Maps cleanly to BTC's empirical four-phase cycle structure (you can label every BTC market period since 2014 by quadrant and it reads sensibly).
-- **Con:** doesn't produce a single backtestable composite score the way MRMI does — you backtest by quadrant transitions. More moving parts in the dashboard.
+The aggregate drives the decision. The components explain the decision. Best of both — the additive math gives a chart-able decision signal, the decomposition prevents the framework from being a black box.
 
-### My lean: **Option B — 2×2 regime matrix.**
-
-The reason MRMI is additive is that macro-framework's consumers need a single number you can chart against SPX and make a binary call from. Onchain-index doesn't have that constraint — the use-case is "tell me what BTC regime we're in *and* how much conviction we have." A 2×2 expresses that natively; an additive composite collapses it.
-
-The dashboard becomes a four-quadrant grid with the current state highlighted, plus the two dimension scores shown explicitly so you can see *why* you're in the quadrant you're in.
-
-If Martin pushes back and wants MRMI-style for consistency, we can also produce the additive composite as a secondary output (it falls out of the same two dimension scores).
+> **What changed from v0.2:** I leaned toward a 2×2 categorical matrix. Martin chose additive composite, which I now think is right. The 2×2's "preserves the diagnostic" argument is recovered by the dashboard decomposition without sacrificing the additive's "single chartable number." Additive wins on both fronts once the dashboard does its job.
 
 ## 4. Decision rule
 
-Three candidates:
-
-- **Binary (in/cash):** MRMI-style. Decisive, simple, but coarse for BTC's stacked-regime structure.
-- **Graded sizing (e.g. 0% / 25% / 50% / 75% / 100%):** captures conviction levels. Natural fit for the 2×2 (each quadrant has a sizing).
-- **Regime label only (no position implied):** decision-support, not decision-rule. Output is the label; user decides the position.
-
-**My lean: graded sizing, derived from the 2×2.**
+**Graded sizing tiers derived from threshold buckets on PI_score.** Decided 2026-05-20.
 
 ```
-ACCUMULATION       → 100% long
-EARLY-BULL         → 75% long
-MATURE-BULL        → 50% long
-DISTRIBUTION       → 0% (cash) / optional hedge
+PI_score  > +1.0         →  100% long  (Strong)
+PI_score   0   to +1.0   →   75% long  (Sized)
+PI_score  -1.0 to  0     →   50% long  (Trim)
+PI_score  < -1.0         →    0% (cash) or floor — see open Q below
 ```
 
-Binary forces a false choice when conditions are mixed. Regime-label-only is honest but leaves the harder question (sizing) for later. Graded sizing makes the framework directly actionable while still encoding uncertainty.
+Threshold values are placeholders. **Actual thresholds will be set empirically in Phase C** by examining the historical PI_score distribution at known regime-transition points (2018 top, 2018 bottom, 2021 top, 2022 bottom, etc.), not by optimization. Same discipline as macro-framework's threshold provenance.
 
-The 4 sizing levels are deliberately coarse — not 0/10/20/…/100. Fine sizing implies precision the framework doesn't have. Four levels matches the four quadrants and treats sizing as a categorical decision, which it really is.
+Why these properties:
+- **Four tiers, deliberately coarse.** Not 0/10/20/…/100. Fine sizing implies a precision the framework doesn't have. Four tiers treats sizing as a categorical decision, which it really is.
+- **Symmetric around zero.** The composite is built from z-scores; zero is the natural neutral. Tiers above zero are scaled long; tiers at-or-below scale toward cash.
+- **Single decisive output.** Tier = function of PI_score. No averaging across "but maybe…" inputs. Reproducible and auditable.
+
+Binary was rejected because BTC's regime structure has stacked timescales (within-cycle volatility + 4-year structural cycle) — a single in/out call hides too much information. Regime-label-only was rejected because it leaves the sizing question for downstream, and we'd just end up specifying sizing tiers anyway. Graded sizing is the honest output for a multi-month BTC framework.
+
+> **What changed from v0.2:** the sizing tiers were previously derived from the 2×2 quadrants. With the structure now additive, the tiers are derived from PI_score thresholds. Same number of tiers, same decision-shape, different upstream math.
 
 ## 5. What's deliberately left out and why
 
@@ -127,34 +119,50 @@ The 4 sizing levels are deliberately coarse — not 0/10/20/…/100. Fine sizing
 
 ## 6. Open questions for Martin (please push back)
 
-1. **2×2 vs additive composite?** I lean strongly 2×2 but the call depends on downstream use-case. If you want a single number you can chart and present, additive wins. If you want a regime label + sizing + visible decomposition, 2×2 wins. *(Unchanged from v0.1 — still open.)*
+1. **Sizing floor — 0% cash or structural 25%?** In the bottom tier (PI_score < -1.0), the framework's natural output is 0% (full cash). For a discretionary trader that's fine; for someone who wants permanent BTC exposure and just sizes around a baseline, a floor of e.g. 25% is more realistic. The math can produce either. Martin's call.
 
-2. **Graded sizing levels (100/75/50/0)** — is the cash floor really 0% in the DISTRIBUTION quadrant, or do you want a small structural long (e.g. 25%) always? Function of how the framework is used, not what it can measure. *(Unchanged from v0.1 — still open.)*
+2. **Naming the sizing tiers.** Three candidates:
+   - Descriptive: **Strong / Sized / Trim / Cash**
+   - Actionable: **Max / Long / Cautious / Out**
+   - Numerical only: **100% / 75% / 50% / 0%** (no labels, scores speak for themselves)
+   - Conviction-shaped: **High Conviction Long / Conviction Long / Neutral / Risk-Off**
+   
+   Naming sets the dashboard's tone and how it gets cited verbally ("we're in a Sized regime" vs "we're at 75% long" vs "we're in Conviction Long").
 
-3. **Macro override** — should this framework *take* macro-framework as an input (e.g. "in our quadrant logic, when macro is RISK-OFF, downshift one tier"), or stay strictly on-chain and let the user combine? Strict separation is cleaner; joint logic is more decision-ready. *(Unchanged from v0.1 — still open.)*
+3. **Threshold calibration method for the four tiers.** Three candidates:
+   - **Fixed z-score thresholds** (>+1, 0–1, -1–0, <-1) — assumes composite is roughly normally distributed. Simple, reproducible.
+   - **Rolling percentile** (top quartile / upper third / lower third / bottom quartile) — forces equal time in each tier. More even but can churn during steady regimes.
+   - **Empirically calibrated to historical regime transitions** — set thresholds by looking at composite values at known cycle tops/bottoms (2014/2018/2022 lows; 2017/2021 highs). Most defensible but requires explicit historical labelling — and the cycle-transition dates themselves involve some discretion.
+   
+   My lean: **start with fixed z-score thresholds for v1 simplicity, validate against empirical regime transitions in Phase C as a sanity check.** Don't optimize either.
 
-4. **Naming the quadrants** — ACCUMULATION / EARLY-BULL / MATURE-BULL / DISTRIBUTION is conventional but not the only choice. Some prefer COILED / EXPANSION / EUPHORIA / UNWIND or similar. Naming sets the dashboard's tone. *(Unchanged from v0.1 — still open.)*
+4. **Diagnostic surface for holder-behavior sub-cohorts.** Should the dashboard prominently show all four sub-cohort scores (on-chain / DAT / ETF / exchange) alongside the headline PI_score? My lean: yes, prominently — when on-chain and ETF flows disagree, that's the single most decision-relevant signal the framework produces. Equivalent to macro-framework's morning page showing component sub-indicators alongside the MRMI value. *(Carried forward from v0.2.)*
 
-5. **Diagnostic surface for holder-behavior sub-cohorts.** The 2×2 only sees the *aggregate* holder-behavior score, but the user might want to see whether the call is being driven by on-chain LTHs, by ETF flows, or by DATs. Should the dashboard surface the four sub-cohort scores explicitly alongside the quadrant call? My lean: yes, prominently — when on-chain and ETFs disagree, that's the single most decision-relevant signal the framework produces. *(New in v0.2.)*
+### Resolved 2026-05-20
 
-### Resolved in v0.2
-
-- ~~Two dimensions vs three~~ — Resolved 2026-05-20: stays two. Capital flows folded into expanded holder behavior. The "third dimension" question went away because the partition was wrong, not because we deliberately discarded a real driver.
+- ~~Two dimensions vs three~~ → two. Capital flows folded into expanded holder behavior.
+- ~~2×2 matrix vs additive composite~~ → **additive composite**. Diagnostic decomposition recovered via dashboard.
+- ~~Macro override or strict separation~~ → **strict separation**. Onchain-index produces the BTC-inside view; macro-framework produces the outside view. They are complementary outputs, not nested inputs. A future "joint" wrapper layer could combine them; not part of this framework.
 
 ---
 
 ## Next step
 
-If Martin accepts the broad shape (two dimensions, 2×2 matrix, graded sizing, epoch-labeled holder-behavior composition), Phase C becomes:
+With the v0.3 decisions in (additive composite, graded sizing tiers, strict separation from macro-framework), Phase C is now concrete:
 
-1. Build the **Valuation composite** from Phase B's robust valuation winners. Candidates: STH MVRV, RHODL Ratio (both 4/4 cycles positive), Puell Multiple (3/4 cycles, miner-revenue lens), and one of MVRV-Z / NUPL (not both — 0.88 correlated).
-2. Build the **Holder Behavior composite** with the four sub-cohorts, equal-weighted within available coverage and epoch-labeled:
-   - On-chain holders (always available)
-   - Corporate DAT (2020+)
-   - Institutional ETF (2024+)
-   - Exchange-side flow (pending data-layer addition — Phase B flagged)
-3. Define the quadrant thresholds (likely 504d-rolling percentile on both dimension scores).
-4. Backtest each quadrant's historical occupancy + the implied graded-sizing rule, walk-forward by cycle.
-5. Build the dashboard with the 2×2 matrix surfaced + four sub-cohort scores visible (so the user sees *why* we're in a given quadrant).
+1. Build the **Valuation composite** from Phase B's robust winners. Candidates: STH MVRV, RHODL Ratio (both 4/4 cycles positive), Puell Multiple (3/4 cycles, miner-revenue lens), and one of MVRV-Z / NUPL (not both — 0.88 correlated). Equal-weighted z-score of constituents.
+2. Build the **Holder Behavior composite** as four epoch-aware sub-cohort scores, equal-weighted within available coverage:
+   - On-chain holders (always available — STH MVRV is already in valuation; for holder-behavior, use HODL waves / dormancy / age-band metrics not already in valuation, to avoid double-counting)
+   - Corporate DAT (2020+) — MSTR/Strategy Δ holdings, future: Metaplanet, Marathon, etc.
+   - Institutional ETF (2024+) — Farside spot ETF net flow
+   - Exchange-side flow (pending data-layer addition — Phase B flagged) — net coin flow to/from sell venues
+3. Compute **PI_score** = z(Valuation) + z(Holder Behavior).
+4. Set the four sizing-tier thresholds. Start with fixed z-score thresholds (>+1, 0–1, -1–0, <-1); sanity-check against historical cycle-transition values.
+5. Backtest the tier-driven sizing rule walk-forward by cycle (2014-17 / 2018-21 / 2022-24 / 2025-now). Output: per-cycle realized return, drawdown, time-in-each-tier breakdown.
+6. Build the dashboard:
+   - Headline: current PI_score + current tier + suggested sizing
+   - Dimension scores: Valuation z, Holder Behavior z
+   - Sub-cohort scores: 4 holder-behavior cohort z's, with epoch tag
+   - Historical context: PI_score chart over time with tier-region shading + BTC price overlay
 
-But only after the theory is locked.
+Open calibration questions from Section 6 (sizing floor, tier naming, threshold calibration method) get resolved during Phase C empirics. Theory shape is locked.
