@@ -270,7 +270,7 @@ wheels = [
 ]
 
 [[package]]
-name = "onchain-pulse-index"
+name = "onchain-index"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

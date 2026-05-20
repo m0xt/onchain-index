@@ -2,14 +2,14 @@
 
 ## Required secret
 
-- `BMP_API_KEY` — Bitcoin Magazine Pro API key used by `src/onchain_pulse_index/data.py`.
+- `BMP_API_KEY` — Bitcoin Magazine Pro API key used by `src/onchain_index/data.py`.
 
 ## Location
 
 The real file lives outside this project repo:
 
 ```text
-~/ops/secrets/onchain-pulse-index/.env
+~/ops/secrets/onchain-index/.env
 ```
 
 Expected contents:
@@ -28,7 +28,7 @@ Current ops state on this machine: the file exists and is mode `600`, but `~/ops
 
 ## Rotation
 
-1. Replace the value in `~/ops/secrets/onchain-pulse-index/.env`.
-2. Run `uv run python -m onchain_pulse_index.data --no-cache` from this repo.
+1. Replace the value in `~/ops/secrets/onchain-index/.env`.
+2. Run `uv run python -m onchain_index.data --no-cache` from this repo.
 3. Confirm the fetch summary prints a current date range and `.cache/raw_data.pkl` updates.
 4. Do not modify or delete the old prototype's `.env` until Martin explicitly retires it.

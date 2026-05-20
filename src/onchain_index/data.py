@@ -1,4 +1,4 @@
-"""Raw data fetch layer for onchain-pulse-index.
+"""Raw data fetch layer for onchain-index.
 
 This module intentionally contains data acquisition only. Composite construction,
 backtests, optimization, and dashboard rendering belong to later phases.
@@ -26,7 +26,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CACHE_DIR = PROJECT_ROOT / ".cache"
 RAW_CACHE_NAME = "raw_data.pkl"
 CACHE_MAX_AGE = timedelta(hours=12)
-OPS_SECRET_ENV = Path.home() / "ops" / "secrets" / "onchain-pulse-index" / ".env"
+OPS_SECRET_ENV = Path.home() / "ops" / "secrets" / "onchain-index" / ".env"
 
 BMP_BASE = "https://api.bitcoinmagazinepro.com"
 START_DATE = "2012-01-01"

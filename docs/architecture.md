@@ -4,7 +4,7 @@ Phase A contains only the data-fetch foundation for a future BTC on-chain pulse 
 
 ## Current data flow
 
-1. `validate_secrets()` loads `BMP_API_KEY` from `~/ops/secrets/onchain-pulse-index/.env` or the process environment and fails before network work if it is missing.
+1. `validate_secrets()` loads `BMP_API_KEY` from `~/ops/secrets/onchain-index/.env` or the process environment and fails before network work if it is missing.
 2. `fetch_bmp()` pulls on-chain metrics from Bitcoin Magazine Pro from 2012-01-01 onward.
 3. `fetch_etf_flows()` pulls daily US spot BTC ETF flows from Farside.
 4. `fetch_strategy_holdings()` pulls Strategy/MSTR BTC holdings from strategytracker.com.

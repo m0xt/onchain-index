@@ -3,13 +3,13 @@ from __future__ import annotations
 import importlib
 import pkgutil
 
-import onchain_pulse_index
-from onchain_pulse_index import data
+import onchain_index
+from onchain_index import data
 
 
 def test_import_every_package_module() -> None:
-    prefix = onchain_pulse_index.__name__ + "."
-    for module_info in pkgutil.walk_packages(onchain_pulse_index.__path__, prefix):
+    prefix = onchain_index.__name__ + "."
+    for module_info in pkgutil.walk_packages(onchain_index.__path__, prefix):
         importlib.import_module(module_info.name)
 
 

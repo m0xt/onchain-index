@@ -5,8 +5,8 @@
 - `CLAUDE.md` — symlink to `AGENTS.md`.
 - `DECISIONS.md` — dated rationale for durable decisions.
 - `pyproject.toml` / `uv.lock` — uv-managed package, tests, lint, type-check config.
-- `src/onchain_pulse_index/` — importable production package.
-- `src/onchain_pulse_index/data.py` — source fetchers, 12h cache, CLI summary.
+- `src/onchain_index/` — importable production package.
+- `src/onchain_index/data.py` — source fetchers, 12h cache, CLI summary.
 - `tests/` — smoke tests only in Phase A.
 - `docs/` — human-facing architecture notes.
 - `agent_docs/` — terse operational contracts for agents.

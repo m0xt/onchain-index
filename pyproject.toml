@@ -1,5 +1,5 @@
 [project]
-name = "onchain-pulse-index"
+name = "onchain-index"
 version = "0.1.0"
 description = "Raw data layer for a future BTC on-chain pulse index"
 readme = "README.md"
