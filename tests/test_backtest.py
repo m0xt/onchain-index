@@ -58,12 +58,10 @@ def test_walk_forward_by_cycle_returns_all_cycles() -> None:
 
 def test_backtest_tiered_signal_metrics_smoke() -> None:
     idx = pd.date_range("2024-01-01", periods=130)
-    tiers = pd.Series(["Strong"] * 65 + ["Cash"] * 65, index=idx)
+    tiers = pd.Series(["STAY LONG"] * 65 + ["CASH"] * 65, index=idx)
     ret = pd.Series([0.001] * 130, index=idx)
 
-    result = backtest_tiered_signal(
-        tiers, ret, {"Cash": 0.0, "Trim": 50.0, "Sized": 75.0, "Strong": 100.0}
-    )
+    result = backtest_tiered_signal(tiers, ret, {"CASH": 0.0, "STAY LONG": 100.0})
 
     assert result is not None
     assert result["avg_allocation_pct"] == 50.0

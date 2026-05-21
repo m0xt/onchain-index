@@ -69,3 +69,14 @@ The framework's 4-tier granularity is not earning its keep under the requested P
 Recommendation: **simplify to 2-tier as the research candidate** — Cash when `PI_score <= 0`, Long when `PI_score > 0`. That is the honest parsimony result from this test.
 
 Caveat before production promotion: the 2-tier rule's cycle profile is less even than the 4-tier baseline, especially `2018–2021` (`+0.6%` vs 4-tier `+14.1%`). If Martin values smoother behavior and partial-sizing semantics more than the requested median-OOS parsimony statistic, 3-tier is the more balanced simplification candidate. But under the rule Bob specified, binary wins and 5-tier does not.
+
+---
+
+## Production decision addendum — 2026-05-21
+
+Martin decided on 2026-05-21 to adopt option (a): the 2-tier binary rule for MRMI parity and the observed alpha advantage. Production now maps `PI_score > 0` to `STAY LONG` / 100% and `PI_score <= 0` to `CASH` / 0%. Composite math is unchanged.
+
+| Candidate | Production status as of 2026-05-21 | Rule | Sizing | OOS median alpha | Delta vs former 4-tier |
+| --- | --- | --- | --- | ---: | ---: |
+| 2-tier | **PRODUCTION as of 2026-05-21** | `PI > 0` | `0 / 100` | `+17.7%` | `+4.1pp` |
+| 4-tier baseline | Former production baseline | `<-1 / -1..0 / 0..+1 / >=+1` | `0 / 50 / 75 / 100` | `+13.5%` | `0.0pp` |

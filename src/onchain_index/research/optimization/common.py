@@ -18,7 +18,6 @@ import numpy as np
 import pandas as pd
 
 from onchain_index.backtest import BTC_CYCLES, CycleMap, backtest_tiered_signal
-from onchain_index.composite import TIER_PCT, sizing_tier
 from onchain_index.data import DEFAULT_CACHE_DIR, PROJECT_ROOT, RAW_CACHE_NAME, fetch_all
 
 Candidate = dict[str, Any]
@@ -69,11 +68,20 @@ def backtest_score(
     *,
     thresholds: tuple[float, float, float] = DEFAULT_THRESHOLDS,
 ) -> Metrics | None:
-    """Backtest a PI_score-style series through the production tier mapper."""
+    """Backtest a PI_score-style series through a historical threshold bucket mapper."""
+    low, mid, high = thresholds
     local_score = score.reindex(mask.index).loc[mask]
     local_ret = ret.reindex(mask.index).loc[mask]
-    tiers = sizing_tier(local_score, thresholds=thresholds)
-    return backtest_tiered_signal(tiers, local_ret, TIER_PCT)
+    tiers = pd.Series(pd.NA, index=local_score.index, dtype="object")
+    tiers = tiers.mask(local_score < low, "BUCKET_0")
+    tiers = tiers.mask((local_score >= low) & (local_score < mid), "BUCKET_50")
+    tiers = tiers.mask((local_score >= mid) & (local_score < high), "BUCKET_75")
+    tiers = tiers.mask(local_score >= high, "BUCKET_100")
+    return backtest_tiered_signal(
+        tiers,
+        local_ret,
+        {"BUCKET_0": 0.0, "BUCKET_50": 50.0, "BUCKET_75": 75.0, "BUCKET_100": 100.0},
+    )
 
 
 def walk_forward_grid(

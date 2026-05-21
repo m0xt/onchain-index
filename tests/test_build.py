@@ -82,5 +82,5 @@ def test_build_entrypoint_writes_dashboard_and_status(tmp_path) -> None:
     assert set(status) == {"last_run_utc", "last_pi_score", "last_tier", "last_error"}
     assert isinstance(status["last_run_utc"], str)
     assert isinstance(status["last_pi_score"], float)
-    assert status["last_tier"] in {"Cash", "Trim", "Sized", "Strong"}
+    assert status["last_tier"] in {"CASH", "STAY LONG"}
     assert status["last_error"] is None

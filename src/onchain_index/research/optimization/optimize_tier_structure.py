@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 
 from onchain_index.backtest import BTC_CYCLES, backtest_tiered_signal
-from onchain_index.composite import pi_score, sizing_tier
+from onchain_index.composite import pi_score
 from onchain_index.data import DEFAULT_CACHE_DIR
 from onchain_index.research.optimization.common import (
     Metrics,
@@ -56,35 +56,40 @@ def _empty_tiers(score: pd.Series) -> pd.Series:
 
 
 def tier_2(score: pd.Series) -> pd.Series:
-    """Map PI_score to the 2-tier Cash/Long structure: PI > 0 is long."""
+    """Map PI_score to the 2-tier CASH/STAY LONG structure: PI > 0 is long."""
     values = _empty_tiers(score)
-    values = values.mask(score <= 0.0, "Cash")
-    values = values.mask(score > 0.0, "Long")
+    values = values.mask(score <= 0.0, "CASH")
+    values = values.mask(score > 0.0, "STAY LONG")
     return values
 
 
 def tier_3(score: pd.Series) -> pd.Series:
-    """Map PI_score to the canonical 3-tier Cash/Mid/Long structure."""
+    """Map PI_score to the canonical 3-bucket structure."""
     values = _empty_tiers(score)
-    values = values.mask(score < -0.5, "Cash")
-    values = values.mask((score >= -0.5) & (score < 0.5), "Mid")
-    values = values.mask(score >= 0.5, "Long")
+    values = values.mask(score < -0.5, "BUCKET_0")
+    values = values.mask((score >= -0.5) & (score < 0.5), "BUCKET_50")
+    values = values.mask(score >= 0.5, "BUCKET_100")
     return values
 
 
 def tier_4(score: pd.Series) -> pd.Series:
-    """Map PI_score to the production 4-tier Cash/Trim/Sized/Strong structure."""
-    return sizing_tier(score, thresholds=(-1.0, 0.0, 1.0)).astype("object")
+    """Map PI_score to the historical 4-bucket structure."""
+    values = _empty_tiers(score)
+    values = values.mask(score < -1.0, "BUCKET_0")
+    values = values.mask((score >= -1.0) & (score < 0.0), "BUCKET_50")
+    values = values.mask((score >= 0.0) & (score < 1.0), "BUCKET_75")
+    values = values.mask(score >= 1.0, "BUCKET_100")
+    return values
 
 
 def tier_5(score: pd.Series) -> pd.Series:
-    """Map PI_score to the canonical 5-tier Cash/Trim/Mid/Sized/Strong structure."""
+    """Map PI_score to the canonical 5-bucket structure."""
     values = _empty_tiers(score)
-    values = values.mask(score < -1.5, "Cash")
-    values = values.mask((score >= -1.5) & (score < -0.5), "Trim")
-    values = values.mask((score >= -0.5) & (score < 0.5), "Mid")
-    values = values.mask((score >= 0.5) & (score < 1.5), "Sized")
-    values = values.mask(score >= 1.5, "Strong")
+    values = values.mask(score < -1.5, "BUCKET_0")
+    values = values.mask((score >= -1.5) & (score < -0.5), "BUCKET_25")
+    values = values.mask((score >= -0.5) & (score < 0.5), "BUCKET_50")
+    values = values.mask((score >= 0.5) & (score < 1.5), "BUCKET_75")
+    values = values.mask(score >= 1.5, "BUCKET_100")
     return values
 
 
@@ -95,8 +100,8 @@ def tier_structures() -> list[TierStructure]:
             candidate_id="2_tier",
             label="2-tier",
             thresholds="PI > 0",
-            tier_order=("Cash", "Long"),
-            tier_to_pct={"Cash": 0.0, "Long": 100.0},
+            tier_order=("CASH", "STAY LONG"),
+            tier_to_pct={"CASH": 0.0, "STAY LONG": 100.0},
             tier_function=tier_2,
             complexity=2,
             notes="MRMI-style binary; coarsest candidate.",
@@ -105,21 +110,26 @@ def tier_structures() -> list[TierStructure]:
             candidate_id="3_tier",
             label="3-tier",
             thresholds="PI < -0.5; -0.5 <= PI < +0.5; PI >= +0.5",
-            tier_order=("Cash", "Mid", "Long"),
-            tier_to_pct={"Cash": 0.0, "Mid": 50.0, "Long": 100.0},
+            tier_order=("BUCKET_0", "BUCKET_50", "BUCKET_100"),
+            tier_to_pct={"BUCKET_0": 0.0, "BUCKET_50": 50.0, "BUCKET_100": 100.0},
             tier_function=tier_3,
             complexity=3,
             notes="Symmetric middle ground.",
         ),
         TierStructure(
             candidate_id="4_tier",
-            label="4-tier (baseline)",
+            label="4-tier (former baseline)",
             thresholds="PI < -1; -1 <= PI < 0; 0 <= PI < +1; PI >= +1",
-            tier_order=("Cash", "Trim", "Sized", "Strong"),
-            tier_to_pct={"Cash": 0.0, "Trim": 50.0, "Sized": 75.0, "Strong": 100.0},
+            tier_order=("BUCKET_0", "BUCKET_50", "BUCKET_75", "BUCKET_100"),
+            tier_to_pct={
+                "BUCKET_0": 0.0,
+                "BUCKET_50": 50.0,
+                "BUCKET_75": 75.0,
+                "BUCKET_100": 100.0,
+            },
             tier_function=tier_4,
             complexity=4,
-            notes="Current production rule.",
+            notes="Former production rule retained for Phase F reproducibility."
         ),
         TierStructure(
             candidate_id="5_tier",
@@ -128,13 +138,13 @@ def tier_structures() -> list[TierStructure]:
                 "PI < -1.5; -1.5 <= PI < -0.5; -0.5 <= PI < +0.5; "
                 "+0.5 <= PI < +1.5; PI >= +1.5"
             ),
-            tier_order=("Cash", "Trim", "Mid", "Sized", "Strong"),
+            tier_order=("BUCKET_0", "BUCKET_25", "BUCKET_50", "BUCKET_75", "BUCKET_100"),
             tier_to_pct={
-                "Cash": 0.0,
-                "Trim": 25.0,
-                "Mid": 50.0,
-                "Sized": 75.0,
-                "Strong": 100.0,
+                "BUCKET_0": 0.0,
+                "BUCKET_25": 25.0,
+                "BUCKET_50": 50.0,
+                "BUCKET_75": 75.0,
+                "BUCKET_100": 100.0,
             },
             tier_function=tier_5,
             complexity=5,

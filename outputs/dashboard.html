@@ -62,22 +62,17 @@
   .scale-track { position: relative; height: 8px; border-radius: 4px; background: #1a1a1a; display: flex; overflow: visible; }
   .scale-zone { height: 100%; }
   .scale-zone:first-child { border-radius: 4px 0 0 4px; }
-  .scale-zone:nth-child(4) { border-radius: 0 4px 4px 0; }
-  .scale-zone-cash { background: linear-gradient(to right, #E84B5A28, #E84B5A12); }
-  .scale-zone-trim { background: linear-gradient(to right, #FF980020, #FF980010); }
-  .scale-zone-sized { background: linear-gradient(to right, #8BC34A10, #8BC34A18); }
-  .scale-zone-strong { background: linear-gradient(to right, #4CAF5014, #4CAF5028); }
-  .scale-zero, .scale-threshold { position: absolute; top: -3px; bottom: -3px; width: 1px; background: #333; }
-  .scale-zero { background: #555; }
+  .scale-zone:nth-child(2) { border-radius: 0 4px 4px 0; }
+  .scale-zone-cash { background: linear-gradient(to right, #E84B5A22, #E84B5A11); }
+  .scale-zone-long { background: linear-gradient(to right, #4CAF5011, #4CAF5022); }
+  .scale-zero { position: absolute; top: -3px; bottom: -3px; width: 1px; background: #555; }
   .scale-marker { position: absolute; top: -4px; width: 16px; height: 16px; border-radius: 50%; transform: translateX(-50%); transition: left 0.3s; }
   .scale-axis { position: relative; height: 14px; margin-top: 8px; font-size: 10px; color: #555; font-family: 'SF Mono', Menlo, monospace; }
   .scale-axis span { position: absolute; transform: translateX(-50%); }
   .scale-axis span:first-child { transform: translateX(0); }
   .scale-axis span:last-child { transform: translateX(-100%); }
-  .scale-legend { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 4px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; }
+  .scale-legend { display: flex; justify-content: space-between; margin-top: 4px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; }
   .scale-cash-label { color: #E84B5A88; }
-  .scale-trim-label { color: #FF980088; text-align:center; }
-  .scale-sized-label { color: #8BC34A88; text-align:center; }
   .scale-long-label { color: #4CAF5088; text-align:right; }
 
   .section-title {
@@ -178,7 +173,7 @@
   <span class="brand">MILK ROAD · ON-CHAIN INDEX</span>
   <span class="meta-right">
     <span>data 2026-05-20</span>
-    <span>built 2026-05-21 11:33 UTC</span>
+    <span>built 2026-05-21 12:06 UTC</span>
     <span>epoch 2024-onward</span>
     <span><i class="status-dot green"></i>OK</span>
   </span>
@@ -189,36 +184,28 @@
   <div class="hero-grid">
     <div class="hero-main">
       <div class="hero-row">
-        <div class="hero-value mono" style="color:#FF9800;">-0.51</div>
+        <div class="hero-value mono" style="color:#E84B5A;">-0.51</div>
         <div class="hero-action">
-          <div class="hero-action-label" style="color:#FF9800;">TRIM · 50% long</div>
-          <div class="hero-action-sub">50% long · mixed / caution zone.</div>
+          <div class="hero-action-label" style="color:#E84B5A;">CASH · 0% long</div>
+          <div class="hero-action-sub">0% long · PI_score is at or below zero.</div>
         </div>
       </div>
       
       <div class="scale-bar" aria-label="PI_score tier position">
         <div class="scale-track">
-          <div class="scale-zone scale-zone-cash" style="width:25%;"></div>
-          <div class="scale-zone scale-zone-trim" style="width:25%;"></div>
-          <div class="scale-zone scale-zone-sized" style="width:25%;"></div>
-          <div class="scale-zone scale-zone-strong" style="width:25%;"></div>
+          <div class="scale-zone scale-zone-cash" style="width:50.00%;"></div>
+          <div class="scale-zone scale-zone-long" style="width:50.00%;"></div>
           <div class="scale-zero" style="left: 50.00%;"></div>
-          <div class="scale-threshold" style="left: 25.00%;"></div>
-          <div class="scale-threshold" style="left: 75.00%;"></div>
-          <div class="scale-marker" style="left: 37.30%; background: #FF9800; box-shadow: 0 0 0 4px #FF980033;"></div>
+          <div class="scale-marker" style="left: 37.30%; background: #E84B5A; box-shadow: 0 0 0 4px #E84B5A33;"></div>
         </div>
         <div class="scale-axis">
           <span style="left:0%;">−2</span>
-          <span style="left:25.00%;">−1</span>
           <span style="left:50.00%; color:#888;">0</span>
-          <span style="left:75.00%;">+1</span>
           <span style="left:100%;">+2</span>
         </div>
         <div class="scale-legend">
           <span class="scale-cash-label">CASH</span>
-          <span class="scale-trim-label">TRIM</span>
-          <span class="scale-sized-label">SIZED</span>
-          <span class="scale-long-label">STRONG</span>
+          <span class="scale-long-label">STAY LONG</span>
         </div>
       </div>
     </div>
@@ -253,7 +240,7 @@
 <div class="mrmi-chart">
   <div class="mrmi-chart-header">
     <h3>Milk Road on-chain index
-      <span class="info-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="4" r="0.9" fill="currentColor"/><line x1="7" y1="6.5" x2="7" y2="10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg><span class="tip-pop"><strong>How PI_score works:</strong> PI_score adds the Valuation dimension to the Holder Behavior dimension. The line is the production composite used for the tiered sizing rule; background bands show Cash, Trim, Sized, and Strong buckets. BTC spot can be toggled as a log-price overlay.</span></span>
+      <span class="info-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="4" r="0.9" fill="currentColor"/><line x1="7" y1="6.5" x2="7" y2="10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg><span class="tip-pop"><strong>How PI_score works:</strong> PI_score adds the Valuation dimension to the Holder Behavior dimension. The line is the production composite used for the binary MRMI-shaped rule; background bands show CASH below zero and STAY LONG above zero. BTC spot can be toggled as a log-price overlay.</span></span>
     </h3>
     <div class="range-tabs">
       <button data-chart="pi" data-range="1y" class="active">1Y</button>
@@ -262,7 +249,7 @@
       <button data-chart="pi" data-range="all">ALL</button>
     </div>
   </div>
-  <p class="mrmi-chart-subtitle">A single BTC-specific regime signal: realized-cost valuation plus holder positioning, mapped to fixed sizing tiers.</p>
+  <p class="mrmi-chart-subtitle">A single BTC-specific regime signal: realized-cost valuation plus holder positioning, mapped to a binary MRMI-shaped rule.</p>
   <div class="legend">
     <span class="legend-item" data-series="pi"><span class="legend-dot" style="background:#fff"></span>PI_score</span>
     <span class="legend-item" data-series="btc"><span class="legend-dot" style="background:#A78BFA"></span>BTC log price</span>
@@ -270,15 +257,15 @@
   </div>
   <div class="chart-container"><canvas id="historyChart"></canvas></div>
   <div class="chart-description">
-    <p><strong>Decision rule:</strong> PI_score &lt; -1 → Cash / 0%; -1 to 0 → Trim / 50%; 0 to +1 → Sized / 75%; ≥ +1 → Strong / 100%.</p>
+    <p><strong>Decision rule:</strong> PI_score &gt; 0 → STAY LONG / 100%; PI_score ≤ 0 → CASH / 0%. Martin adopted this 2-tier MRMI-shape after Task-26 showed +17.7% OOS median alpha, +4.1pp versus the former 4-tier baseline.</p>
     <details class="drivers backtest-toggle">
       <summary><span>How well does this work historically?</span></summary>
       <div class="drivers-body">
-        <p class="details-copy">Walk-forward tiered sizing by BTC cycle, using the same production tier values and no leverage.</p>
+        <p class="details-copy">Walk-forward binary sizing by BTC cycle, using the same production 0% / 100% values and no leverage.</p>
         
     <table>
       <thead><tr><th>Window</th><th>BTC B&amp;H</th><th>PI tier</th><th>Alpha</th><th>BTC DD</th><th>PI DD</th></tr></thead>
-      <tbody><tr><td>Full sample</td><td class="mono">+42.6%</td><td class="mono">+55.7%</td><td class="mono val pos">+13.0%</td><td class="mono">-84.5%</td><td class="mono">-64.5%</td></tr><tr><td>2014-2017</td><td class="mono">+66.3%</td><td class="mono">+77.3%</td><td class="mono val pos">+11.0%</td><td class="mono">-80.8%</td><td class="mono">-53.3%</td></tr><tr><td>2018-2021</td><td class="mono">+23.1%</td><td class="mono">+37.2%</td><td class="mono val pos">+14.1%</td><td class="mono">-81.4%</td><td class="mono">-57.8%</td></tr><tr><td>2022-2024</td><td class="mono">+17.5%</td><td class="mono">+34.5%</td><td class="mono val pos">+17.0%</td><td class="mono">-66.9%</td><td class="mono">-27.6%</td></tr><tr><td>2025-now</td><td class="mono">-9.0%</td><td class="mono">+4.0%</td><td class="mono val pos">+13.0%</td><td class="mono">-49.6%</td><td class="mono">-13.1%</td></tr></tbody>
+      <tbody><tr><td>Full sample</td><td class="mono">+42.6%</td><td class="mono">+55.2%</td><td class="mono val pos">+12.5%</td><td class="mono">-84.5%</td><td class="mono">-65.9%</td></tr><tr><td>2014-2017</td><td class="mono">+66.3%</td><td class="mono">+88.9%</td><td class="mono val pos">+22.6%</td><td class="mono">-80.8%</td><td class="mono">-47.7%</td></tr><tr><td>2018-2021</td><td class="mono">+23.1%</td><td class="mono">+23.7%</td><td class="mono val pos">+0.6%</td><td class="mono">-81.4%</td><td class="mono">-65.9%</td></tr><tr><td>2022-2024</td><td class="mono">+17.5%</td><td class="mono">+37.9%</td><td class="mono val pos">+20.4%</td><td class="mono">-66.9%</td><td class="mono">-34.5%</td></tr><tr><td>2025-now</td><td class="mono">-9.0%</td><td class="mono">+6.0%</td><td class="mono val pos">+15.0%</td><td class="mono">-49.6%</td><td class="mono">-10.4%</td></tr></tbody>
     </table>
     
       </div>
@@ -367,10 +354,8 @@ PI_score = Valuation + Holder Behavior</div>
     <summary><span>Tier thresholds <a class="suggest" href="https://github.com/m0xt/onchain-index/edit/main/src/onchain_index/composite.py" target="_blank" rel="noreferrer">Suggest edit ↗</a></span></summary>
     <div class="drivers-body">
       <table><thead><tr><th>PI_score bucket</th><th>Tier</th><th>Allocation</th></tr></thead><tbody>
-        <tr><td class="mono">&lt; -1.0</td><td>Cash</td><td class="mono">0%</td></tr>
-        <tr><td class="mono">[-1.0, 0.0)</td><td>Trim</td><td class="mono">50%</td></tr>
-        <tr><td class="mono">[0.0, +1.0)</td><td>Sized</td><td class="mono">75%</td></tr>
-        <tr><td class="mono">&gt;= +1.0</td><td>Strong</td><td class="mono">100%</td></tr>
+        <tr><td class="mono">&lt;= 0.0</td><td>CASH</td><td class="mono">0%</td></tr>
+        <tr><td class="mono">&gt; 0.0</td><td>STAY LONG</td><td class="mono">100%</td></tr>
       </tbody></table>
     </div>
   </details>
@@ -381,12 +366,12 @@ PI_score = Valuation + Holder Behavior</div>
   </details>
 
   <details class="drivers">
-    <summary><span>Open questions <a class="suggest" href="https://github.com/m0xt/onchain-index/edit/main/docs/theory.md" target="_blank" rel="noreferrer">Suggest edit ↗</a></span></summary>
+    <summary><span>Resolved framework choices <a class="suggest" href="https://github.com/m0xt/onchain-index/edit/main/docs/theory.md" target="_blank" rel="noreferrer">Suggest edit ↗</a></span></summary>
     <div class="drivers-body">
       <table><thead><tr><th>Question</th><th>Current v1 posture</th></tr></thead><tbody>
-        <tr><td>Sizing floor</td><td>0% Cash by default; revisit only as a portfolio-policy choice.</td></tr>
-        <tr><td>Tier naming</td><td>Strong / Sized / Trim / Cash.</td></tr>
-        <tr><td>Threshold method</td><td>Fixed (-1, 0, +1); future work can compare rolling percentiles or transition-calibrated thresholds.</td></tr>
+        <tr><td>Sizing floor</td><td>Resolved at 0% for CASH and 100% for STAY LONG.</td></tr>
+        <tr><td>Tier naming</td><td>Resolved to MRMI wording: CASH / STAY LONG.</td></tr>
+        <tr><td>Threshold method</td><td>Resolved to the MRMI-shape zero threshold: invested only when PI_score &gt; 0.</td></tr>
         <tr><td>Diagnostic surface</td><td>Keep holder sub-cohorts prominent so composition drift is visible.</td></tr>
       </tbody></table>
     </div>
@@ -394,7 +379,7 @@ PI_score = Valuation + Holder Behavior</div>
 </section>
 
 <footer>
-  Milk Road on-chain index · Technical handle: <code>PI_score</code> · Repo: <a href="https://github.com/m0xt/onchain-index">https://github.com/m0xt/onchain-index</a> · Last commit: <span class="mono">70028d6</span> feat: add on-chain dimension drilldowns · Last refresh UTC: <span class="mono">2026-05-21 11:33:14</span> · Theory doc: v0.4
+  Milk Road on-chain index · Technical handle: <code>PI_score</code> · Repo: <a href="https://github.com/m0xt/onchain-index">https://github.com/m0xt/onchain-index</a> · Last commit: <span class="mono">517a61c</span> research: audit PI_score tier structure · Last refresh UTC: <span class="mono">2026-05-21 12:06:41</span> · Theory doc: v0.5
 </footer>
 
 <script>
@@ -443,13 +428,9 @@ function zeroLineAnnotation() {
 }
 function tierBandAnnotations() {
   return {
-    cash: { type: 'box', yMin: -6, yMax: -1, backgroundColor: 'rgba(232,75,90,0.10)', borderWidth: 0, scaleID: 'y' },
-    trim: { type: 'box', yMin: -1, yMax: 0, backgroundColor: 'rgba(255,152,0,0.07)', borderWidth: 0, scaleID: 'y' },
-    sized: { type: 'box', yMin: 0, yMax: 1, backgroundColor: 'rgba(139,195,74,0.06)', borderWidth: 0, scaleID: 'y' },
-    strong: { type: 'box', yMin: 1, yMax: 6, backgroundColor: 'rgba(76,175,80,0.09)', borderWidth: 0, scaleID: 'y' },
+    cash: { type: 'box', yMin: -6, yMax: 0, backgroundColor: 'rgba(232,75,90,0.10)', borderWidth: 0, scaleID: 'y' },
+    stayLong: { type: 'box', yMin: 0, yMax: 6, backgroundColor: 'rgba(76,175,80,0.09)', borderWidth: 0, scaleID: 'y' },
     ...zeroLineAnnotation(),
-    minusOne: { type: 'line', yMin: -1, yMax: -1, borderColor: '#333', borderWidth: 1, borderDash: [4,3], scaleID: 'y' },
-    plusOne: { type: 'line', yMin: 1, yMax: 1, borderColor: '#333', borderWidth: 1, borderDash: [4,3], scaleID: 'y' },
   };
 }
 function sharedChartOptions({ small = false, annotations = zeroLineAnnotation(), yAxis = {}, extraScales = {}, tooltipCallbacks = {} } = {}) {

@@ -1,6 +1,6 @@
 # Milk Road on-chain index — theory of the framework
 
-**Status:** draft v0.4 — Milk Road on-chain index display name adopted; `PI_score` remains the technical math handle. v0.3 framework retained, honesty pass applied: exchange flow removed after the failed Phase E canonical-rule gate, and the Valuation × Holder Behavior framing softened to partially correlated complementary lenses (Phase D Pearson `0.631`). Composite math, thresholds, and production tier logic are unchanged.
+**Status:** draft v0.5 — production decision rule simplified from the former 4-bucket sizing rule to the 2-tier MRMI-shaped `CASH` / `STAY LONG` rule. Martin chose option (a) on 2026-05-21 after Task-26 / Phase F showed the binary rule beat the former baseline by `+4.1pp` (`+4.2pp` rounded in the dispatch note) OOS median alpha while matching MRMI shape. Composite math is unchanged.
 
 > This document encodes *why* the framework is shaped the way it is. The MRMI structure works for macro-framework because it encodes a specific causal model (growth + financial conditions drive regime; real-econ tail risk modifies it). For Milk Road on-chain index to be more than "MRMI shape with BTC inputs," it needs its own causal model. That's what this doc is for.
 
@@ -88,25 +88,22 @@ The aggregate drives the decision. The components explain the decision. Best of 
 
 ## 4. Decision rule
 
-**Graded sizing tiers derived from threshold buckets on PI_score.** Decided 2026-05-20.
+**Binary MRMI-shaped rule on PI_score.** Decided 2026-05-21.
 
 ```
-PI_score  > +1.0         →  100% long  (Strong)
-PI_score   0   to +1.0   →   75% long  (Sized)
-PI_score  -1.0 to  0     →   50% long  (Trim)
-PI_score  < -1.0         →    0% (cash) or floor — see open Q below
+PI_score  > 0   →  STAY LONG  (100%)
+PI_score <= 0   →  CASH        (0%)
 ```
 
-Threshold values are placeholders. **Actual thresholds will be set empirically in Phase C** by examining the historical PI_score distribution at known regime-transition points (2018 top, 2018 bottom, 2021 top, 2022 bottom, etc.), not by optimization. Same discipline as macro-framework's threshold provenance.
+The threshold is deliberately fixed at zero. This is the same shape as MRMI: invested only when the framework score is positive, otherwise cash. Exact zero maps to `CASH`, matching the strict `score > 0` convention.
 
 Why these properties:
-- **Four tiers, deliberately coarse.** Not 0/10/20/…/100. Fine sizing implies a precision the framework doesn't have. Four tiers treats sizing as a categorical decision, which it really is.
-- **Symmetric around zero.** The composite is built from z-scores; zero is the natural neutral. Tiers above zero are scaled long; tiers at-or-below scale toward cash.
-- **Single decisive output.** Tier = function of PI_score. No averaging across "but maybe…" inputs. Reproducible and auditable.
+- **MRMI parity.** The product surface now has the same two-state action language as Milk Road Macro Index: `STAY LONG` / `CASH`.
+- **Parsimony with evidence.** Task-26 / Phase F compared fixed 2-, 3-, 4-, and 5-tier structures without tuning thresholds. The 2-tier rule produced `+17.7%` OOS median alpha versus `+13.5%` for the former 4-tier baseline (`+4.1pp`; rounded as `+4.2pp` in Bob's dispatch).
+- **No false precision.** The composite remains a multi-month BTC-specific regime score. Intermediate sizing buckets implied precision the walk-forward did not earn.
+- **Single decisive output.** Tier = function of PI_score. No averaging across “but maybe…” inputs. Reproducible and auditable.
 
-Binary was rejected because BTC's regime structure has stacked timescales (within-cycle volatility + 4-year structural cycle) — a single in/out call hides too much information. Regime-label-only was rejected because it leaves the sizing question for downstream, and we'd just end up specifying sizing tiers anyway. Graded sizing is the honest output for a multi-month BTC framework.
-
-> **What changed from v0.2:** the sizing tiers were previously derived from the 2×2 quadrants. With the structure now additive, the tiers are derived from PI_score thresholds. Same number of tiers, same decision-shape, different upstream math.
+> **What changed from v0.4:** the prior graded 4-bucket production sizing rule was simplified to binary `CASH` / `STAY LONG`. The Valuation, Holder Behavior, and PI_score formulas did not change; only the interpretation layer changed.
 
 ## 5. What's deliberately left out and why
 
@@ -117,26 +114,11 @@ Binary was rejected because BTC's regime structure has stacked timescales (withi
 - **Single-cycle backtests.** BTC cycles are ~4 years. Any backtest that doesn't span ≥2-3 cycles is curve-fitting noise. Walk-forward by cycle is mandatory.
 - **Composite of composites beyond what's spec'd here.** Holder behavior is *intentionally* a composite-of-sub-cohorts because that's how the dimension is defined (cohorts of holders). No further nesting. If a third top-level dimension ever genuinely belongs, we revisit this doc; we don't quietly bolt one on.
 
-## 6. Open questions for Martin (please push back)
+## 6. Open questions for Martin
 
-1. **Sizing floor — 0% cash or structural 25%?** In the bottom tier (PI_score < -1.0), the framework's natural output is 0% (full cash). For a discretionary trader that's fine; for someone who wants permanent BTC exposure and just sizes around a baseline, a floor of e.g. 25% is more realistic. The math can produce either. Martin's call.
+None blocking for v1. The framework shape is now settled: additive `PI_score`, strict separation from macro-framework, two product states (`CASH` / `STAY LONG`), and prominent diagnostic decomposition.
 
-2. **Naming the sizing tiers.** Three candidates:
-   - Descriptive: **Strong / Sized / Trim / Cash**
-   - Actionable: **Max / Long / Cautious / Out**
-   - Numerical only: **100% / 75% / 50% / 0%** (no labels, scores speak for themselves)
-   - Conviction-shaped: **High Conviction Long / Conviction Long / Neutral / Risk-Off**
-   
-   Naming sets the dashboard's tone and how it gets cited verbally ("we're in a Sized regime" vs "we're at 75% long" vs "we're in Conviction Long").
-
-3. **Threshold calibration method for the four tiers.** Three candidates:
-   - **Fixed z-score thresholds** (>+1, 0–1, -1–0, <-1) — assumes composite is roughly normally distributed. Simple, reproducible.
-   - **Rolling percentile** (top quartile / upper third / lower third / bottom quartile) — forces equal time in each tier. More even but can churn during steady regimes.
-   - **Empirically calibrated to historical regime transitions** — set thresholds by looking at composite values at known cycle tops/bottoms (2014/2018/2022 lows; 2017/2021 highs). Most defensible but requires explicit historical labelling — and the cycle-transition dates themselves involve some discretion.
-   
-   My lean: **start with fixed z-score thresholds for v1 simplicity, validate against empirical regime transitions in Phase C as a sanity check.** Don't optimize either.
-
-4. **Diagnostic surface for holder-behavior sub-cohorts.** Should the dashboard prominently show all three sub-cohort scores (on-chain / DAT / ETF) alongside the headline PI_score? My lean: yes, prominently — when on-chain and ETF flows disagree, that's the single most decision-relevant signal the framework produces. Equivalent to macro-framework's morning page showing component sub-indicators alongside the MRMI value. *(Carried forward from v0.2; exchange flow removed in v0.4.)*
+Future research can still evaluate new source coverage or a separate joint macro + on-chain wrapper, but not by silently changing this framework's production rule.
 
 ### Resolved 2026-05-20
 
@@ -144,24 +126,22 @@ Binary was rejected because BTC's regime structure has stacked timescales (withi
 - ~~2×2 matrix vs additive composite~~ → **additive composite**. Diagnostic decomposition recovered via dashboard.
 - ~~Macro override or strict separation~~ → **strict separation**. Onchain-index produces the BTC-inside view; macro-framework produces the outside view. They are complementary outputs, not nested inputs. A future "joint" wrapper layer could combine them; not part of this framework.
 
+### Resolved 2026-05-21
+
+- ~~Sizing floor~~ → **0% / 100% binary**. `CASH` is 0%; `STAY LONG` is 100%. No configurable floor.
+- ~~Tier naming~~ → **MRMI wording: `CASH` / `STAY LONG`**.
+- ~~Threshold calibration~~ → **fixed zero threshold**. `PI_score > 0` is invested; `PI_score <= 0` is cash. No grid search or tuning.
+
 ---
 
 ## Next step
 
-With the v0.4 framing in (additive composite, graded sizing tiers, strict separation from macro-framework, three holder cohorts, and partial-correlation disclosure), Phase C is concrete:
+With v0.5 in place, the production framework is concrete:
 
-1. Build the **Valuation composite** from Phase B's robust winners. Candidates: STH MVRV, RHODL Ratio (both 4/4 cycles positive), Puell Multiple (3/4 cycles, miner-revenue lens), and one of MVRV-Z / NUPL (not both — 0.88 correlated). Equal-weighted z-score of constituents.
-2. Build the **Holder Behavior composite** as three epoch-aware sub-cohort scores, equal-weighted within available coverage:
-   - On-chain holders (always available — STH MVRV is already in valuation; for holder-behavior, use HODL waves / dormancy / age-band metrics not already in valuation, to avoid double-counting)
-   - Corporate DAT (2020+) — MSTR/Strategy Δ holdings; future expansion to Metaplanet, Marathon, etc. would diversify the currently single-buyer DAT signal
-   - Institutional ETF (2024+) — Farside spot ETF net flow
-3. Compute **PI_score** = z(Valuation) + z(Holder Behavior).
-4. Set the four sizing-tier thresholds. Start with fixed z-score thresholds (>+1, 0–1, -1–0, <-1); sanity-check against historical cycle-transition values.
-5. Backtest the tier-driven sizing rule walk-forward by cycle (2014-17 / 2018-21 / 2022-24 / 2025-now). Output: per-cycle realized return, drawdown, time-in-each-tier breakdown.
-6. Build the dashboard:
-   - Headline: current PI_score + current tier + suggested sizing
-   - Dimension scores: Valuation z, Holder Behavior z
-   - Sub-cohort scores: 3 holder-behavior cohort z's, with epoch tag and constituent concentration disclosure
-   - Historical context: PI_score chart over time with tier-region shading + BTC price overlay
-
-Open calibration questions from Section 6 (sizing floor, tier naming, threshold calibration method) get resolved during Phase C empirics. Theory shape is locked.
+1. Compute **PI_score** = z(Valuation) + z(Holder Behavior) using the locked production composite.
+2. Map PI_score through the binary rule: `PI_score > 0` → `STAY LONG` / 100%; `PI_score <= 0` → `CASH` / 0%.
+3. Keep the dashboard focused on the same three-section product surface:
+   - Headline: current PI_score + binary action + allocation
+   - Valuation lens: current z-score and constituent drivers
+   - Holder Behavior lens: current z-score, epoch, cohort drivers, and concentration disclosures
+4. Treat future work as additive research only: new source coverage, DAT diversification, or a separate joint macro + on-chain wrapper. Do not change the production threshold or sizing shape without a new explicit decision.

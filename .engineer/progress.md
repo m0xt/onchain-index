@@ -110,3 +110,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: Production tier simplification decision remains separate; no dashboard/composite change made.
+
+## 2026-05-21T12:07:56Z — Binary MRMI-shape tier rule
+- What: Simplified production PI_score interpretation from the former 4-tier sizing map to MRMI-shaped CASH / STAY LONG at zero; rebuilt dashboard, v0.5 theory, decisions, tests, and Phase F addendum.
+- Files touched: src/onchain_index/composite.py, src/onchain_index/build.py, src/onchain_index/research/optimization/common.py, src/onchain_index/research/optimization/optimize_tier_structure.py, tests/test_*.py, docs/theory.md, docs/index.html, outputs/dashboard.html, reports/phase-f-tier-structure-2026-05-21.md, DECISIONS.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: none

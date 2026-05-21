@@ -41,7 +41,7 @@ from onchain_index.data import DEFAULT_CACHE_DIR, PROJECT_ROOT, fetch_all
 
 GITHUB_EDIT_BASE = "https://github.com/m0xt/onchain-index/edit/main"
 PROJECT_REPO_URL = "https://github.com/m0xt/onchain-index"
-THEORY_VERSION = "v0.4"
+THEORY_VERSION = "v0.5"
 
 CYCLE_REFERENCE_POINTS: tuple[tuple[str, str], ...] = (
     ("2013 top", "2013-12-04"),
@@ -84,24 +84,18 @@ VALUATION_LABELS: dict[str, str] = {
 }
 
 TIER_COLORS: dict[str, str] = {
-    "Strong": "#4CAF50",
-    "Sized": "#8BC34A",
-    "Trim": "#FF9800",
-    "Cash": "#E84B5A",
+    "STAY LONG": "#4CAF50",
+    "CASH": "#E84B5A",
 }
 
 TIER_LABELS: dict[str, str] = {
-    "Strong": "STRONG",
-    "Sized": "SIZED",
-    "Trim": "TRIM",
-    "Cash": "CASH",
+    "STAY LONG": "STAY LONG",
+    "CASH": "CASH",
 }
 
 TIER_SUBTITLES: dict[str, str] = {
-    "Strong": "100% long · all BTC-specific lenses confirm risk-on.",
-    "Sized": "75% long · constructive, but not full-confirmation.",
-    "Trim": "50% long · mixed / caution zone.",
-    "Cash": "0% long · BTC-specific risk-off bucket.",
+    "STAY LONG": "100% long · PI_score is above zero.",
+    "CASH": "0% long · PI_score is at or below zero.",
 }
 
 
@@ -370,39 +364,27 @@ def _state_color(value: float | None) -> str:
 
 
 def _make_pi_scale_bar(pi_value: float, tier_color: str) -> str:
-    """Horizontal Cash-to-Strong bar for PI_score, using fixed tier thresholds."""
+    """Horizontal CASH/STAY LONG bar for the binary PI_score rule."""
     scale_min, scale_max = -2.0, 2.0
     clamped = max(scale_min, min(scale_max, pi_value))
     pct = (clamped - scale_min) / (scale_max - scale_min) * 100
-    ticks = {
-        "-1": (-1 - scale_min) / (scale_max - scale_min) * 100,
-        "0": (0 - scale_min) / (scale_max - scale_min) * 100,
-        "+1": (1 - scale_min) / (scale_max - scale_min) * 100,
-    }
+    zero_pct = (0 - scale_min) / (scale_max - scale_min) * 100
     return f'''
       <div class="scale-bar" aria-label="PI_score tier position">
         <div class="scale-track">
-          <div class="scale-zone scale-zone-cash" style="width:25%;"></div>
-          <div class="scale-zone scale-zone-trim" style="width:25%;"></div>
-          <div class="scale-zone scale-zone-sized" style="width:25%;"></div>
-          <div class="scale-zone scale-zone-strong" style="width:25%;"></div>
-          <div class="scale-zero" style="left: {ticks['0']:.2f}%;"></div>
-          <div class="scale-threshold" style="left: {ticks['-1']:.2f}%;"></div>
-          <div class="scale-threshold" style="left: {ticks['+1']:.2f}%;"></div>
+          <div class="scale-zone scale-zone-cash" style="width:{zero_pct:.2f}%;"></div>
+          <div class="scale-zone scale-zone-long" style="width:{100 - zero_pct:.2f}%;"></div>
+          <div class="scale-zero" style="left: {zero_pct:.2f}%;"></div>
           <div class="scale-marker" style="left: {pct:.2f}%; background: {tier_color}; box-shadow: 0 0 0 4px {tier_color}33;"></div>
         </div>
         <div class="scale-axis">
           <span style="left:0%;">−2</span>
-          <span style="left:{ticks['-1']:.2f}%;">−1</span>
-          <span style="left:{ticks['0']:.2f}%; color:#888;">0</span>
-          <span style="left:{ticks['+1']:.2f}%;">+1</span>
+          <span style="left:{zero_pct:.2f}%; color:#888;">0</span>
           <span style="left:100%;">+2</span>
         </div>
         <div class="scale-legend">
           <span class="scale-cash-label">CASH</span>
-          <span class="scale-trim-label">TRIM</span>
-          <span class="scale-sized-label">SIZED</span>
-          <span class="scale-long-label">STRONG</span>
+          <span class="scale-long-label">STAY LONG</span>
         </div>
       </div>'''
 
@@ -589,22 +571,17 @@ def _render_html(
   .scale-track {{ position: relative; height: 8px; border-radius: 4px; background: #1a1a1a; display: flex; overflow: visible; }}
   .scale-zone {{ height: 100%; }}
   .scale-zone:first-child {{ border-radius: 4px 0 0 4px; }}
-  .scale-zone:nth-child(4) {{ border-radius: 0 4px 4px 0; }}
-  .scale-zone-cash {{ background: linear-gradient(to right, #E84B5A28, #E84B5A12); }}
-  .scale-zone-trim {{ background: linear-gradient(to right, #FF980020, #FF980010); }}
-  .scale-zone-sized {{ background: linear-gradient(to right, #8BC34A10, #8BC34A18); }}
-  .scale-zone-strong {{ background: linear-gradient(to right, #4CAF5014, #4CAF5028); }}
-  .scale-zero, .scale-threshold {{ position: absolute; top: -3px; bottom: -3px; width: 1px; background: #333; }}
-  .scale-zero {{ background: #555; }}
+  .scale-zone:nth-child(2) {{ border-radius: 0 4px 4px 0; }}
+  .scale-zone-cash {{ background: linear-gradient(to right, #E84B5A22, #E84B5A11); }}
+  .scale-zone-long {{ background: linear-gradient(to right, #4CAF5011, #4CAF5022); }}
+  .scale-zero {{ position: absolute; top: -3px; bottom: -3px; width: 1px; background: #555; }}
   .scale-marker {{ position: absolute; top: -4px; width: 16px; height: 16px; border-radius: 50%; transform: translateX(-50%); transition: left 0.3s; }}
   .scale-axis {{ position: relative; height: 14px; margin-top: 8px; font-size: 10px; color: #555; font-family: 'SF Mono', Menlo, monospace; }}
   .scale-axis span {{ position: absolute; transform: translateX(-50%); }}
   .scale-axis span:first-child {{ transform: translateX(0); }}
   .scale-axis span:last-child {{ transform: translateX(-100%); }}
-  .scale-legend {{ display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 4px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; }}
+  .scale-legend {{ display: flex; justify-content: space-between; margin-top: 4px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; }}
   .scale-cash-label {{ color: #E84B5A88; }}
-  .scale-trim-label {{ color: #FF980088; text-align:center; }}
-  .scale-sized-label {{ color: #8BC34A88; text-align:center; }}
   .scale-long-label {{ color: #4CAF5088; text-align:right; }}
 
   .section-title {{
@@ -755,7 +732,7 @@ def _render_html(
 <div class="mrmi-chart">
   <div class="mrmi-chart-header">
     <h3>Milk Road on-chain index
-      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>How PI_score works:</strong> PI_score adds the Valuation dimension to the Holder Behavior dimension. The line is the production composite used for the tiered sizing rule; background bands show Cash, Trim, Sized, and Strong buckets. BTC spot can be toggled as a log-price overlay.</span></span>
+      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>How PI_score works:</strong> PI_score adds the Valuation dimension to the Holder Behavior dimension. The line is the production composite used for the binary MRMI-shaped rule; background bands show CASH below zero and STAY LONG above zero. BTC spot can be toggled as a log-price overlay.</span></span>
     </h3>
     <div class="range-tabs">
       <button data-chart="pi" data-range="1y" class="active">1Y</button>
@@ -764,7 +741,7 @@ def _render_html(
       <button data-chart="pi" data-range="all">ALL</button>
     </div>
   </div>
-  <p class="mrmi-chart-subtitle">A single BTC-specific regime signal: realized-cost valuation plus holder positioning, mapped to fixed sizing tiers.</p>
+  <p class="mrmi-chart-subtitle">A single BTC-specific regime signal: realized-cost valuation plus holder positioning, mapped to a binary MRMI-shaped rule.</p>
   <div class="legend">
     <span class="legend-item" data-series="pi"><span class="legend-dot" style="background:#fff"></span>PI_score</span>
     <span class="legend-item" data-series="btc"><span class="legend-dot" style="background:#A78BFA"></span>BTC log price</span>
@@ -772,11 +749,11 @@ def _render_html(
   </div>
   <div class="chart-container"><canvas id="historyChart"></canvas></div>
   <div class="chart-description">
-    <p><strong>Decision rule:</strong> PI_score &lt; -1 → Cash / 0%; -1 to 0 → Trim / 50%; 0 to +1 → Sized / 75%; ≥ +1 → Strong / 100%.</p>
+    <p><strong>Decision rule:</strong> PI_score &gt; 0 → STAY LONG / 100%; PI_score ≤ 0 → CASH / 0%. Martin adopted this 2-tier MRMI-shape after Task-26 showed +17.7% OOS median alpha, +4.1pp versus the former 4-tier baseline.</p>
     <details class="drivers backtest-toggle">
       <summary><span>How well does this work historically?</span></summary>
       <div class="drivers-body">
-        <p class="details-copy">Walk-forward tiered sizing by BTC cycle, using the same production tier values and no leverage.</p>
+        <p class="details-copy">Walk-forward binary sizing by BTC cycle, using the same production 0% / 100% values and no leverage.</p>
         {_walk_forward_table(walk_forward_rows)}
       </div>
     </details>
@@ -857,10 +834,8 @@ def _render_html(
     <summary><span>Tier thresholds {_edit_link('src/onchain_index/composite.py')}</span></summary>
     <div class="drivers-body">
       <table><thead><tr><th>PI_score bucket</th><th>Tier</th><th>Allocation</th></tr></thead><tbody>
-        <tr><td class="mono">&lt; -1.0</td><td>Cash</td><td class="mono">0%</td></tr>
-        <tr><td class="mono">[-1.0, 0.0)</td><td>Trim</td><td class="mono">50%</td></tr>
-        <tr><td class="mono">[0.0, +1.0)</td><td>Sized</td><td class="mono">75%</td></tr>
-        <tr><td class="mono">&gt;= +1.0</td><td>Strong</td><td class="mono">100%</td></tr>
+        <tr><td class="mono">&lt;= 0.0</td><td>CASH</td><td class="mono">0%</td></tr>
+        <tr><td class="mono">&gt; 0.0</td><td>STAY LONG</td><td class="mono">100%</td></tr>
       </tbody></table>
     </div>
   </details>
@@ -871,12 +846,12 @@ def _render_html(
   </details>
 
   <details class="drivers">
-    <summary><span>Open questions {_edit_link('docs/theory.md')}</span></summary>
+    <summary><span>Resolved framework choices {_edit_link('docs/theory.md')}</span></summary>
     <div class="drivers-body">
       <table><thead><tr><th>Question</th><th>Current v1 posture</th></tr></thead><tbody>
-        <tr><td>Sizing floor</td><td>0% Cash by default; revisit only as a portfolio-policy choice.</td></tr>
-        <tr><td>Tier naming</td><td>Strong / Sized / Trim / Cash.</td></tr>
-        <tr><td>Threshold method</td><td>Fixed (-1, 0, +1); future work can compare rolling percentiles or transition-calibrated thresholds.</td></tr>
+        <tr><td>Sizing floor</td><td>Resolved at 0% for CASH and 100% for STAY LONG.</td></tr>
+        <tr><td>Tier naming</td><td>Resolved to MRMI wording: CASH / STAY LONG.</td></tr>
+        <tr><td>Threshold method</td><td>Resolved to the MRMI-shape zero threshold: invested only when PI_score &gt; 0.</td></tr>
         <tr><td>Diagnostic surface</td><td>Keep holder sub-cohorts prominent so composition drift is visible.</td></tr>
       </tbody></table>
     </div>
@@ -933,13 +908,9 @@ function zeroLineAnnotation() {{
 }}
 function tierBandAnnotations() {{
   return {{
-    cash: {{ type: 'box', yMin: -6, yMax: -1, backgroundColor: 'rgba(232,75,90,0.10)', borderWidth: 0, scaleID: 'y' }},
-    trim: {{ type: 'box', yMin: -1, yMax: 0, backgroundColor: 'rgba(255,152,0,0.07)', borderWidth: 0, scaleID: 'y' }},
-    sized: {{ type: 'box', yMin: 0, yMax: 1, backgroundColor: 'rgba(139,195,74,0.06)', borderWidth: 0, scaleID: 'y' }},
-    strong: {{ type: 'box', yMin: 1, yMax: 6, backgroundColor: 'rgba(76,175,80,0.09)', borderWidth: 0, scaleID: 'y' }},
+    cash: {{ type: 'box', yMin: -6, yMax: 0, backgroundColor: 'rgba(232,75,90,0.10)', borderWidth: 0, scaleID: 'y' }},
+    stayLong: {{ type: 'box', yMin: 0, yMax: 6, backgroundColor: 'rgba(76,175,80,0.09)', borderWidth: 0, scaleID: 'y' }},
     ...zeroLineAnnotation(),
-    minusOne: {{ type: 'line', yMin: -1, yMax: -1, borderColor: '#333', borderWidth: 1, borderDash: [4,3], scaleID: 'y' }},
-    plusOne: {{ type: 'line', yMin: 1, yMax: 1, borderColor: '#333', borderWidth: 1, borderDash: [4,3], scaleID: 'y' }},
   }};
 }}
 function sharedChartOptions({{ small = false, annotations = zeroLineAnnotation(), yAxis = {{}}, extraScales = {{}}, tooltipCallbacks = {{}} }} = {{}}) {{

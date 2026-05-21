@@ -22,12 +22,10 @@ VALUATION_CONSTITUENTS: tuple[str, ...] = (
     "mvrv_zscore",
 )
 
-TIER_ORDER: tuple[str, ...] = ("Cash", "Trim", "Sized", "Strong")
+TIER_ORDER: tuple[str, ...] = ("CASH", "STAY LONG")
 TIER_PCT: dict[str, float] = {
-    "Cash": 0.0,
-    "Trim": 50.0,
-    "Sized": 75.0,
-    "Strong": 100.0,
+    "CASH": 0.0,
+    "STAY LONG": 100.0,
 }
 TIER_DTYPE = CategoricalDtype(categories=list(TIER_ORDER), ordered=True)
 
@@ -129,24 +127,16 @@ def pi_score(data: pd.DataFrame, window: int = DEFAULT_ZSCORE_WINDOW) -> pd.Seri
     return score
 
 
-def sizing_tier(
-    pi_score: pd.Series,
-    thresholds: tuple[float, float, float] = (-1.0, 0.0, 1.0),
-    floor_pct: float = 0.0,
-) -> pd.Series:
-    """Map PI_score values into ordered sizing tiers.
+def sizing_tier(pi_score: pd.Series) -> pd.Series:
+    """Map PI_score values into the binary MRMI-shaped production rule.
 
-    ``floor_pct`` is accepted so callers can switch the bottom bucket from cash to
-    a structural-long floor without changing the public function signature. Labels
-    remain descriptive; sizing percentages live in the backtest tier map.
+    PI_score > 0 maps to ``STAY LONG`` / 100%; PI_score <= 0 maps to
+    ``CASH`` / 0%. Exact zero is deliberately cash, matching MRMI's
+    "invested when score > 0" convention.
     """
-    del floor_pct  # label assignment is independent of the chosen bottom allocation.
-    low, mid, high = thresholds
     values = pd.Series(pd.NA, index=pi_score.index, dtype="object")
-    values = values.mask(pi_score < low, "Cash")
-    values = values.mask((pi_score >= low) & (pi_score < mid), "Trim")
-    values = values.mask((pi_score >= mid) & (pi_score < high), "Sized")
-    values = values.mask(pi_score >= high, "Strong")
+    values = values.mask(pi_score <= 0.0, "CASH")
+    values = values.mask(pi_score > 0.0, "STAY LONG")
     return values.astype(TIER_DTYPE)
 
 

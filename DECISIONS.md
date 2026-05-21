@@ -23,3 +23,7 @@ Reason: Auto-refresh wired via launchd Mon–Fri 22:30 CEST, mirroring macro-fra
 ## 2026-05-21 — Rebranded display name to "Milk Road on-chain index"
 
 Reason: Rebranded display name to "Milk Road on-chain index" for product-family consistency with Milk Road Macro Index. PI_score remains the technical handle; no acronym (MROCI) adopted.
+
+## 2026-05-21 — Simplified to 2-tier binary (STAY LONG / CASH)
+
+Reason: Simplified to 2-tier binary (STAY LONG / CASH) per task-26 walk-forward finding that 4-tier under-performed by 4.2pp OOS. MRMI-shape parity. Threshold at PI_score = 0. See reports/phase-f-tier-structure-2026-05-21.md.

@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from onchain_index.composite import (
+    TIER_PCT,
     epoch_for_date,
     holder_behavior_cohorts,
     holder_behavior_composite,
@@ -43,15 +44,30 @@ def test_pi_score_uses_dimension_composites() -> None:
     pd.testing.assert_series_equal(pi_score(data), expected.rename("pi_score"))
 
 
-def test_sizing_tier_is_monotonic() -> None:
+def test_sizing_tier_is_binary_mrmi_shape() -> None:
     idx = pd.date_range("2024-01-01", periods=5)
-    score = pd.Series([-2.0, -0.5, 0.5, 2.0, np.nan], index=idx)
+    score = pd.Series([-2.0, 0.0, 0.0001, 2.0, np.nan], index=idx)
 
     tiers = sizing_tier(score)
 
-    assert list(tiers.astype("object")) == ["Cash", "Trim", "Sized", "Strong", np.nan]
-    assert list(tiers.cat.categories) == ["Cash", "Trim", "Sized", "Strong"]
+    labels = list(tiers.astype("object"))
+    assert labels == ["CASH", "CASH", "STAY LONG", "STAY LONG", np.nan]
+    allocations = [TIER_PCT[str(label)] if not pd.isna(label) else np.nan for label in labels]
+    assert allocations[:4] == [0.0, 0.0, 100.0, 100.0]
+    assert np.isnan(allocations[-1])
+    assert list(tiers.cat.categories) == ["CASH", "STAY LONG"]
     assert tiers.cat.ordered
+
+
+def test_pi_score_math_regression_unchanged_by_tier_simplification() -> None:
+    score = pi_score(_sample_frame(periods=900)).dropna().tail(5)
+
+    expected = pd.Series(
+        [1.151482401317, 1.163384874879, 1.175071621867, 1.186547303724, 1.197816696559],
+        index=pd.date_range("2020-06-14", periods=5),
+        name="pi_score",
+    )
+    pd.testing.assert_series_equal(score, expected, check_exact=False, atol=1e-12)
 
 
 def test_epoch_evolution_labels_and_available_cohorts() -> None:
