@@ -96,3 +96,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: none
+
+## 2026-05-21T11:35:03Z — Dashboard structural realignment
+- What: Reworked the dashboard into the macro-framework three-section pattern: PI_score history/backtest, Valuation lens, and Holder Behavior lens; removed standalone pillar/sub-cohort card sections and factored shared Chart.js options for all charts.
+- Files touched: src/onchain_index/build.py, docs/index.html, outputs/dashboard.html, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: Martin review of the rebuilt structure; no macro-framework changes made.

@@ -520,11 +520,6 @@ def _render_html(
     tier_color = TIER_COLORS[latest.tier]
     tier_label = TIER_LABELS[latest.tier]
     tier_subtitle = TIER_SUBTITLES[latest.tier]
-    valuation_items = {
-        VALUATION_LABELS[name]: latest.valuation_constituents[name]
-        for name in VALUATION_LABELS
-    }
-    holder_items = {COHORT_LABELS[name]: latest.holder_cohorts[name] for name in COHORT_LABELS}
     chart_json = json.dumps(historical, separators=(",", ":"))
     markers_json = json.dumps(markers, separators=(",", ":"))
     scale_html = _make_pi_scale_bar(latest.pi, tier_color)
@@ -613,44 +608,29 @@ def _render_html(
   .scale-long-label {{ color: #4CAF5088; text-align:right; }}
 
   .section-title {{
-    font-size: 19px; letter-spacing: -0.3px; color: #e0e0e0;
-    margin: 56px 0 14px; font-weight: 600; display: flex; align-items: center; gap: 14px;
+    font-size: 19px; letter-spacing: -0.3px;
+    color: #e0e0e0; margin: 56px 0 14px; font-weight: 600;
+    display: flex; align-items: center; gap: 14px;
+    text-transform: none;
   }}
   .step-num {{
-    display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; flex:0 0 30px;
-    background:#1a1a1a; border:1px solid #2a2a2a; color:#888; font-size:13px; font-weight:600;
-    border-radius:50%; font-family:'SF Mono', Menlo, monospace;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; flex: 0 0 30px;
+    background: #1a1a1a; border: 1px solid #2a2a2a;
+    color: #888; font-size: 13px; font-weight: 600;
+    border-radius: 50%; letter-spacing: 0;
+    font-family: 'SF Mono', Menlo, monospace;
   }}
   .pillar-chip {{ display:inline-block; padding:2px 9px; border-radius:4px; font-size:10px; text-transform:uppercase; letter-spacing:1.5px; font-weight:600; margin-left:auto; }}
-  .pillar-chip.onchain {{ background: rgba(205,170,106,0.10); color:#cdaa6a; border:1px solid rgba(205,170,106,0.25); }}
+  .pillar-chip.valuation {{ background: rgba(255,255,255,0.06); color:#ccc; border:1px solid #2a2a2a; }}
+  .pillar-chip.holder {{ background: rgba(205,170,106,0.10); color:#cdaa6a; border:1px solid rgba(205,170,106,0.25); }}
   .section-intro {{ color:#aaa; font-size:13px; line-height:1.55; margin:0 0 16px 0; }}
   .section-intro strong {{ color:#ddd; }}
-
-  .pillars-grid {{ display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:36px; margin-bottom: 36px; padding-top: 26px; border-top: 1px solid #1a1a1a; }}
-  .pillar-card {{ background:#111; border:1px solid #222; border-radius:10px; padding:22px 26px; }}
-  .pillar-card-head {{ display:flex; align-items: baseline; justify-content: space-between; gap:16px; margin-bottom: 10px; }}
-  .pillar-name {{ font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #888; font-weight: 500; }}
-  .pillar-state {{ font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; }}
-  .pillar-score {{ font-size: 38px; font-weight: 600; line-height: 1; letter-spacing: -1px; margin-bottom: 12px; }}
-  .pillar-card p {{ color:#777; font-size: 13px; line-height:1.55; }}
-  .metric-list {{ list-style:none; margin:16px 0 0; padding:0; }}
-  .metric-list li {{ display:flex; justify-content:space-between; gap:16px; padding:8px 0; border-top:1px solid #1a1a1a; font-size:13px; }}
-  .metric-list span {{ color:#aaa; }}
-  .metric-list strong {{ color:#ddd; }}
-
-  .sub-grid {{ display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:16px; margin-bottom:36px; }}
-  .sub-card {{ background:#111; border:1px solid #222; border-radius:10px; padding:18px 20px; min-width:0; }}
-  .sub-card-top {{ display:flex; justify-content:space-between; gap:14px; align-items:flex-start; }}
-  .sub-eyebrow {{ font-size:10px; text-transform:uppercase; letter-spacing:1.4px; color:#555; font-weight:600; margin-bottom:5px; }}
-  .sub-card h3 {{ color:#ddd; font-size:16px; font-weight:600; letter-spacing:-0.2px; }}
-  .mini-chip {{ display:inline-block; padding:2px 8px; border-radius:4px; font-size:10px; text-transform:uppercase; letter-spacing:1px; color:#999; border:1px solid #2a2a2a; background:#161616; white-space:nowrap; }}
-  .mini-chip.warn {{ color:#f59e0b; border-color:#f59e0b44; background:#1a1100; }}
-  .sub-score {{ font-size:34px; font-weight:600; line-height:1; letter-spacing:-1px; margin:16px 0 4px; }}
-  .sub-state {{ font-size:11px; text-transform:uppercase; letter-spacing:1.2px; font-weight:600; margin-bottom:14px; }}
-  .sub-meta {{ display:grid; grid-template-columns: 94px 1fr; gap:7px 12px; font-size:12px; line-height:1.35; border-top:1px solid #1a1a1a; padding-top:13px; }}
-  .sub-meta dt {{ color:#555; }}
-  .sub-meta dd {{ color:#aaa; margin:0; }}
-  .sub-meta dd.hot {{ color:#f59e0b; }}
+  .dimension-reading {{ display:flex; align-items:baseline; gap:10px; }}
+  .dimension-reading-value {{ font-size:18px; font-weight:600; }}
+  .dimension-reading-label {{ font-size:11px; color:#555; text-transform:uppercase; letter-spacing:1.2px; font-weight:600; }}
+  .inline-disclosure {{ margin: -2px 0 12px; color:#aaa; font-size:12px; line-height:1.5; }}
+  .inline-disclosure strong {{ color:#cdaa6a; font-weight:600; }}
 
   .mrmi-chart {{ background:#111; border:1px solid #222; border-radius:10px; padding:18px 24px 18px; margin-bottom:24px; }}
   .mrmi-chart-header {{ display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:6px; }}
@@ -660,7 +640,8 @@ def _render_html(
   .chart-container.dimension {{ height:250px; }}
   .drivers-chart-grid {{ display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:14px; margin-top:12px; }}
   .driver-chart-card {{ background:#0d0d0d; border:1px solid #1c1c1c; border-radius:8px; padding:14px 16px; }}
-  .driver-chart-card h4 {{ color:#ddd; font-size:13px; font-weight:600; margin-bottom:4px; }}
+  .driver-chart-card h4 {{ color:#ddd; font-size:13px; font-weight:600; margin-bottom:4px; display:flex; justify-content:space-between; gap:10px; }}
+  .driver-value {{ color:#aaa; font-weight:500; }}
   .driver-chart-card p {{ color:#666; font-size:11px; line-height:1.45; margin-bottom:10px; }}
   .driver-chart-wrap {{ position:relative; height:175px; width:100%; }}
   .legend {{ font-size:12px; color:#888; margin-bottom:10px; }}
@@ -676,8 +657,7 @@ def _render_html(
   .chart-description p {{ font-size:13px; color:#aaa; line-height:1.6; margin:0 0 10px 0; }}
   .chart-description strong {{ color:#ddd; }}
 
-  .panel {{ background:#111; border:1px solid #222; border-radius:10px; padding:22px 26px; margin-bottom:24px; }}
-  .panel h3 {{ color:#ddd; font-size:16px; font-weight:600; margin-bottom:6px; }}
+  .iteration-surface {{ margin-top:40px; }}
   table {{ width:100%; border-collapse:collapse; margin-top:8px; }}
   th {{ text-align:left; padding:10px 8px; border-bottom:1px solid #222; color:#555; font-size:10px; text-transform:uppercase; letter-spacing:1px; font-weight:600; }}
   th:first-child {{ padding-left:0; }}
@@ -711,7 +691,7 @@ def _render_html(
     body {{ padding:20px 18px 40px; }}
     .meta-bar {{ flex-direction:column; gap:6px; }}
     .meta-bar .meta-right {{ justify-content:flex-start; }}
-    .hero-grid, .pillars-grid, .sub-grid, .drivers-chart-grid {{ grid-template-columns:1fr; gap:22px; }}
+    .hero-grid, .drivers-chart-grid {{ grid-template-columns:1fr; gap:22px; }}
     .hero-pillars {{ border-left:none; border-top:1px solid #1f1f1f; padding:20px 0 0; }}
     .hero-row {{ flex-direction:column; align-items:flex-start; gap:10px; }}
     .hero-value {{ font-size:64px; }}
@@ -771,24 +751,11 @@ def _render_html(
   <p class="hero-story">Milk Road Macro Index reads the outside risk-asset regime. Milk Road on-chain index uses the same product skeleton for BTC’s inside view: realized-cost valuation plus what meaningful holder cohorts are doing across on-chain, DAT and ETF channels. The technical math handle remains <code>PI_score</code>.</p>
 </header>
 
-<div class="section-title"><span class="step-num">1</span>What's behind it<span class="pillar-chip onchain">Two BTC lenses</span></div>
-<p class="section-intro"><strong>Valuation × Holder Behavior.</strong> The score is additive, but the dashboard keeps the diagnosis visible: valuation says where price sits relative to realized cost basis; holder behavior says whether meaningful cohorts are adding or shedding conviction.</p>
-<section class="pillars-grid">
-  {_dimension_card('Valuation', latest.valuation, valuation_items, 'Mean of available z-scored valuation constituents; strongest BTC-specific multi-month lens.')}
-  {_dimension_card('Holder Behavior', latest.holder_behavior, holder_items, 'Epoch-aware mean of holder cohorts; useful confirmation/contradiction against valuation.')}
-</section>
-
-<div class="section-title"><span class="step-num">2</span>Holder cohort breakdown<span class="pillar-chip onchain">Composition visible</span></div>
-<p class="section-intro">Holder Behavior is equal-weighted across available cohorts in the current epoch. Exchange flow is intentionally absent after the Phase E canonical-rule gate failed.</p>
-<section class="sub-grid">
-  {_cohort_cards(components, latest)}
-</section>
-
-<div class="section-title"><span class="step-num">3</span>How the index has evolved</div>
+<div class="section-title"><span class="step-num">1</span>How the index has evolved</div>
 <div class="mrmi-chart">
   <div class="mrmi-chart-header">
-    <h3>PI_score history
-      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>Reading the chart:</strong> white line is PI_score on the left axis. Purple line is BTC spot on a log right axis. Background bands show fixed tier thresholds: Cash &lt; -1, Trim -1 to 0, Sized 0 to +1, Strong ≥ +1. Cycle markers are Phase C reference points.</span></span>
+    <h3>Milk Road on-chain index
+      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>How PI_score works:</strong> PI_score adds the Valuation dimension to the Holder Behavior dimension. The line is the production composite used for the tiered sizing rule; background bands show Cash, Trim, Sized, and Strong buckets. BTC spot can be toggled as a log-price overlay.</span></span>
     </h3>
     <div class="range-tabs">
       <button data-chart="pi" data-range="1y" class="active">1Y</button>
@@ -797,80 +764,82 @@ def _render_html(
       <button data-chart="pi" data-range="all">ALL</button>
     </div>
   </div>
-  <p class="mrmi-chart-subtitle">BTC log price overlay + PI_score line with the same dark chart treatment and threshold-band language as macro-framework.</p>
+  <p class="mrmi-chart-subtitle">A single BTC-specific regime signal: realized-cost valuation plus holder positioning, mapped to fixed sizing tiers.</p>
   <div class="legend">
     <span class="legend-item" data-series="pi"><span class="legend-dot" style="background:#fff"></span>PI_score</span>
     <span class="legend-item" data-series="btc"><span class="legend-dot" style="background:#A78BFA"></span>BTC log price</span>
     <span class="legend-item" data-series="markers"><span class="legend-dot" style="background:#cdaa6a"></span>Cycle references</span>
   </div>
   <div class="chart-container"><canvas id="historyChart"></canvas></div>
-  <div class="chart-description"><p><strong>Decision rule:</strong> PI_score &lt; -1 → Cash / 0%; -1 to 0 → Trim / 50%; 0 to +1 → Sized / 75%; ≥ +1 → Strong / 100%.</p></div>
+  <div class="chart-description">
+    <p><strong>Decision rule:</strong> PI_score &lt; -1 → Cash / 0%; -1 to 0 → Trim / 50%; 0 to +1 → Sized / 75%; ≥ +1 → Strong / 100%.</p>
+    <details class="drivers backtest-toggle">
+      <summary><span>How well does this work historically?</span></summary>
+      <div class="drivers-body">
+        <p class="details-copy">Walk-forward tiered sizing by BTC cycle, using the same production tier values and no leverage.</p>
+        {_walk_forward_table(walk_forward_rows)}
+      </div>
+    </details>
+  </div>
 </div>
 
+<div class="section-title"><span class="step-num">2</span>How BTC is valued<span class="pillar-chip valuation">Valuation lens</span></div>
+<p class="section-intro"><strong>Valuation.</strong> Answers where BTC trades relative to realized cost-basis and miner-revenue anchors — the strongest multi-month mean-reversion lens in the framework.</p>
 <div class="mrmi-chart">
   <div class="mrmi-chart-header">
-    <h3>Valuation dimension
+    <h3>Valuation
       <span class="info-icon">{info_svg}<span class="tip-pop"><strong>What you're seeing:</strong> the Valuation dimension z-score over time. It is the equal-weighted mean of the same lagged 504d z-scored valuation constituents used by production <code>PI_score</code>. The zero line is neutral; no PI tier shading appears because this is a component, not the sizing rule.</span></span>
     </h3>
-    <div class="range-tabs">
-      <button data-chart="valuation" data-range="1y" class="active">1Y</button>
-      <button data-chart="valuation" data-range="3y">3Y</button>
-      <button data-chart="valuation" data-range="5y">5Y</button>
-      <button data-chart="valuation" data-range="all">ALL</button>
+    <div class="dimension-reading">
+      <span class="dimension-reading-value mono" style="color:{_state_color(latest.valuation)};">{_format_score(latest.valuation)}</span>
+      <span class="dimension-reading-label" style="color:{_state_color(latest.valuation)};">{_state_label(latest.valuation)}</span>
     </div>
   </div>
   <p class="mrmi-chart-subtitle">Valuation pressure over time: realized-cost and miner-revenue lenses averaged into one dimension score.</p>
   <div class="chart-container dimension"><canvas id="valuationChart"></canvas></div>
 </div>
 <details class="drivers" id="valuation-drivers">
-  <summary><span>Valuation drivers — what's behind this dimension?</span></summary>
+  <summary><span>Valuation drivers</span></summary>
   <div class="drivers-body">
     <p class="details-copy">Each driver is the production lagged 504d rolling z-score imported from <code>onchain_index.composite.valuation_constituents</code>.</p>
     <div class="drivers-chart-grid">
-      <article class="driver-chart-card"><h4>z(STH MVRV)</h4><p>Short-term holder cost-basis valuation.</p><div class="driver-chart-wrap"><canvas id="driverValSth"></canvas></div></article>
-      <article class="driver-chart-card"><h4>z(RHODL Ratio)</h4><p>Realized-value age-band valuation oscillator.</p><div class="driver-chart-wrap"><canvas id="driverValRhodl"></canvas></div></article>
-      <article class="driver-chart-card"><h4>z(Puell Multiple)</h4><p>Miner-revenue valuation lens.</p><div class="driver-chart-wrap"><canvas id="driverValPuell"></canvas></div></article>
-      <article class="driver-chart-card"><h4>z(MVRV-Z)</h4><p>Canonical realized-cap deviation metric.</p><div class="driver-chart-wrap"><canvas id="driverValMvrvZ"></canvas></div></article>
+      <article class="driver-chart-card"><h4>z(STH MVRV)<span class="driver-value mono">{_format_score(latest.valuation_constituents['sth_mvrv'])}</span></h4><p>Short-term holder cost-basis valuation.</p><div class="driver-chart-wrap"><canvas id="driverValSth"></canvas></div></article>
+      <article class="driver-chart-card"><h4>z(RHODL Ratio)<span class="driver-value mono">{_format_score(latest.valuation_constituents['rhodl_ratio'])}</span></h4><p>Realized-value age-band valuation oscillator.</p><div class="driver-chart-wrap"><canvas id="driverValRhodl"></canvas></div></article>
+      <article class="driver-chart-card"><h4>z(Puell Multiple)<span class="driver-value mono">{_format_score(latest.valuation_constituents['puell_multiple'])}</span></h4><p>Miner-revenue valuation lens.</p><div class="driver-chart-wrap"><canvas id="driverValPuell"></canvas></div></article>
+      <article class="driver-chart-card"><h4>z(MVRV-Z)<span class="driver-value mono">{_format_score(latest.valuation_constituents['mvrv_zscore'])}</span></h4><p>Canonical realized-cap deviation metric.</p><div class="driver-chart-wrap"><canvas id="driverValMvrvZ"></canvas></div></article>
     </div>
   </div>
 </details>
 
+<div class="section-title"><span class="step-num">3</span>How holders are positioning<span class="pillar-chip holder">Holder Behavior lens</span></div>
+<p class="section-intro"><strong>Holder Behavior.</strong> Answers whether meaningful holders are adding or shedding conviction across on-chain, corporate DAT and ETF cohorts. It is a complementary lens to Valuation, partially correlated (0.631) rather than statistically independent.</p>
 <div class="mrmi-chart">
   <div class="mrmi-chart-header">
-    <h3>Holder Behavior dimension
+    <h3>Holder Behavior
       <span class="info-icon">{info_svg}<span class="tip-pop"><strong>What you're seeing:</strong> the Holder Behavior dimension z-score over time. It is the equal-weighted mean of available holder cohorts for each epoch: on-chain holders, corporate DAT, and institutional ETF flows. The zero line is neutral; no PI tier shading appears because this is a component.</span></span>
     </h3>
-    <div class="range-tabs">
-      <button data-chart="holder" data-range="1y" class="active">1Y</button>
-      <button data-chart="holder" data-range="3y">3Y</button>
-      <button data-chart="holder" data-range="5y">5Y</button>
-      <button data-chart="holder" data-range="all">ALL</button>
+    <div class="dimension-reading">
+      <span class="dimension-reading-value mono" style="color:{_state_color(latest.holder_behavior)};">{_format_score(latest.holder_behavior)}</span>
+      <span class="dimension-reading-label" style="color:{_state_color(latest.holder_behavior)};">{_state_label(latest.holder_behavior)}</span>
     </div>
   </div>
   <p class="mrmi-chart-subtitle">Holder conviction over time: wallet-age behavior plus DAT and ETF accumulation/distribution cohorts.</p>
   <div class="chart-container dimension"><canvas id="holderChart"></canvas></div>
+  <p class="inline-disclosure"><strong>Corporate DAT cohort:</strong> MSTR / Strategy, 100% of cohort signal.</p>
 </div>
 <details class="drivers" id="holder-drivers">
-  <summary><span>Holder behavior drivers — what's behind this dimension?</span></summary>
+  <summary><span>Holder behavior drivers</span></summary>
   <div class="drivers-body">
-    <p class="details-copy">Current cohorts each have one production constituent, so the cohort score is the drill-down series. The layout keeps symmetry with macro-framework and leaves room for multi-constituent cohorts later.</p>
+    <p class="details-copy">Current cohorts each have one production constituent, so the cohort score is the drill-down series. The layout keeps room for multi-constituent cohorts later.</p>
     <div class="drivers-chart-grid">
-      <article class="driver-chart-card"><h4>On-chain holders</h4><p>z(HODL 1Y+ 30d-change, inverted).</p><div class="driver-chart-wrap"><canvas id="driverHolderOnChain"></canvas></div></article>
-      <article class="driver-chart-card"><h4>Corporate DAT</h4><p>z(MSTR / Strategy BTC holdings Δ 30d).</p><div class="driver-chart-wrap"><canvas id="driverHolderDat"></canvas></div></article>
-      <article class="driver-chart-card"><h4>Institutional ETF</h4><p>z(spot BTC ETF flow rolling 30d sum).</p><div class="driver-chart-wrap"><canvas id="driverHolderEtf"></canvas></div></article>
+      <article class="driver-chart-card"><h4>On-chain holders<span class="driver-value mono">{_format_score(latest.holder_cohorts['on_chain'])}</span></h4><p>z(HODL 1Y+ 30d-change, inverted).</p><div class="driver-chart-wrap"><canvas id="driverHolderOnChain"></canvas></div></article>
+      <article class="driver-chart-card"><h4>Corporate DAT<span class="driver-value mono">{_format_score(latest.holder_cohorts['corporate_dat'])}</span></h4><p>z(MSTR / Strategy BTC holdings Δ 30d).</p><div class="driver-chart-wrap"><canvas id="driverHolderDat"></canvas></div></article>
+      <article class="driver-chart-card"><h4>Institutional ETF<span class="driver-value mono">{_format_score(latest.holder_cohorts['institutional_etf'])}</span></h4><p>z(spot BTC ETF flow rolling 30d sum).</p><div class="driver-chart-wrap"><canvas id="driverHolderEtf"></canvas></div></article>
     </div>
   </div>
 </details>
 
-<div class="section-title"><span class="step-num">4</span>Walk-forward backtest</div>
-<section class="panel">
-  <h3>Tiered sizing by BTC cycle</h3>
-  <p class="mrmi-chart-subtitle">Same Phase C table, restyled into the macro-framework panel language. No composite math changed in this rebuild.</p>
-  {_walk_forward_table(walk_forward_rows)}
-</section>
-
-<div class="section-title"><span class="step-num">5</span>Iteration surface</div>
-<section>
+<section class="iteration-surface">
   <details class="drivers" open>
     <summary><span>Composite formulas {_edit_link('src/onchain_index/composite.py')}</span></summary>
     <div class="drivers-body">
@@ -936,25 +905,70 @@ function markerPoints(points) {{
 function destroyChart(key) {{
   if (charts[key]) charts[key].destroy();
 }}
+const SHARED_LINE_STYLE = {{ borderWidth: 2.0, pointRadius: 0, tension: 0.1, spanGaps: true }};
+const SHARED_CHART_CONFIG = {{
+  responsive: true,
+  maintainAspectRatio: false,
+  animation: false,
+  interaction: {{ mode: 'index', intersect: false }},
+  legend: {{ display: false }},
+  gridColor: '#1a1a1a',
+  tickColor: '#555',
+  tickFont: "'SF Mono', Menlo, monospace",
+}};
 function tooltipLabel(ctx) {{
   const value = ctx.parsed.y;
   return ctx.dataset.label + ': ' + (value !== null && Number.isFinite(value) ? value.toFixed(2) : '—');
 }}
-function baseTooltip() {{
+function sharedTooltip(extraCallbacks = {{}}) {{
   return {{
     backgroundColor: '#1a1a1a', borderColor: '#333', borderWidth: 1,
     titleColor: '#999', bodyColor: '#e0e0e0', titleFont: {{ size: 11 }},
-    bodyFont: {{ size: 11, family: "'SF Mono', Menlo, monospace" }}, padding: 8,
-    callbacks: {{ label: tooltipLabel }},
+    bodyFont: {{ size: 11, family: SHARED_CHART_CONFIG.tickFont }}, padding: 8,
+    callbacks: {{ label: tooltipLabel, ...extraCallbacks }},
   }};
 }}
 function zeroLineAnnotation() {{
   return {{ zero: {{ type: 'line', yMin: 0, yMax: 0, borderColor: '#444', borderWidth: 1, scaleID: 'y' }} }};
 }}
+function tierBandAnnotations() {{
+  return {{
+    cash: {{ type: 'box', yMin: -6, yMax: -1, backgroundColor: 'rgba(232,75,90,0.10)', borderWidth: 0, scaleID: 'y' }},
+    trim: {{ type: 'box', yMin: -1, yMax: 0, backgroundColor: 'rgba(255,152,0,0.07)', borderWidth: 0, scaleID: 'y' }},
+    sized: {{ type: 'box', yMin: 0, yMax: 1, backgroundColor: 'rgba(139,195,74,0.06)', borderWidth: 0, scaleID: 'y' }},
+    strong: {{ type: 'box', yMin: 1, yMax: 6, backgroundColor: 'rgba(76,175,80,0.09)', borderWidth: 0, scaleID: 'y' }},
+    ...zeroLineAnnotation(),
+    minusOne: {{ type: 'line', yMin: -1, yMax: -1, borderColor: '#333', borderWidth: 1, borderDash: [4,3], scaleID: 'y' }},
+    plusOne: {{ type: 'line', yMin: 1, yMax: 1, borderColor: '#333', borderWidth: 1, borderDash: [4,3], scaleID: 'y' }},
+  }};
+}}
+function sharedChartOptions({{ small = false, annotations = zeroLineAnnotation(), yAxis = {{}}, extraScales = {{}}, tooltipCallbacks = {{}} }} = {{}}) {{
+  const tickSize = small ? 9 : 10;
+  const tickLimit = small ? 5 : 12;
+  return {{
+    responsive: SHARED_CHART_CONFIG.responsive,
+    maintainAspectRatio: SHARED_CHART_CONFIG.maintainAspectRatio,
+    animation: SHARED_CHART_CONFIG.animation,
+    interaction: SHARED_CHART_CONFIG.interaction,
+    plugins: {{
+      legend: SHARED_CHART_CONFIG.legend,
+      tooltip: sharedTooltip(tooltipCallbacks),
+      annotation: {{ annotations }},
+    }},
+    scales: {{
+      x: {{ type: 'category', ticks: {{ color: SHARED_CHART_CONFIG.tickColor, font: {{ size: tickSize }}, maxTicksLimit: tickLimit, maxRotation: 0 }}, grid: {{ display: false }} }},
+      y: {{ position: 'left', ...yAxis, ticks: {{ color: SHARED_CHART_CONFIG.tickColor, font: {{ size: tickSize, family: SHARED_CHART_CONFIG.tickFont }}, maxTicksLimit: small ? 5 : 7 }}, grid: {{ color: SHARED_CHART_CONFIG.gridColor }} }},
+      ...extraScales,
+    }},
+  }};
+}}
+function lineDataset(label, data, color, extra = {{}}) {{
+  return {{ label, data, borderColor: color, ...SHARED_LINE_STYLE, ...extra }};
+}}
 function buildPiDatasets(points) {{
   const datasets = [];
-  if (visibleSeries.btc) datasets.push({{ label: 'BTC log price', data: points.map(p => p.price), borderColor: '#A78BFA', borderWidth: 1.5, pointRadius: 0, tension: 0.1, spanGaps: true, yAxisID: 'yPrice', order: 2 }});
-  if (visibleSeries.pi) datasets.push({{ label: 'PI_score', data: points.map(p => p.pi), borderColor: '#ffffff', borderWidth: 2.0, pointRadius: 0, tension: 0.1, spanGaps: true, yAxisID: 'y', order: 0 }});
+  if (visibleSeries.btc) datasets.push(lineDataset('BTC log price', points.map(p => p.price), '#A78BFA', {{ yAxisID: 'yPrice', order: 2 }}));
+  if (visibleSeries.pi) datasets.push(lineDataset('PI_score', points.map(p => p.pi), '#ffffff', {{ yAxisID: 'y', order: 0 }}));
   if (visibleSeries.markers) datasets.push({{ type: 'scatter', label: 'Cycle references', data: markerPoints(points), parsing: false, backgroundColor: '#cdaa6a', borderColor: '#0a0a0a', borderWidth: 1, pointRadius: 4, yAxisID: 'y', order: -1 }});
   return datasets;
 }}
@@ -964,34 +978,12 @@ function renderPi(rangeKey) {{
   charts.pi = new Chart(document.getElementById('historyChart'), {{
     type: 'line',
     data: {{ labels: points.map(p => p.date), datasets: buildPiDatasets(points) }},
-    options: {{
-      responsive: true, maintainAspectRatio: false, animation: false,
-      interaction: {{ mode: 'index', intersect: false }},
-      plugins: {{
-        legend: {{ display: false }},
-        tooltip: {{
-          ...baseTooltip(),
-          callbacks: {{
-            label: tooltipLabel,
-            afterLabel: ctx => ctx.raw && ctx.raw.label ? ctx.raw.label : '',
-          }},
-        }},
-        annotation: {{ annotations: {{
-          cash: {{ type: 'box', yMin: -6, yMax: -1, backgroundColor: 'rgba(232,75,90,0.10)', borderWidth: 0, scaleID: 'y' }},
-          trim: {{ type: 'box', yMin: -1, yMax: 0, backgroundColor: 'rgba(255,152,0,0.07)', borderWidth: 0, scaleID: 'y' }},
-          sized: {{ type: 'box', yMin: 0, yMax: 1, backgroundColor: 'rgba(139,195,74,0.06)', borderWidth: 0, scaleID: 'y' }},
-          strong: {{ type: 'box', yMin: 1, yMax: 6, backgroundColor: 'rgba(76,175,80,0.09)', borderWidth: 0, scaleID: 'y' }},
-          zero: {{ type: 'line', yMin: 0, yMax: 0, borderColor: '#444', borderWidth: 1, scaleID: 'y' }},
-          minusOne: {{ type: 'line', yMin: -1, yMax: -1, borderColor: '#333', borderWidth: 1, borderDash: [4,3], scaleID: 'y' }},
-          plusOne: {{ type: 'line', yMin: 1, yMax: 1, borderColor: '#333', borderWidth: 1, borderDash: [4,3], scaleID: 'y' }},
-        }} }},
-      }},
-      scales: {{
-        x: {{ type: 'category', ticks: {{ color: '#555', font: {{ size: 10 }}, maxTicksLimit: 12, maxRotation: 0 }}, grid: {{ display: false }} }},
-        y: {{ position: 'left', min: -6, max: 6, ticks: {{ color: '#555', font: {{ size: 10, family: "'SF Mono', Menlo, monospace" }}, maxTicksLimit: 7 }}, grid: {{ color: '#1a1a1a' }} }},
-        yPrice: {{ display: visibleSeries.btc, type: 'logarithmic', position: 'right', ticks: {{ color: '#444', font: {{ size: 9, family: "'SF Mono', Menlo, monospace" }}, maxTicksLimit: 5 }}, grid: {{ display: false }} }},
-      }},
-    }},
+    options: sharedChartOptions({{
+      annotations: tierBandAnnotations(),
+      yAxis: {{ min: -6, max: 6 }},
+      extraScales: {{ yPrice: {{ display: visibleSeries.btc, type: 'logarithmic', position: 'right', ticks: {{ color: '#444', font: {{ size: 9, family: SHARED_CHART_CONFIG.tickFont }}, maxTicksLimit: 5 }}, grid: {{ display: false }} }} }},
+      tooltipCallbacks: {{ afterLabel: ctx => ctx.raw && ctx.raw.label ? ctx.raw.label : '' }},
+    }}),
   }});
 }}
 function renderZChart(key, canvasId, field, label, color, rangeKey, small = false) {{
@@ -999,23 +991,8 @@ function renderZChart(key, canvasId, field, label, color, rangeKey, small = fals
   destroyChart(key);
   charts[key] = new Chart(document.getElementById(canvasId), {{
     type: 'line',
-    data: {{
-      labels: points.map(p => p.date),
-      datasets: [{{ label, data: points.map(p => p[field]), borderColor: color, borderWidth: small ? 1.5 : 2.0, pointRadius: 0, tension: 0.1, spanGaps: true }}],
-    }},
-    options: {{
-      responsive: true, maintainAspectRatio: false, animation: false,
-      interaction: {{ mode: 'index', intersect: false }},
-      plugins: {{
-        legend: {{ display: false }},
-        tooltip: baseTooltip(),
-        annotation: {{ annotations: zeroLineAnnotation() }},
-      }},
-      scales: {{
-        x: {{ type: 'category', ticks: {{ color: '#555', font: {{ size: small ? 9 : 10 }}, maxTicksLimit: small ? 5 : 12, maxRotation: 0 }}, grid: {{ display: false }} }},
-        y: {{ position: 'left', suggestedMin: -3, suggestedMax: 3, ticks: {{ color: '#555', font: {{ size: small ? 9 : 10, family: "'SF Mono', Menlo, monospace" }}, maxTicksLimit: small ? 5 : 7 }}, grid: {{ color: '#1a1a1a' }} }},
-      }},
-    }},
+    data: {{ labels: points.map(p => p.date), datasets: [lineDataset(label, points.map(p => p[field]), color)] }},
+    options: sharedChartOptions({{ small, yAxis: {{ suggestedMin: -3, suggestedMax: 3 }} }}),
   }});
 }}
 function renderDashboardChart(chartKey, rangeKey) {{
