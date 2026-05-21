@@ -117,3 +117,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: none
+
+## 2026-05-21T12:24:12Z — Macro-style chart pass
+- What: Updated all onchain dashboard canvases to use one macro-framework-style Chart.js options path, switched range tabs to 1Y/2Y/5Y/ALL, removed PI_score cycle-reference markers and decision-rule explainer clutter while preserving green/red regime shading.
+- Files touched: src/onchain_index/build.py, docs/index.html, outputs/dashboard.html, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: none
