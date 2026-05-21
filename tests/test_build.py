@@ -6,7 +6,7 @@ import subprocess
 import numpy as np
 import pandas as pd
 
-from onchain_index.composite import pi_score
+from onchain_index.composite import mroi
 
 
 def _build_sample_frame() -> pd.DataFrame:
@@ -75,12 +75,12 @@ def test_build_entrypoint_writes_dashboard_and_status(tmp_path) -> None:
     assert docs_index.stat().st_size > 0
     assert outputs_dashboard.read_text() == docs_index.read_text()
 
-    latest_pi = pi_score(frame).dropna().iloc[-1]
+    latest_pi = mroi(frame).dropna().iloc[-1]
     assert f"{latest_pi:+.2f}" in docs_index.read_text()
 
     status = json.loads(status_json.read_text())
-    assert set(status) == {"last_run_utc", "last_pi_score", "last_tier", "last_error"}
+    assert set(status) == {"last_run_utc", "last_mroi", "last_tier", "last_error"}
     assert isinstance(status["last_run_utc"], str)
-    assert isinstance(status["last_pi_score"], float)
+    assert isinstance(status["last_mroi"], float)
     assert status["last_tier"] in {"CASH", "STAY LONG"}
     assert status["last_error"] is None

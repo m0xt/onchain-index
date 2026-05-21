@@ -124,3 +124,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: none
+
+## 2026-05-21T12:36:30Z — Task 29 MROI rename and global chart range
+- What: Renamed PI_score/pi_score to MROI/mroi, removed hardcoded chart y-axis bounds, and made one global 1Y/3Y/5Y/ALL range selector drive main, dimension, and drill-down charts.
+- Files touched: src/onchain_index/composite.py, src/onchain_index/build.py, src/onchain_index/research/optimization/*.py, tests/test_*.py, docs/theory.md, docs/index.html, outputs/dashboard.html, README.md, AGENTS.md, DECISIONS.md, reports/phase-{c,d,f}-*.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: none

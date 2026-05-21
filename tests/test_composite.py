@@ -8,7 +8,7 @@ from onchain_index.composite import (
     epoch_for_date,
     holder_behavior_cohorts,
     holder_behavior_composite,
-    pi_score,
+    mroi,
     sizing_tier,
     valuation_composite,
 )
@@ -36,12 +36,12 @@ def _sample_frame(periods: int = 900) -> pd.DataFrame:
     )
 
 
-def test_pi_score_uses_dimension_composites() -> None:
+def test_mroi_uses_dimension_composites() -> None:
     data = _sample_frame()
 
     expected = valuation_composite(data) + holder_behavior_composite(data)
 
-    pd.testing.assert_series_equal(pi_score(data), expected.rename("pi_score"))
+    pd.testing.assert_series_equal(mroi(data), expected.rename("mroi"))
 
 
 def test_sizing_tier_is_binary_mrmi_shape() -> None:
@@ -59,13 +59,13 @@ def test_sizing_tier_is_binary_mrmi_shape() -> None:
     assert tiers.cat.ordered
 
 
-def test_pi_score_math_regression_unchanged_by_tier_simplification() -> None:
-    score = pi_score(_sample_frame(periods=900)).dropna().tail(5)
+def test_mroi_math_regression_unchanged_by_tier_simplification() -> None:
+    score = mroi(_sample_frame(periods=900)).dropna().tail(5)
 
     expected = pd.Series(
         [1.151482401317, 1.163384874879, 1.175071621867, 1.186547303724, 1.197816696559],
         index=pd.date_range("2020-06-14", periods=5),
-        name="pi_score",
+        name="mroi",
     )
     pd.testing.assert_series_equal(score, expected, check_exact=False, atol=1e-12)
 
@@ -98,7 +98,7 @@ def test_composite_has_no_same_day_lookahead() -> None:
     changed.loc[date, ["sth_mvrv", "rhodl_ratio", "puell_multiple", "mvrv_zscore"]] = 1_000_000.0
     changed.loc[date, "hodl_1yr_pct"] = -1_000_000.0
 
-    base_score = pi_score(data)
-    changed_score = pi_score(changed)
+    base_score = mroi(data)
+    changed_score = mroi(changed)
 
     assert changed_score.loc[date] == base_score.loc[date]

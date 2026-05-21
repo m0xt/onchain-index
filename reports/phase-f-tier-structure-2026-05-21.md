@@ -1,5 +1,8 @@
 # Phase F tier-structure parsimony audit — 2026-05-21
 
+> NOTE: This report predates the 2026-05-21 rename PI_score → MROI; numbers and statistics are unchanged.
+
+
 Data snapshot: cached Phase A frame, `5253` daily rows, `2012-01-01→2026-05-20`. Production `PI_score` values come from `src/onchain_index/composite.py`; this dispatch changed no production composite, threshold, sizing, dashboard, or macro-framework code. Structured output: `.cache/optim/tier_structure.json`.
 
 ## 1. Methodology

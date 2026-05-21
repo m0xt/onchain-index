@@ -1,5 +1,8 @@
 # Phase D structural audit — cross-dimension correlation + null benchmark — 2026-05-21
 
+> NOTE: This report predates the 2026-05-21 rename PI_score → MROI; numbers and statistics are unchanged.
+
+
 Data snapshot: cached Phase A frame, `5253` daily rows, `2012-01-01→2026-05-20`, `18` fetched columns. BTC returns use BMP `btc_price.pct_change()`. Composite inputs are the production functions in `src/onchain_index/composite.py`; no production code, dashboard code, constituents, weights, thresholds, or optimization logic were changed.
 
 ## 1. Why this audit exists

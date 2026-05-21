@@ -1,8 +1,8 @@
-"""Phase F research: compare canonical PI_score tier-count structures.
+"""Phase F research: compare canonical MROI tier-count structures.
 
 This is a parsimony audit, not threshold optimization. The candidate thresholds and
 sizing maps are fixed by the Phase F dispatch and are evaluated head-to-head with
-the production PI_score series and the shared tiered backtest harness.
+the production MROI series and the shared tiered backtest harness.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 
 from onchain_index.backtest import BTC_CYCLES, backtest_tiered_signal
-from onchain_index.composite import pi_score
+from onchain_index.composite import mroi
 from onchain_index.data import DEFAULT_CACHE_DIR
 from onchain_index.research.optimization.common import (
     Metrics,
@@ -56,7 +56,7 @@ def _empty_tiers(score: pd.Series) -> pd.Series:
 
 
 def tier_2(score: pd.Series) -> pd.Series:
-    """Map PI_score to the 2-tier CASH/STAY LONG structure: PI > 0 is long."""
+    """Map MROI to the 2-tier CASH/STAY LONG structure: MROI > 0 is long."""
     values = _empty_tiers(score)
     values = values.mask(score <= 0.0, "CASH")
     values = values.mask(score > 0.0, "STAY LONG")
@@ -64,7 +64,7 @@ def tier_2(score: pd.Series) -> pd.Series:
 
 
 def tier_3(score: pd.Series) -> pd.Series:
-    """Map PI_score to the canonical 3-bucket structure."""
+    """Map MROI to the canonical 3-bucket structure."""
     values = _empty_tiers(score)
     values = values.mask(score < -0.5, "BUCKET_0")
     values = values.mask((score >= -0.5) & (score < 0.5), "BUCKET_50")
@@ -73,7 +73,7 @@ def tier_3(score: pd.Series) -> pd.Series:
 
 
 def tier_4(score: pd.Series) -> pd.Series:
-    """Map PI_score to the historical 4-bucket structure."""
+    """Map MROI to the historical 4-bucket structure."""
     values = _empty_tiers(score)
     values = values.mask(score < -1.0, "BUCKET_0")
     values = values.mask((score >= -1.0) & (score < 0.0), "BUCKET_50")
@@ -83,7 +83,7 @@ def tier_4(score: pd.Series) -> pd.Series:
 
 
 def tier_5(score: pd.Series) -> pd.Series:
-    """Map PI_score to the canonical 5-bucket structure."""
+    """Map MROI to the canonical 5-bucket structure."""
     values = _empty_tiers(score)
     values = values.mask(score < -1.5, "BUCKET_0")
     values = values.mask((score >= -1.5) & (score < -0.5), "BUCKET_25")
@@ -287,7 +287,7 @@ def _recommendation(results: list[dict[str, Any]]) -> dict[str, Any]:
 def run_optimization(data: pd.DataFrame, *, output_path: Path | None = None) -> dict[str, Any]:
     """Run the fixed tier-structure comparison and optionally write JSON."""
     ret = cast(pd.Series, data["btc_price"]).pct_change()
-    score = pi_score(data)
+    score = mroi(data)
     results = [evaluate_structure(structure, score, ret) for structure in tier_structures()]
 
     payload = envelope(
@@ -323,7 +323,7 @@ def run_optimization(data: pd.DataFrame, *, output_path: Path | None = None) -> 
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Compare fixed PI_score tier structures.")
+    parser = argparse.ArgumentParser(description="Compare fixed MROI tier structures.")
     parser.add_argument("--cache-dir", type=Path, default=DEFAULT_CACHE_DIR)
     parser.add_argument("--no-cache", action="store_true")
     parser.add_argument("--output", type=Path, default=default_output_path("tier_structure.json"))

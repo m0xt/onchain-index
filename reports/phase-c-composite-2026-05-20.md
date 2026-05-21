@@ -1,5 +1,8 @@
 # Phase C composite — PI_score calibration/backtest — 2026-05-20
 
+> NOTE: This report predates the 2026-05-21 rename PI_score → MROI; numbers and statistics are unchanged.
+
+
 Data snapshot: cached Phase A frame, `5252` daily rows, `2012-01-01→2026-05-19`, `18` fetched columns. BTC returns use BMP `btc_price.pct_change()`. Backtests keep the Phase B convention of 252 bars/year for comparability. All composite inputs are lagged: a score dated T uses source data through T-1.
 
 ## 1. Indicator → dimension mapping

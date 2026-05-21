@@ -2,7 +2,7 @@
 
 ## What this does
 
-Milk Road on-chain index is the product-facing BTC regime dashboard; `PI_score` remains the technical math handle inside the `onchain-index` repo/package.
+Milk Road on-chain index is the product-facing BTC regime dashboard; `MROI` remains the technical math handle inside the `onchain-index` repo/package.
 
 ## Repo map
 

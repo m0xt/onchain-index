@@ -59,7 +59,7 @@ def build_score(
     holder_weight: float = 1.0,
     thresholds: tuple[float, float, float] = DEFAULT_THRESHOLDS,
 ) -> pd.Series:
-    """Build PI_score from production valuation constituents and holder composite."""
+    """Build MROI from production valuation constituents and holder composite."""
     del thresholds  # score construction is independent of tier thresholds.
     parts = valuation_constituents(data)
     weights = cast(dict[str, float], candidate["weights"])
@@ -70,7 +70,7 @@ def build_score(
     valuation = weighted.sum(axis=1, skipna=True) / sum(float(value) for value in weights.values())
     valuation = valuation.where(weighted.notna().any(axis=1))
     score = valuation + holder_behavior_composite(data) * holder_weight
-    score.name = "pi_score"
+    score.name = "mroi"
     return score
 
 

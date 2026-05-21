@@ -1,4 +1,4 @@
-"""Production PI_score composite for onchain-index.
+"""Production MROI composite for onchain-index.
 
 The functions in this module are the canonical signal-construction path for both
 live evaluation and Phase C backtests. Inputs are lagged through ``rolling_zscore``
@@ -118,25 +118,25 @@ def holder_behavior_composite(
     return result
 
 
-def pi_score(data: pd.DataFrame, window: int = DEFAULT_ZSCORE_WINDOW) -> pd.Series:
-    """Return the production PI_score: valuation dimension + holder dimension."""
+def mroi(data: pd.DataFrame, window: int = DEFAULT_ZSCORE_WINDOW) -> pd.Series:
+    """Return the production MROI: valuation dimension + holder dimension."""
     score = valuation_composite(data, window=window) + holder_behavior_composite(
         data, window=window
     )
-    score.name = "pi_score"
+    score.name = "mroi"
     return score
 
 
-def sizing_tier(pi_score: pd.Series) -> pd.Series:
-    """Map PI_score values into the binary MRMI-shaped production rule.
+def sizing_tier(mroi: pd.Series) -> pd.Series:
+    """Map MROI values into the binary MRMI-shaped production rule.
 
-    PI_score > 0 maps to ``STAY LONG`` / 100%; PI_score <= 0 maps to
+    MROI > 0 maps to ``STAY LONG`` / 100%; MROI <= 0 maps to
     ``CASH`` / 0%. Exact zero is deliberately cash, matching MRMI's
     "invested when score > 0" convention.
     """
-    values = pd.Series(pd.NA, index=pi_score.index, dtype="object")
-    values = values.mask(pi_score <= 0.0, "CASH")
-    values = values.mask(pi_score > 0.0, "STAY LONG")
+    values = pd.Series(pd.NA, index=mroi.index, dtype="object")
+    values = values.mask(mroi <= 0.0, "CASH")
+    values = values.mask(mroi > 0.0, "STAY LONG")
     return values.astype(TIER_DTYPE)
 
 

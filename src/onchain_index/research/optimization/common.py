@@ -68,7 +68,7 @@ def backtest_score(
     *,
     thresholds: tuple[float, float, float] = DEFAULT_THRESHOLDS,
 ) -> Metrics | None:
-    """Backtest a PI_score-style series through a historical threshold bucket mapper."""
+    """Backtest a MROI-style series through a historical threshold bucket mapper."""
     low, mid, high = thresholds
     local_score = score.reindex(mask.index).loc[mask]
     local_ret = ret.reindex(mask.index).loc[mask]

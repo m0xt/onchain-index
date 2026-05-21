@@ -68,13 +68,13 @@ def cohort_weight_grid() -> list[Candidate]:
 
 
 def build_score(data: pd.DataFrame, candidate: Candidate) -> pd.Series:
-    """Build a candidate PI_score from production dimension composites."""
+    """Build a candidate MROI from production dimension composites."""
     weights = cast(dict[str, float], candidate["weights"])
     score = (
         valuation_composite(data) * weights["valuation"]
         + holder_behavior_composite(data) * weights["holder_behavior"]
     )
-    score.name = "pi_score"
+    score.name = "mroi"
     return score
 
 

@@ -1,6 +1,6 @@
 # Milk Road on-chain index — theory of the framework
 
-**Status:** draft v0.5 — production decision rule simplified from the former 4-bucket sizing rule to the 2-tier MRMI-shaped `CASH` / `STAY LONG` rule. Martin chose option (a) on 2026-05-21 after Task-26 / Phase F showed the binary rule beat the former baseline by `+4.1pp` (`+4.2pp` rounded in the dispatch note) OOS median alpha while matching MRMI shape. Composite math is unchanged.
+**Status:** draft v0.6 — renamed the framework score to `MROI` (Milk Road On-chain Index) on 2026-05-21 because the prior abstract variable name was confusing on the live dashboard. Composite math and the v0.5 binary `CASH` / `STAY LONG` decision rule are unchanged.
 
 > This document encodes *why* the framework is shaped the way it is. The MRMI structure works for macro-framework because it encodes a specific causal model (growth + financial conditions drive regime; real-econ tail risk modifies it). For Milk Road on-chain index to be more than "MRMI shape with BTC inputs," it needs its own causal model. That's what this doc is for.
 
@@ -66,7 +66,7 @@ Exchange flow was tested in Task-20 / Phase E via Coin Metrics Community daily B
 **Additive composite, MRMI-shaped, with diagnostic decomposition surfaced on the dashboard.** Decided 2026-05-20.
 
 ```
-PI_score = z(valuation_composite) + z(holder_behavior_composite)
+MROI = z(valuation_composite) + z(holder_behavior_composite)
 ```
 
 Where:
@@ -77,7 +77,7 @@ The score is a single number you can chart, compare against BTC price, and reaso
 
 **The diagnostic trade-off is solved by the dashboard, not by the math.** An additive composite alone collapses *why* you're at a given score — "cheap + distribution" averages to neutral. The dashboard fixes this by surfacing decomposition, while being explicit that the dimensions are partially overlapping rather than independent. At Phase D's `0.631` full-sample correlation, divergences between dimensions are still useful signal, but the user should not be told they are statistically clean axes. The dashboard surfaces four levels:
 
-1. **PI_score** — the headline composite, drives the sizing tier
+1. **MROI** — the headline composite, drives the sizing tier
 2. **Valuation dimension** — current z-score
 3. **Holder Behavior dimension** — current z-score
 4. **Three holder-behavior sub-cohort scores** — on-chain / DAT / ETF, so the user can see *which cohort* is moving the holder-behavior score
@@ -88,11 +88,11 @@ The aggregate drives the decision. The components explain the decision. Best of 
 
 ## 4. Decision rule
 
-**Binary MRMI-shaped rule on PI_score.** Decided 2026-05-21.
+**Binary MRMI-shaped rule on MROI.** Decided 2026-05-21.
 
 ```
-PI_score  > 0   →  STAY LONG  (100%)
-PI_score <= 0   →  CASH        (0%)
+MROI  > 0   →  STAY LONG  (100%)
+MROI <= 0   →  CASH        (0%)
 ```
 
 The threshold is deliberately fixed at zero. This is the same shape as MRMI: invested only when the framework score is positive, otherwise cash. Exact zero maps to `CASH`, matching the strict `score > 0` convention.
@@ -101,9 +101,9 @@ Why these properties:
 - **MRMI parity.** The product surface now has the same two-state action language as Milk Road Macro Index: `STAY LONG` / `CASH`.
 - **Parsimony with evidence.** Task-26 / Phase F compared fixed 2-, 3-, 4-, and 5-tier structures without tuning thresholds. The 2-tier rule produced `+17.7%` OOS median alpha versus `+13.5%` for the former 4-tier baseline (`+4.1pp`; rounded as `+4.2pp` in Bob's dispatch).
 - **No false precision.** The composite remains a multi-month BTC-specific regime score. Intermediate sizing buckets implied precision the walk-forward did not earn.
-- **Single decisive output.** Tier = function of PI_score. No averaging across “but maybe…” inputs. Reproducible and auditable.
+- **Single decisive output.** Tier = function of MROI. No averaging across “but maybe…” inputs. Reproducible and auditable.
 
-> **What changed from v0.4:** the prior graded 4-bucket production sizing rule was simplified to binary `CASH` / `STAY LONG`. The Valuation, Holder Behavior, and PI_score formulas did not change; only the interpretation layer changed.
+> **What changed from v0.4:** the prior graded 4-bucket production sizing rule was simplified to binary `CASH` / `STAY LONG`. The Valuation, Holder Behavior, and MROI formulas did not change; only the interpretation layer changed.
 
 ## 5. What's deliberately left out and why
 
@@ -116,7 +116,7 @@ Why these properties:
 
 ## 6. Open questions for Martin
 
-None blocking for v1. The framework shape is now settled: additive `PI_score`, strict separation from macro-framework, two product states (`CASH` / `STAY LONG`), and prominent diagnostic decomposition.
+None blocking for v1. The framework shape is now settled: additive `MROI`, strict separation from macro-framework, two product states (`CASH` / `STAY LONG`), and prominent diagnostic decomposition.
 
 Future research can still evaluate new source coverage or a separate joint macro + on-chain wrapper, but not by silently changing this framework's production rule.
 
@@ -130,18 +130,18 @@ Future research can still evaluate new source coverage or a separate joint macro
 
 - ~~Sizing floor~~ → **0% / 100% binary**. `CASH` is 0%; `STAY LONG` is 100%. No configurable floor.
 - ~~Tier naming~~ → **MRMI wording: `CASH` / `STAY LONG`**.
-- ~~Threshold calibration~~ → **fixed zero threshold**. `PI_score > 0` is invested; `PI_score <= 0` is cash. No grid search or tuning.
+- ~~Threshold calibration~~ → **fixed zero threshold**. `MROI > 0` is invested; `MROI <= 0` is cash. No grid search or tuning.
 
 ---
 
 ## Next step
 
-With v0.5 in place, the production framework is concrete:
+With v0.6 in place, the production framework is concrete:
 
-1. Compute **PI_score** = z(Valuation) + z(Holder Behavior) using the locked production composite.
-2. Map PI_score through the binary rule: `PI_score > 0` → `STAY LONG` / 100%; `PI_score <= 0` → `CASH` / 0%.
+1. Compute **MROI** = z(Valuation) + z(Holder Behavior) using the locked production composite.
+2. Map MROI through the binary rule: `MROI > 0` → `STAY LONG` / 100%; `MROI <= 0` → `CASH` / 0%.
 3. Keep the dashboard focused on the same three-section product surface:
-   - Headline: current PI_score + binary action + allocation
+   - Headline: current MROI + binary action + allocation
    - Valuation lens: current z-score and constituent drivers
    - Holder Behavior lens: current z-score, epoch, cohort drivers, and concentration disclosures
 4. Treat future work as additive research only: new source coverage, DAT diversification, or a separate joint macro + on-chain wrapper. Do not change the production threshold or sizing shape without a new explicit decision.

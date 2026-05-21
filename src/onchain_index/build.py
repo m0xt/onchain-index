@@ -32,7 +32,7 @@ from onchain_index.composite import (
     epoch_for_date,
     holder_behavior_cohorts,
     holder_behavior_composite,
-    pi_score,
+    mroi,
     sizing_tier,
     valuation_composite,
     valuation_constituents,
@@ -41,7 +41,7 @@ from onchain_index.data import DEFAULT_CACHE_DIR, PROJECT_ROOT, fetch_all
 
 GITHUB_EDIT_BASE = "https://github.com/m0xt/onchain-index/edit/main"
 PROJECT_REPO_URL = "https://github.com/m0xt/onchain-index"
-THEORY_VERSION = "v0.5"
+THEORY_VERSION = "v0.6"
 
 INDICATOR_DECISIONS: dict[str, tuple[str, str, str]] = {
     "STH MVRV": ("Valuation", "In", "Best cycle-robust valuation survivor; 4/4 cycles positive."),
@@ -85,8 +85,8 @@ TIER_LABELS: dict[str, str] = {
 }
 
 TIER_SUBTITLES: dict[str, str] = {
-    "STAY LONG": "100% long · PI_score is above zero.",
-    "CASH": "0% long · PI_score is at or below zero.",
+    "STAY LONG": "100% long · MROI is above zero.",
+    "CASH": "0% long · MROI is at or below zero.",
 }
 
 
@@ -152,7 +152,7 @@ def _json_float(value: object) -> float | None:
 def _latest_valid_index(score: pd.Series) -> pd.Timestamp:
     valid = score.dropna()
     if valid.empty:
-        raise ValueError("PI_score has no non-NaN observations")
+        raise ValueError("MROI has no non-NaN observations")
     return cast(pd.Timestamp, valid.index[-1])
 
 
@@ -208,7 +208,7 @@ def _latest_scores(data: pd.DataFrame) -> tuple[LatestScores, pd.DataFrame, pd.S
     valuation = valuation_composite(data)
     cohorts = pd.DataFrame(holder_behavior_cohorts(data), index=data.index)
     holder = holder_behavior_composite(data)
-    score = pi_score(data)
+    score = mroi(data)
     tiers = sizing_tier(score)
     latest_date = _latest_valid_index(score)
     tier = str(tiers.astype("object").loc[latest_date])
@@ -226,7 +226,7 @@ def _latest_scores(data: pd.DataFrame) -> tuple[LatestScores, pd.DataFrame, pd.S
     )
     components = pd.concat(
         {
-            "pi_score": score,
+            "mroi": score,
             "valuation": valuation,
             "holder_behavior": holder,
             **{f"valuation_{name}": series for name, series in valuation_parts.items()},
@@ -244,12 +244,12 @@ def _historical_points(data: pd.DataFrame, components: pd.DataFrame) -> list[dic
             **{column: components[column] for column in components.columns},
         },
         index=data.index,
-    ).dropna(subset=["pi_score", "btc_price"])
+    ).dropna(subset=["mroi", "btc_price"])
     points: list[dict[str, float | str | None]] = []
     for index, row in joined.iterrows():
         point: dict[str, float | str | None] = {
             "date": str(index)[:10],
-            "pi": _json_float(row["pi_score"]),
+            "pi": _json_float(row["mroi"]),
             "price": _json_float(row["btc_price"]),
             "valuation": _json_float(row["valuation"]),
             "holder": _json_float(row["holder_behavior"]),
@@ -339,13 +339,13 @@ def _state_color(value: float | None) -> str:
 
 
 def _make_pi_scale_bar(pi_value: float, tier_color: str) -> str:
-    """Horizontal CASH/STAY LONG bar for the binary PI_score rule."""
+    """Horizontal CASH/STAY LONG bar for the binary MROI rule."""
     scale_min, scale_max = -2.0, 2.0
     clamped = max(scale_min, min(scale_max, pi_value))
     pct = (clamped - scale_min) / (scale_max - scale_min) * 100
     zero_pct = (0 - scale_min) / (scale_max - scale_min) * 100
     return f'''
-      <div class="scale-bar" aria-label="PI_score tier position">
+      <div class="scale-bar" aria-label="MROI tier position">
         <div class="scale-track">
           <div class="scale-zone scale-zone-cash" style="width:{zero_pct:.2f}%;"></div>
           <div class="scale-zone scale-zone-long" style="width:{100 - zero_pct:.2f}%;"></div>
@@ -435,7 +435,7 @@ def _walk_forward_table(rows: list[dict[str, str | float | None]]) -> str:
     )
     return f'''
     <table>
-      <thead><tr><th>Window</th><th>BTC B&amp;H</th><th>PI tier</th><th>Alpha</th><th>BTC DD</th><th>PI DD</th></tr></thead>
+      <thead><tr><th>Window</th><th>BTC B&amp;H</th><th>MROI tier</th><th>Alpha</th><th>BTC DD</th><th>MROI DD</th></tr></thead>
       <tbody>{body}</tbody>
     </table>
     '''
@@ -664,7 +664,7 @@ def _render_html(
 </div>
 
 <header class="hero">
-  <div class="hero-eyebrow">Milk Road on-chain index · PI_score · {latest.date.strftime('%Y-%m-%d')}</div>
+  <div class="hero-eyebrow">Milk Road on-chain index · MROI · {latest.date.strftime('%Y-%m-%d')}</div>
   <div class="hero-grid">
     <div class="hero-main">
       <div class="hero-row">
@@ -697,28 +697,28 @@ def _render_html(
         <span class="hero-pillar-name">BTC spot</span>
         <span class="hero-pillar-right"><span class="hero-pillar-value mono">${latest.btc_price:,.0f}</span></span>
       </div>
-      <div class="hero-pillar-note">PI_score = Valuation + Holder Behavior. Two complementary BTC lenses, partially correlated (0.631), not independent axes.</div>
+      <div class="hero-pillar-note">MROI = Valuation + Holder Behavior. Two complementary BTC lenses, partially correlated (0.631), not independent axes.</div>
     </aside>
   </div>
-  <p class="hero-story">Milk Road Macro Index reads the outside risk-asset regime. Milk Road on-chain index uses the same product skeleton for BTC’s inside view: realized-cost valuation plus what meaningful holder cohorts are doing across on-chain, DAT and ETF channels. The technical math handle remains <code>PI_score</code>.</p>
+  <p class="hero-story">Milk Road Macro Index reads the outside risk-asset regime. Milk Road on-chain index uses the same product skeleton for BTC’s inside view: realized-cost valuation plus what meaningful holder cohorts are doing across on-chain, DAT and ETF channels. The technical math handle remains <code>MROI</code>.</p>
 </header>
 
 <div class="section-title"><span class="step-num">1</span>How the index has evolved</div>
 <div class="mrmi-chart">
   <div class="mrmi-chart-header">
     <h3>Milk Road on-chain index
-      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>How PI_score works:</strong> PI_score adds the Valuation dimension to the Holder Behavior dimension. The line is the production composite; background shading mirrors the Macro Index chart treatment.</span></span>
+      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>How MROI works:</strong> MROI adds the Valuation dimension to the Holder Behavior dimension. The line is the production composite; background shading mirrors the Macro Index chart treatment.</span></span>
     </h3>
-    <div class="range-tabs">
-      <button data-chart="pi" data-range="1y" class="active">1Y</button>
-      <button data-chart="pi" data-range="2y">2Y</button>
-      <button data-chart="pi" data-range="5y">5Y</button>
-      <button data-chart="pi" data-range="all">ALL</button>
+    <div class="range-tabs" aria-label="Global chart range">
+      <button data-range="1y" class="active">1Y</button>
+      <button data-range="3y">3Y</button>
+      <button data-range="5y">5Y</button>
+      <button data-range="all">ALL</button>
     </div>
   </div>
-  <p class="mrmi-chart-subtitle">Production PI_score over time; BTC can be toggled as a normalized overlay.</p>
+  <p class="mrmi-chart-subtitle">Production MROI over time; BTC can be toggled as a normalized overlay.</p>
   <div class="legend">
-    <span class="legend-item" data-series="pi"><span class="legend-dot" style="background:#fff"></span>PI_score</span>
+    <span class="legend-item" data-series="pi"><span class="legend-dot" style="background:#fff"></span>MROI</span>
     <span class="legend-item" data-series="btc"><span class="legend-dot" style="background:#A78BFA"></span>BTC</span>
   </div>
   <div class="chart-container"><canvas id="historyChart"></canvas></div>
@@ -738,14 +738,9 @@ def _render_html(
 <div class="mrmi-chart">
   <div class="mrmi-chart-header">
     <h3>Valuation
-      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>What you're seeing:</strong> the Valuation dimension z-score over time. It is the equal-weighted mean of the same lagged 504d z-scored valuation constituents used by production <code>PI_score</code>. The zero line is neutral; no PI tier shading appears because this is a component, not the sizing rule.</span></span>
+      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>What you're seeing:</strong> the Valuation dimension z-score over time. It is the equal-weighted mean of the same lagged 504d z-scored valuation constituents used by production <code>MROI</code>. The zero line is neutral; no MROI tier shading appears because this is a component, not the sizing rule.</span></span>
     </h3>
-    <div class="range-tabs">
-      <button data-chart="valuation" data-range="1y" class="active">1Y</button>
-      <button data-chart="valuation" data-range="2y">2Y</button>
-      <button data-chart="valuation" data-range="5y">5Y</button>
-      <button data-chart="valuation" data-range="all">ALL</button>
-    </div>
+
   </div>
   <p class="mrmi-chart-subtitle">Latest: <span class="mono" style="color:{_state_color(latest.valuation)};">{_format_score(latest.valuation)}</span> · {_state_label(latest.valuation)}</p>
   <div class="chart-container dimension"><canvas id="valuationChart"></canvas></div>
@@ -768,14 +763,9 @@ def _render_html(
 <div class="mrmi-chart">
   <div class="mrmi-chart-header">
     <h3>Holder Behavior
-      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>What you're seeing:</strong> the Holder Behavior dimension z-score over time. It is the equal-weighted mean of available holder cohorts for each epoch: on-chain holders, corporate DAT, and institutional ETF flows. The zero line is neutral; no PI tier shading appears because this is a component.</span></span>
+      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>What you're seeing:</strong> the Holder Behavior dimension z-score over time. It is the equal-weighted mean of available holder cohorts for each epoch: on-chain holders, corporate DAT, and institutional ETF flows. The zero line is neutral; no MROI tier shading appears because this is a component.</span></span>
     </h3>
-    <div class="range-tabs">
-      <button data-chart="holder" data-range="1y" class="active">1Y</button>
-      <button data-chart="holder" data-range="2y">2Y</button>
-      <button data-chart="holder" data-range="5y">5Y</button>
-      <button data-chart="holder" data-range="all">ALL</button>
-    </div>
+
   </div>
   <p class="mrmi-chart-subtitle">Latest: <span class="mono" style="color:{_state_color(latest.holder_behavior)};">{_format_score(latest.holder_behavior)}</span> · {_state_label(latest.holder_behavior)}</p>
   <div class="chart-container dimension"><canvas id="holderChart"></canvas></div>
@@ -797,7 +787,7 @@ def _render_html(
   <details class="drivers" open>
     <summary><span>Composite formulas {_edit_link('src/onchain_index/composite.py')}</span></summary>
     <div class="drivers-body">
-      <div class="formula">Valuation = mean_available(z(STH MVRV), z(RHODL), z(Puell Multiple), z(MVRV-Z))\nHolder Behavior = mean_available(on-chain, corporate DAT, institutional ETF)\nPI_score = Valuation + Holder Behavior</div>
+      <div class="formula">Valuation = mean_available(z(STH MVRV), z(RHODL), z(Puell Multiple), z(MVRV-Z))\nHolder Behavior = mean_available(on-chain, corporate DAT, institutional ETF)\nMROI = Valuation + Holder Behavior</div>
       <p class="details-copy">The renderer imports production composite functions directly; there is no dashboard-only signal path.</p>
     </div>
   </details>
@@ -810,7 +800,7 @@ def _render_html(
   <details class="drivers">
     <summary><span>Tier thresholds {_edit_link('src/onchain_index/composite.py')}</span></summary>
     <div class="drivers-body">
-      <table><thead><tr><th>PI_score bucket</th><th>Tier</th><th>Allocation</th></tr></thead><tbody>
+      <table><thead><tr><th>MROI bucket</th><th>Tier</th><th>Allocation</th></tr></thead><tbody>
         <tr><td class="mono">&lt;= 0.0</td><td>CASH</td><td class="mono">0%</td></tr>
         <tr><td class="mono">&gt; 0.0</td><td>STAY LONG</td><td class="mono">100%</td></tr>
       </tbody></table>
@@ -828,7 +818,7 @@ def _render_html(
       <table><thead><tr><th>Question</th><th>Current v1 posture</th></tr></thead><tbody>
         <tr><td>Sizing floor</td><td>Resolved at 0% for CASH and 100% for STAY LONG.</td></tr>
         <tr><td>Tier naming</td><td>Resolved to MRMI wording: CASH / STAY LONG.</td></tr>
-        <tr><td>Threshold method</td><td>Resolved to the MRMI-shape zero threshold: invested only when PI_score &gt; 0.</td></tr>
+        <tr><td>Threshold method</td><td>Resolved to the MRMI-shape zero threshold: invested only when MROI &gt; 0.</td></tr>
         <tr><td>Diagnostic surface</td><td>Keep holder sub-cohorts prominent so composition drift is visible.</td></tr>
       </tbody></table>
     </div>
@@ -836,16 +826,17 @@ def _render_html(
 </section>
 
 <footer>
-  Milk Road on-chain index · Technical handle: <code>PI_score</code> · Repo: <a href="{PROJECT_REPO_URL}">{PROJECT_REPO_URL}</a> · Last commit: <span class="mono">{escape(sha)}</span> {escape(message)} · Last refresh UTC: <span class="mono">{generated_at.strftime('%Y-%m-%d %H:%M:%S')}</span> · Theory doc: {THEORY_VERSION}
+  Milk Road on-chain index · Technical handle: <code>MROI</code> · Repo: <a href="{PROJECT_REPO_URL}">{PROJECT_REPO_URL}</a> · Last commit: <span class="mono">{escape(sha)}</span> {escape(message)} · Last refresh UTC: <span class="mono">{generated_at.strftime('%Y-%m-%d %H:%M:%S')}</span> · Theory doc: {THEORY_VERSION}
 </footer>
 
 <script>
 const ALL_POINTS = {chart_json};
-const RANGE_DAYS = {{ '1y': 365, '2y': 730, '5y': 1825, 'all': 0 }};
+const RANGE_DAYS = {{ '1y': 365, '3y': 1095, '5y': 1825, 'all': 0 }};
 const visibleSeries = {{ pi: true, btc: true }};
 const charts = {{}};
+let activeRange = '1y';
 
-function slicePoints(rangeKey) {{
+function slicePoints(rangeKey = activeRange) {{
   const n = RANGE_DAYS[rangeKey] || 0;
   return n > 0 ? ALL_POINTS.slice(Math.max(ALL_POINTS.length - n, 0)) : ALL_POINTS.slice();
 }}
@@ -913,43 +904,48 @@ function lineDataset(label, data, color, extra = {{}}) {{
 function buildPiDatasets(points) {{
   const datasets = [];
   if (visibleSeries.btc) datasets.push(lineDataset('BTC', normalizePrices(points.map(p => p.price)), '#A78BFA', {{ yAxisID: 'yPrice', order: 2 }}));
-  if (visibleSeries.pi) datasets.push(lineDataset('PI_score', points.map(p => p.pi), '#ffffff', {{ yAxisID: 'y', order: 0, fill: {{ target: 'origin', above: 'rgba(76,175,80,0.22)', below: 'rgba(232,75,90,0.22)' }} }}));
+  if (visibleSeries.pi) datasets.push(lineDataset('MROI', points.map(p => p.pi), '#ffffff', {{ yAxisID: 'y', order: 0, fill: {{ target: 'origin', above: 'rgba(76,175,80,0.22)', below: 'rgba(232,75,90,0.22)' }} }}));
   return datasets;
 }}
-function renderPi(rangeKey) {{
-  const points = slicePoints(rangeKey);
+function renderPi() {{
+  const points = slicePoints();
   destroyChart('pi');
   charts.pi = new Chart(document.getElementById('historyChart'), {{
     type: 'line',
     data: {{ labels: points.map(p => p.date), datasets: buildPiDatasets(points) }},
     options: sharedChartOptions({{
       annotations: tierBandAnnotations(),
-      yAxis: {{ min: -6, max: 6 }},
       extraScales: {{ yPrice: {{ display: visibleSeries.btc, position: 'right', ticks: {{ color: '#444', font: {{ size: 9, family: SHARED_CHART_CONFIG.tickFont }}, maxTicksLimit: 5 }}, grid: {{ display: false }} }} }},
     }}),
   }});
 }}
-function renderZChart(key, canvasId, field, label, color, rangeKey, small = false) {{
-  const points = slicePoints(rangeKey).filter(p => p[field] !== null);
+function renderZChart(key, canvasId, field, label, color, small = false) {{
+  const points = slicePoints().filter(p => p[field] !== null);
   destroyChart(key);
   charts[key] = new Chart(document.getElementById(canvasId), {{
     type: 'line',
     data: {{ labels: points.map(p => p.date), datasets: [lineDataset(label, points.map(p => p[field]), color, {{ fill: {{ target: 'origin', above: 'rgba(76,175,80,0.18)', below: 'rgba(232,75,90,0.18)' }} }})] }},
-    options: sharedChartOptions({{ small, yAxis: {{ suggestedMin: -3, suggestedMax: 3 }} }}),
+    options: sharedChartOptions({{ small }}),
   }});
 }}
-function renderDashboardChart(chartKey, rangeKey) {{
-  if (chartKey === 'pi') renderPi(rangeKey);
-  if (chartKey === 'valuation') renderZChart('valuation', 'valuationChart', 'valuation', 'Valuation dimension', '#ffffff', rangeKey);
-  if (chartKey === 'holder') renderZChart('holder', 'holderChart', 'holder', 'Holder Behavior dimension', '#ffffff', rangeKey);
+function renderAllCharts() {{
+  renderPi();
+  renderZChart('valuation', 'valuationChart', 'valuation', 'Valuation dimension', '#ffffff');
+  renderZChart('holder', 'holderChart', 'holder', 'Holder Behavior dimension', '#ffffff');
+  renderZChart('driverValSth', 'driverValSth', 'valuation_sth_mvrv', 'z(STH MVRV)', '#ffffff', true);
+  renderZChart('driverValRhodl', 'driverValRhodl', 'valuation_rhodl_ratio', 'z(RHODL Ratio)', '#ffffff', true);
+  renderZChart('driverValPuell', 'driverValPuell', 'valuation_puell_multiple', 'z(Puell Multiple)', '#ffffff', true);
+  renderZChart('driverValMvrvZ', 'driverValMvrvZ', 'valuation_mvrv_zscore', 'z(MVRV-Z)', '#ffffff', true);
+  renderZChart('driverHolderOnChain', 'driverHolderOnChain', 'holder_on_chain', 'On-chain holders', '#ffffff', true);
+  renderZChart('driverHolderDat', 'driverHolderDat', 'holder_corporate_dat', 'Corporate DAT', '#ffffff', true);
+  renderZChart('driverHolderEtf', 'driverHolderEtf', 'holder_institutional_etf', 'Institutional ETF', '#ffffff', true);
 }}
 
 document.querySelectorAll('.range-tabs button').forEach(button => {{
   button.addEventListener('click', () => {{
-    const chartKey = button.dataset.chart || 'pi';
-    document.querySelectorAll(`.range-tabs button[data-chart="${{chartKey}}"]`).forEach(b => b.classList.remove('active'));
-    button.classList.add('active');
-    renderDashboardChart(chartKey, button.dataset.range || '1y');
+    activeRange = button.dataset.range || '1y';
+    document.querySelectorAll('.range-tabs button').forEach(b => b.classList.toggle('active', b === button));
+    renderAllCharts();
   }});
 }});
 document.querySelectorAll('.legend-item').forEach(item => {{
@@ -957,8 +953,7 @@ document.querySelectorAll('.legend-item').forEach(item => {{
     const key = item.dataset.series;
     visibleSeries[key] = !visibleSeries[key];
     item.classList.toggle('inactive', !visibleSeries[key]);
-    const active = document.querySelector('.range-tabs button[data-chart="pi"].active');
-    renderPi((active && active.dataset.range) || '1y');
+    renderPi();
   }});
 }});
 document.querySelectorAll('details.drivers').forEach(details => {{
@@ -966,16 +961,7 @@ document.querySelectorAll('details.drivers').forEach(details => {{
     if (details.open) requestAnimationFrame(() => Object.values(charts).forEach(chart => chart.resize()));
   }});
 }});
-renderPi('1y');
-renderZChart('valuation', 'valuationChart', 'valuation', 'Valuation dimension', '#ffffff', '1y');
-renderZChart('holder', 'holderChart', 'holder', 'Holder Behavior dimension', '#ffffff', '1y');
-renderZChart('driverValSth', 'driverValSth', 'valuation_sth_mvrv', 'z(STH MVRV)', '#ffffff', 'all', true);
-renderZChart('driverValRhodl', 'driverValRhodl', 'valuation_rhodl_ratio', 'z(RHODL Ratio)', '#ffffff', 'all', true);
-renderZChart('driverValPuell', 'driverValPuell', 'valuation_puell_multiple', 'z(Puell Multiple)', '#ffffff', 'all', true);
-renderZChart('driverValMvrvZ', 'driverValMvrvZ', 'valuation_mvrv_zscore', 'z(MVRV-Z)', '#ffffff', 'all', true);
-renderZChart('driverHolderOnChain', 'driverHolderOnChain', 'holder_on_chain', 'On-chain holders', '#ffffff', 'all', true);
-renderZChart('driverHolderDat', 'driverHolderDat', 'holder_corporate_dat', 'Corporate DAT', '#ffffff', 'all', true);
-renderZChart('driverHolderEtf', 'driverHolderEtf', 'holder_institutional_etf', 'Institutional ETF', '#ffffff', 'all', true);
+renderAllCharts();
 </script>
 </body>
 </html>
@@ -1014,7 +1000,7 @@ def build_dashboard(
             paths,
             {
                 "last_run_utc": generated_at.isoformat().replace("+00:00", "Z"),
-                "last_pi_score": latest.pi,
+                "last_mroi": latest.pi,
                 "last_tier": latest.tier,
                 "last_error": None,
             },
@@ -1024,7 +1010,7 @@ def build_dashboard(
             paths,
             {
                 "last_run_utc": generated_at.isoformat().replace("+00:00", "Z"),
-                "last_pi_score": None,
+                "last_mroi": None,
                 "last_tier": None,
                 "last_error": str(exc),
             },

@@ -1,4 +1,4 @@
-"""Step 2 optimizer: PI_score sizing-tier thresholds."""
+"""Step 2 optimizer: MROI sizing-tier thresholds."""
 
 from __future__ import annotations
 
@@ -53,12 +53,12 @@ def threshold_grid() -> list[Candidate]:
 def build_score(
     data: pd.DataFrame, *, valuation_weight: float = 1.0, holder_weight: float = 1.0
 ) -> pd.Series:
-    """Build a PI_score candidate from production dimension composites."""
+    """Build a MROI candidate from production dimension composites."""
     score = (
         valuation_composite(data) * valuation_weight
         + holder_behavior_composite(data) * holder_weight
     )
-    score.name = "pi_score"
+    score.name = "mroi"
     return score
 
 
