@@ -89,3 +89,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: none
+
+## 2026-05-21T11:23:00Z — Milk Road on-chain index UI pass
+- What: Rebranded dashboard/docs to Milk Road on-chain index while keeping `PI_score`, added Valuation and Holder Behavior dimension charts, and added constituent driver fold-outs mirroring macro-framework's headline/drivers/backdrop pattern.
+- Files touched: src/onchain_index/build.py, docs/index.html, outputs/dashboard.html, docs/theory.md, README.md, AGENTS.md, DECISIONS.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: none

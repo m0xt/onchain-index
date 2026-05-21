@@ -1,8 +1,8 @@
-# onchain-index — theory of the framework
+# Milk Road on-chain index — theory of the framework
 
-**Status:** draft v0.4 — v0.3 framework retained, honesty pass applied: exchange flow removed after the failed Phase E canonical-rule gate, and the Valuation × Holder Behavior framing softened to partially correlated complementary lenses (Phase D Pearson `0.631`). Composite math, thresholds, and production tier logic are unchanged.
+**Status:** draft v0.4 — Milk Road on-chain index display name adopted; `PI_score` remains the technical math handle. v0.3 framework retained, honesty pass applied: exchange flow removed after the failed Phase E canonical-rule gate, and the Valuation × Holder Behavior framing softened to partially correlated complementary lenses (Phase D Pearson `0.631`). Composite math, thresholds, and production tier logic are unchanged.
 
-> This document encodes *why* the framework is shaped the way it is. The MRMI structure works for macro-framework because it encodes a specific causal model (growth + financial conditions drive regime; real-econ tail risk modifies it). For onchain-index to be more than "MRMI shape with BTC inputs," it needs its own causal model. That's what this doc is for.
+> This document encodes *why* the framework is shaped the way it is. The MRMI structure works for macro-framework because it encodes a specific causal model (growth + financial conditions drive regime; real-econ tail risk modifies it). For Milk Road on-chain index to be more than "MRMI shape with BTC inputs," it needs its own causal model. That's what this doc is for.
 
 ---
 

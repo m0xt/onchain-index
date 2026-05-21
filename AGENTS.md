@@ -2,7 +2,7 @@
 
 ## What this does
 
-`onchain-index` fetches raw BTC on-chain and off-chain market-structure inputs for a future MRMI-shaped on-chain pulse index. Phase A is data-only: no composite, no backtest, no optimization.
+Milk Road on-chain index is the product-facing BTC regime dashboard; `PI_score` remains the technical math handle inside the `onchain-index` repo/package.
 
 ## Repo map
 
