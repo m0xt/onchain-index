@@ -54,3 +54,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: none — equal-weight production composite remains the recommendation; Step 2/3 were not reached on live data.
+
+## 2026-05-21T10:04:35Z — Phase D structural audit
+- What: Measured Valuation-vs-Holder dimension correlation and tiered null benchmarks; found moderate dimension overlap but full composite clears parsimony gaps vs STH/Valuation/Holder nulls.
+- Files touched: reports/phase-d-audit-2026-05-21.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: Dashboard/report wording should avoid claiming independent dimensions; consider adding rolling correlation panel after DAT concentration rebuild.
