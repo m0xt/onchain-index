@@ -41,7 +41,7 @@ from onchain_index.data import DEFAULT_CACHE_DIR, PROJECT_ROOT, fetch_all
 
 GITHUB_EDIT_BASE = "https://github.com/m0xt/onchain-index/edit/main"
 PROJECT_REPO_URL = "https://github.com/m0xt/onchain-index"
-THEORY_VERSION = "v0.3"
+THEORY_VERSION = "v0.4"
 
 CYCLE_REFERENCE_POINTS: tuple[tuple[str, str], ...] = (
     ("2013 top", "2013-12-04"),
@@ -72,8 +72,9 @@ COHORT_LABELS: dict[str, str] = {
     "on_chain": "On-chain holders",
     "corporate_dat": "Corporate DAT",
     "institutional_etf": "Institutional ETF",
-    "exchange_flow": "Exchange flow",
 }
+
+COHORT_CONCENTRATION_THRESHOLD = 0.50
 
 VALUATION_LABELS: dict[str, str] = {
     "sth_mvrv": "STH MVRV",
@@ -311,37 +312,77 @@ def _availability(series: pd.Series) -> str:
     return f"{str(valid.index[0])[:10]} → {str(valid.index[-1])[:10]}"
 
 
+def _cohort_constituents(latest: LatestScores) -> dict[str, tuple[tuple[str, float | None], ...]]:
+    """Return current constituent-level drivers for each holder cohort."""
+    return {
+        "on_chain": (("HODL 1Y+ 30d-change", latest.holder_cohorts["on_chain"]),),
+        "corporate_dat": (("MSTR / Strategy", latest.holder_cohorts["corporate_dat"]),),
+        "institutional_etf": (("Farside spot ETF complex", latest.holder_cohorts["institutional_etf"]),),
+    }
+
+
+def _concentration_disclosure(items: tuple[tuple[str, float | None], ...]) -> tuple[str, float | None]:
+    finite = [(label, float(value)) for label, value in items if value is not None and math.isfinite(value)]
+    if not finite:
+        return "Constituent concentration unavailable while the cohort warms up.", None
+    total_abs = sum(abs(value) for _, value in finite)
+    if total_abs == 0:
+        return "No non-zero constituent contribution in the latest cohort score.", 0.0
+    leader, leader_value = max(finite, key=lambda item: abs(item[1]))
+    share = abs(leader_value) / total_abs
+    return f"{leader}: {share * 100:.0f}% of cohort", share
+
+
 def _cohort_cards(components: pd.DataFrame, latest: LatestScores) -> str:
     specs = (
         ("on_chain", "HODL 1Y+ 30d-change inverted z", "on-chain holder acceleration"),
         ("corporate_dat", "MSTR 30d holdings change z", "corporate treasury accumulation"),
         ("institutional_etf", "Rolling 30d ETF net-flow z", "institutional fund flows"),
-        ("exchange_flow", "Pending real exchange net-flow source", "data gap"),
     )
+    constituent_map = _cohort_constituents(latest)
     cards: list[str] = []
+    dat_disclosure = "MSTR / Strategy: 100% of cohort"
     for key, constituents, description in specs:
         value = latest.holder_cohorts[key]
         label = COHORT_LABELS[key]
         availability = _availability(cast(pd.Series, components[f"cohort_{key}"]))
-        gap = key == "exchange_flow"
-        tag = "pending source" if gap else "active" if value is not None else "warming up"
+        tag = "active" if value is not None else "warming up"
+        disclosure, share = _concentration_disclosure(constituent_map[key])
+        concentrated = share is not None and share >= COHORT_CONCENTRATION_THRESHOLD
+        if key == "corporate_dat":
+            dat_disclosure = disclosure
         cards.append(
             f"""
             <article class=\"card cohort\">
               <div class=\"card-title-row\">
                 <h3>{escape(label)}</h3>
-                <span class=\"tag {'gap' if gap else ''}\">{escape(tag)}</span>
+                <span class=\"tag\">{escape(tag)}</span>
               </div>
               <div class=\"score\" style=\"color:{_score_color(value)}\">{_format_score(value)}</div>
               <p>{escape(description)}</p>
+              <div class=\"concentration {'hot' if concentrated else ''}\">
+                <span class=\"label\">Concentration disclosure</span>
+                <strong>{escape(disclosure)}</strong>
+              </div>
               <dl>
                 <dt>Constituents</dt><dd>{escape(constituents)}</dd>
                 <dt>Epoch availability</dt><dd>{escape(availability)}</dd>
               </dl>
-              {('<a href=\"reports/phase-c-composite-2026-05-20.md#5-sub-cohort-epoch-evolution\">Read gap note</a>' if gap else '')}
             </article>
             """
         )
+    cards.append(
+        f"""
+        <article class=\"card cohort concentration-alert\">
+          <div class=\"card-title-row\">
+            <h3>DAT concentration warning</h3>
+            <span class=\"tag gap\">&gt;{COHORT_CONCENTRATION_THRESHOLD:.0%}</span>
+          </div>
+          <p><strong>{escape(dat_disclosure)}</strong></p>
+          <p>The Corporate DAT cohort is currently a single-buyer signal. Treat its holder-behavior contribution as concentrated until the DAT source expands beyond MSTR / Strategy.</p>
+        </article>
+        """
+    )
     return "\n".join(cards)
 
 
@@ -456,6 +497,8 @@ def _render_html(
   .tag {{ background: #e5e7eb; color: #374151; }}
   .tag.gap {{ background: #fee2e2; color: #991b1b; }}
   .score {{ font-size: 30px; line-height: 1; font-weight: 800; letter-spacing: -.04em; margin: 8px 0; }}
+  .concentration {{ border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 10px; background: #f9fafb; margin: 10px 0; }}
+  .concentration.hot, .concentration-alert {{ border-color: #f59e0b; background: #fffbeb; }}
   .metric-list {{ list-style: none; margin: 12px 0 0; padding: 0; }}
   .metric-list li {{ display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; border-bottom: 1px solid #f3f4f6; }}
   .card-title-row {{ display: flex; align-items: start; justify-content: space-between; gap: 10px; }}
@@ -483,7 +526,7 @@ def _render_html(
 <body>
   <header>
     <h1>onchain-index — BTC regime score</h1>
-    <div class="muted">PI_score = Valuation + Holder Behavior. Multi-month positioning, on-chain perspective.</div>
+    <div class="muted">PI_score = Valuation + Holder Behavior. Complementary BTC lenses with measured overlap, not independent axes.</div>
     <div class="status-row">
       <div class="stat"><span class="label">As-of data</span><span class="value">{latest.date.strftime('%Y-%m-%d')}</span></div>
       <div class="stat"><span class="label">Last refresh</span><span class="value">{generated_at.strftime('%Y-%m-%d %H:%M UTC')}</span></div>
@@ -504,8 +547,8 @@ def _render_html(
   </section>
 
   <section class="grid">
-    {_dimension_card('Valuation', latest.valuation, valuation_items, 'Mean of available z-scored valuation constituents.')}
-    {_dimension_card('Holder Behavior', latest.holder_behavior, holder_items, 'Epoch-aware mean of available holder cohorts.')}
+    {_dimension_card('Valuation', latest.valuation, valuation_items, 'Mean of available z-scored valuation constituents; partially overlaps Holder Behavior (Pearson 0.631 in Phase D).')}
+    {_dimension_card('Holder Behavior', latest.holder_behavior, holder_items, 'Epoch-aware mean of three holder cohorts; a complementary cross-check, not an independent axis.')}
   </section>
 
   <section>
@@ -532,7 +575,7 @@ def _render_html(
     <details open>
       <summary>Composite formulas {_edit_link('src/onchain_index/composite.py')}</summary>
       <div class="details-body">
-        <div class="formula">Valuation = mean_available(z(STH MVRV), z(RHODL), z(Puell Multiple), z(MVRV-Z))\nHolder Behavior = mean_available(on-chain, corporate DAT, institutional ETF, exchange flow)\nPI_score = Valuation + Holder Behavior</div>
+        <div class="formula">Valuation = mean_available(z(STH MVRV), z(RHODL), z(Puell Multiple), z(MVRV-Z))\nHolder Behavior = mean_available(on-chain, corporate DAT, institutional ETF)\nPI_score = Valuation + Holder Behavior</div>
         <p>The renderer imports the production composite functions directly; there is no dashboard-only signal path.</p>
       </div>
     </details>

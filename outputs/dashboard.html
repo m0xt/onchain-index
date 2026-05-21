@@ -30,6 +30,8 @@
   .tag { background: #e5e7eb; color: #374151; }
   .tag.gap { background: #fee2e2; color: #991b1b; }
   .score { font-size: 30px; line-height: 1; font-weight: 800; letter-spacing: -.04em; margin: 8px 0; }
+  .concentration { border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 10px; background: #f9fafb; margin: 10px 0; }
+  .concentration.hot, .concentration-alert { border-color: #f59e0b; background: #fffbeb; }
   .metric-list { list-style: none; margin: 12px 0 0; padding: 0; }
   .metric-list li { display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; border-bottom: 1px solid #f3f4f6; }
   .card-title-row { display: flex; align-items: start; justify-content: space-between; gap: 10px; }
@@ -57,10 +59,10 @@
 <body>
   <header>
     <h1>onchain-index — BTC regime score</h1>
-    <div class="muted">PI_score = Valuation + Holder Behavior. Multi-month positioning, on-chain perspective.</div>
+    <div class="muted">PI_score = Valuation + Holder Behavior. Complementary BTC lenses with measured overlap, not independent axes.</div>
     <div class="status-row">
       <div class="stat"><span class="label">As-of data</span><span class="value">2026-05-20</span></div>
-      <div class="stat"><span class="label">Last refresh</span><span class="value">2026-05-21 08:50 UTC</span></div>
+      <div class="stat"><span class="label">Last refresh</span><span class="value">2026-05-21 10:33 UTC</span></div>
       <div class="stat"><span class="label">Status</span><span class="status-badge green">OK</span></div>
       <div class="stat"><span class="label">Epoch</span><span class="value">2024-onward — on-chain + DAT + ETF</span></div>
     </div>
@@ -82,7 +84,7 @@
     <article class="card dimension">
       <h3>Valuation</h3>
       <div class="score" style="color:#92400e">-0.91</div>
-      <p>Mean of available z-scored valuation constituents.</p>
+      <p>Mean of available z-scored valuation constituents; partially overlaps Holder Behavior (Pearson 0.631 in Phase D).</p>
       <ul class="metric-list"><li><span>STH MVRV</span><strong>+0.06</strong></li><li><span>RHODL Ratio</span><strong>-1.39</strong></li><li><span>Puell Multiple</span><strong>-1.04</strong></li><li><span>MVRV-Z</span><strong>-1.28</strong></li></ul>
     </article>
     
@@ -90,8 +92,8 @@
     <article class="card dimension">
       <h3>Holder Behavior</h3>
       <div class="score" style="color:#2563eb">+0.41</div>
-      <p>Epoch-aware mean of available holder cohorts.</p>
-      <ul class="metric-list"><li><span>On-chain holders</span><strong>-0.98</strong></li><li><span>Corporate DAT</span><strong>+2.75</strong></li><li><span>Institutional ETF</span><strong>-0.55</strong></li><li><span>Exchange flow</span><strong>N/A</strong></li></ul>
+      <p>Epoch-aware mean of three holder cohorts; a complementary cross-check, not an independent axis.</p>
+      <ul class="metric-list"><li><span>On-chain holders</span><strong>-0.98</strong></li><li><span>Corporate DAT</span><strong>+2.75</strong></li><li><span>Institutional ETF</span><strong>-0.55</strong></li></ul>
     </article>
     
   </section>
@@ -102,62 +104,66 @@
             <article class="card cohort">
               <div class="card-title-row">
                 <h3>On-chain holders</h3>
-                <span class="tag ">active</span>
+                <span class="tag">active</span>
               </div>
               <div class="score" style="color:#92400e">-0.98</div>
               <p>on-chain holder acceleration</p>
+              <div class="concentration hot">
+                <span class="label">Concentration disclosure</span>
+                <strong>HODL 1Y+ 30d-change: 100% of cohort</strong>
+              </div>
               <dl>
                 <dt>Constituents</dt><dd>HODL 1Y+ 30d-change inverted z</dd>
                 <dt>Epoch availability</dt><dd>2013-06-18 → 2026-05-20</dd>
               </dl>
-              
             </article>
             
 
             <article class="card cohort">
               <div class="card-title-row">
                 <h3>Corporate DAT</h3>
-                <span class="tag ">active</span>
+                <span class="tag">active</span>
               </div>
               <div class="score" style="color:#166534">+2.75</div>
               <p>corporate treasury accumulation</p>
+              <div class="concentration hot">
+                <span class="label">Concentration disclosure</span>
+                <strong>MSTR / Strategy: 100% of cohort</strong>
+              </div>
               <dl>
                 <dt>Constituents</dt><dd>MSTR 30d holdings change z</dd>
                 <dt>Epoch availability</dt><dd>2022-01-26 → 2026-05-20</dd>
               </dl>
-              
             </article>
             
 
             <article class="card cohort">
               <div class="card-title-row">
                 <h3>Institutional ETF</h3>
-                <span class="tag ">active</span>
+                <span class="tag">active</span>
               </div>
               <div class="score" style="color:#92400e">-0.55</div>
               <p>institutional fund flows</p>
+              <div class="concentration hot">
+                <span class="label">Concentration disclosure</span>
+                <strong>Farside spot ETF complex: 100% of cohort</strong>
+              </div>
               <dl>
                 <dt>Constituents</dt><dd>Rolling 30d ETF net-flow z</dd>
                 <dt>Epoch availability</dt><dd>2025-06-27 → 2026-05-20</dd>
               </dl>
-              
             </article>
             
 
-            <article class="card cohort">
-              <div class="card-title-row">
-                <h3>Exchange flow</h3>
-                <span class="tag gap">pending source</span>
-              </div>
-              <div class="score" style="color:#6b7280">N/A</div>
-              <p>data gap</p>
-              <dl>
-                <dt>Constituents</dt><dd>Pending real exchange net-flow source</dd>
-                <dt>Epoch availability</dt><dd>pending source</dd>
-              </dl>
-              <a href="reports/phase-c-composite-2026-05-20.md#5-sub-cohort-epoch-evolution">Read gap note</a>
-            </article>
-            </div>
+        <article class="card cohort concentration-alert">
+          <div class="card-title-row">
+            <h3>DAT concentration warning</h3>
+            <span class="tag gap">&gt;50%</span>
+          </div>
+          <p><strong>MSTR / Strategy: 100% of cohort</strong></p>
+          <p>The Corporate DAT cohort is currently a single-buyer signal. Treat its holder-behavior contribution as concentrated until the DAT source expands beyond MSTR / Strategy.</p>
+        </article>
+        </div>
   </section>
 
   <section class="card chart-card">
@@ -185,7 +191,7 @@
       <summary>Composite formulas <a class="suggest" href="https://github.com/m0xt/onchain-index/edit/main/src/onchain_index/composite.py" target="_blank" rel="noreferrer">Suggest edit ↗</a></summary>
       <div class="details-body">
         <div class="formula">Valuation = mean_available(z(STH MVRV), z(RHODL), z(Puell Multiple), z(MVRV-Z))
-Holder Behavior = mean_available(on-chain, corporate DAT, institutional ETF, exchange flow)
+Holder Behavior = mean_available(on-chain, corporate DAT, institutional ETF)
 PI_score = Valuation + Holder Behavior</div>
         <p>The renderer imports the production composite functions directly; there is no dashboard-only signal path.</p>
       </div>
@@ -234,7 +240,7 @@ PI_score = Valuation + Holder Behavior</div>
   </section>
 
   <footer>
-    Repo: <a href="https://github.com/m0xt/onchain-index">https://github.com/m0xt/onchain-index</a> · Last commit: c7737c3 feat: build phase c PI score composite · Last refresh UTC: 2026-05-21 08:50:12 · Theory doc: v0.3
+    Repo: <a href="https://github.com/m0xt/onchain-index">https://github.com/m0xt/onchain-index</a> · Last commit: 9bb7e10 docs: align onchain framework framing · Last refresh UTC: 2026-05-21 10:33:22 · Theory doc: v0.4
   </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

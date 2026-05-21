@@ -57,3 +57,9 @@ Current Phase C production numbers therefore remain the latest production baseli
 Data availability is no longer the blocker: Coin Metrics Community can provide free daily BTC exchange inflow/outflow without a new key. The blocker is signal quality under the locked Phase B/C discipline. At the requested 30d rolling-sum / 504d z-score / production-tier horizon, exchange net flow is materially worse than BTC buy-and-hold full-sample and fails in more than one cycle. The inverted sign does not rescue it.
 
 **Decision:** do not wire exchange flow into `holder_behavior_composite` or refresh the dashboard card as active data. The framework is stronger if the fourth slot remains an explicit gap/fail than if a bad constituent is forced into production.
+
+---
+
+## Addendum — 2026-05-21 Martin decision
+
+Martin's follow-up decision was to remove the Exchange Flow cohort entirely rather than keep it as an all-NaN placeholder. Production `holder_behavior_composite` now has three holder cohorts only — on-chain holders, Corporate DAT, and Institutional ETF — and any future exchange-flow reintroduction requires a deliberate theory update rather than a data-source toggle.

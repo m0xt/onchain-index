@@ -68,3 +68,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: Exchange-flow data availability is solved, but the locked Phase B/C rule fails; do not integrate without a new Martin-approved thesis/rule change.
+
+## 2026-05-21T10:32:55Z — Framework honesty pass v0.4
+- What: Removed Exchange Flow as a production holder cohort after the failed Phase E gate, softened Valuation/Holder framing to partially correlated complementary lenses, and surfaced holder-cohort concentration disclosures on the dashboard.
+- Files touched: src/onchain_index/composite.py, src/onchain_index/build.py, tests/test_composite.py, docs/theory.md, docs/index.html, outputs/dashboard.html, reports/phase-e-exchange-flow-2026-05-21.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: none

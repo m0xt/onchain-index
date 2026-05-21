@@ -10,7 +10,6 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import cast
 
-import numpy as np
 import pandas as pd
 from pandas.api.types import CategoricalDtype
 
@@ -101,15 +100,13 @@ def holder_behavior_cohorts(
 ) -> dict[str, pd.Series]:
     """Return epoch-aware holder-behavior sub-cohort scores.
 
-    ``exchange_flow`` is an all-NaN placeholder until a real exchange-flow source
-    is added; it is surfaced explicitly so dashboards can show the data gap.
+    Exchange flow was tested in Phase E and rejected by the canonical-rule gate,
+    so the production holder-behavior dimension has three active cohorts only.
     """
-    exchange_flow = pd.Series(np.nan, index=data.index, name="exchange_flow", dtype="float64")
     return {
         "on_chain": _on_chain_holder_cohort(data, window),
         "corporate_dat": _corporate_dat_cohort(data, window),
         "institutional_etf": _institutional_etf_cohort(data, window),
-        "exchange_flow": exchange_flow,
     }
 
 

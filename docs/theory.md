@@ -1,6 +1,6 @@
 # onchain-index — theory of the framework
 
-**Status:** draft v0.3 — Martin's 2026-05-20 decisions locked in: additive composite (not 2×2), graded sizing tiers, strict separation from macro-framework (no macro input). Theory shape is now substantively settled; remaining open questions are calibration choices (threshold values, sizing floor, tier naming) for Phase C empirics, not framework structure.
+**Status:** draft v0.4 — v0.3 framework retained, honesty pass applied: exchange flow removed after the failed Phase E canonical-rule gate, and the Valuation × Holder Behavior framing softened to partially correlated complementary lenses (Phase D Pearson `0.631`). Composite math, thresholds, and production tier logic are unchanged.
 
 > This document encodes *why* the framework is shaped the way it is. The MRMI structure works for macro-framework because it encodes a specific causal model (growth + financial conditions drive regime; real-econ tail risk modifies it). For onchain-index to be more than "MRMI shape with BTC inputs," it needs its own causal model. That's what this doc is for.
 
@@ -12,7 +12,7 @@ Five causal factors, ranked roughly by signal strength on multi-month horizons:
 
 1. **Valuation mean reversion around realized cost basis.** BTC has no cash flows, no earnings, no DCF anchor. The only fundamental anchor is realized cap — the aggregate cost basis of all coins. Deep deviations (high MVRV-Z) tend to mean-revert downward; extreme negative deviations (capitulation lows) tend to mean-revert upward. Empirically the single strongest multi-month driver across 2014–2025.
 
-2. **Holder behavior — what *all classes of meaningful holders* are doing.** This is broader than the legacy on-chain definition. A holder is anyone with conviction to take or release supply: sovereign individuals (STH/LTH on-chain), institutional funds (spot BTC ETFs, post-2024), corporate treasuries (DATs — MSTR/Strategy, Metaplanet, Marathon, Riot, etc.), and the exchange-side cohort (movement to/from sell venues). LTHs distributing or STHs capitulating, ETF custody net-out, DATs slowing accumulation, exchange inflows spiking — all answer the same causal question: *are meaningful holders adding or shedding conviction right now?* The measurement systems differ (wallet age vs Farside fund flows vs corporate balance-sheet disclosures vs exchange-flow analytics), but the underlying behavior is one thing.
+2. **Holder behavior — what *all classes of meaningful holders* are doing.** This is broader than the legacy on-chain definition. A holder is anyone with conviction to take or release supply: sovereign individuals (STH/LTH on-chain), institutional funds (spot BTC ETFs, post-2024), and corporate treasuries (DATs — currently MSTR/Strategy, with Metaplanet, Marathon, Riot, etc. desirable as future coverage). LTHs distributing or STHs capitulating, ETF custody net-out, and DATs slowing accumulation all answer the same causal question: *are meaningful holders adding or shedding conviction right now?* The measurement systems differ (wallet age vs Farside fund flows vs corporate balance-sheet disclosures), but the underlying behavior is one thing.
 
 3. **Network adoption / structural growth.** Address counts, hashrate, transaction count. Slow-moving — sets the *floor* under price, not the *direction* of price on multi-month timescales. Better as a "is this asset still alive?" signal than as a regime call.
 
@@ -20,7 +20,7 @@ Five causal factors, ranked roughly by signal strength on multi-month horizons:
 
 5. **Macro environment.** Real yields, dollar strength, equity-correlation regime, global liquidity. Increasingly important since 2022 — BTC is more part of the risk-asset complex than it used to be. **Already covered by macro-framework.** This framework treats macro as an external override, not a re-derived input.
 
-> **What changed from v0.1:** the prior draft separated "holder behavior" (on-chain) from "external capital flows" (ETF/DAT/exchange). That was a measurement-system distinction masquerading as a causal one. Causally, they all answer the same question. The framework collapses cleaner without the split.
+> **What changed from v0.1:** the prior draft separated "holder behavior" (on-chain) from "external capital flows" (ETF/DAT). That was a measurement-system distinction masquerading as a causal one. Causally, they answer the same question. The framework collapses cleaner without the split.
 
 ## 2. Which dimensions does this framework deliberately capture?
 
@@ -30,18 +30,17 @@ Rationale:
 - **Valuation** (driver #1) is the strongest single signal in the multi-month range. Mean reversion around realized cost basis is the closest thing BTC has to a fundamental anchor.
 - **Holder behavior — expanded definition** (driver #2) is the *confirmation/contradiction* dimension. Valuation alone is noisy; valuation cross-checked against what holders across cohorts are actually doing is sharper.
 
-These two are complementary because they're measuring different things on different time horizons (valuation: where price is now relative to cost basis; holder behavior: which way meaningful holders are positioning). When they agree, the signal is strong. When they disagree, the signal is uncertain — and "uncertain" is a real, action-relevant state we want to be able to report.
+These two are complementary lenses, not independent axes. They carry overlapping but distinct information: valuation says where price is relative to cost basis, while holder behavior says how meaningful holders are positioning. Phase D measured full-sample Pearson correlation at `0.631`, so the honest claim is partial overlap with diagnostic value, not orthogonality. When they agree, the signal is strong. When they disagree, the signal is uncertain — and "uncertain" is a real, action-relevant state we want to be able to report. See [[reports/phase-d-audit-2026-05-21.md]].
 
 ### Holder behavior composition (sub-cohorts)
 
-The holder dimension is itself composed of four sub-cohorts. Each is a sub-composite within the dimension:
+The holder dimension is itself composed of three sub-cohorts. Each is a sub-composite within the dimension:
 
 | Cohort | What it measures | Source class | Coverage start |
 |---|---|---|---|
 | **On-chain holders** | STH MVRV, LTH MVRV, HODL waves, dormancy, RHODL — wallet-age-derived positioning | BMP / Glassnode-class | 2012-onward (~13y) |
 | **Institutional funds** | Spot BTC ETF net flows | Farside / 13F filings | 2024-01 (~2.5y) |
-| **Corporate treasuries (DATs)** | Strategy/MSTR, Metaplanet, Marathon, Riot, etc. — Δ in disclosed holdings | strategytracker.com / direct corporate disclosures | 2020-08 (~5y for MSTR, less for others) |
-| **Exchange-side flow** | Net coin flow to/from sell venues — coins moving onto exchanges = distribution signal | BMP / Glassnode / CryptoQuant (currently NOT pulled — see Phase B data-gap finding) | (depends on source) |
+| **Corporate treasuries (DATs)** | Strategy/MSTR currently; future expansion to Metaplanet, Marathon, Riot, etc. is desirable for diversification because DAT is now a single-buyer signal | strategytracker.com / direct corporate disclosures | 2020-08 (~5y for MSTR, less for others) |
 
 ### Composition rule — equal-weight by epoch
 
@@ -52,9 +51,10 @@ Inside the holder-behavior dimension, sub-cohorts are equal-weighted **among tho
 | **2012–2020** | On-chain holders only | Only on-chain wallet-age data exists; DATs and ETFs don't yet meaningfully exist. |
 | **2020–2024** | On-chain + corporate DAT | MSTR began accumulating 2020-08. DAT cohort is small but real. |
 | **2024–present** | On-chain + corporate DAT + institutional ETF | Spot ETFs launched 2024-01-11; ETF flow is now the largest marginal-supply lens. |
-| **Future** | + exchange-side flow once we add a source | Phase B flagged this as missing. Adding it is a data-layer task, not a theory change. |
 
 The dashboard surfaces *which epoch* is currently active and which sub-cohorts are contributing, so the user can see the *composition* of the holder-behavior score and not just its number. Composition-drift is information, not a bug.
+
+Exchange flow was tested in Task-20 / Phase E via Coin Metrics Community daily BTC exchange inflow/outflow and rejected because the canonical 30d net-flow z-score rule failed walk-forward in 2 of 4 cycles. It is removed from the framework rather than carried as a NaN placeholder; re-adding it would require a deliberate future theory decision, not a data-layer toggle. See [[reports/phase-e-exchange-flow-2026-05-21.md]].
 
 **Out of scope (and why):**
 - **Adoption (driver #3):** too slow for multi-month timing. Belongs to a "is BTC still a real asset?" framework, which is different.
@@ -71,18 +71,18 @@ PI_score = z(valuation_composite) + z(holder_behavior_composite)
 
 Where:
 - `valuation_composite` = equal-weighted z of Phase B's robust valuation winners (STH MVRV, RHODL Ratio, Puell Multiple, one-of {MVRV-Z, NUPL}).
-- `holder_behavior_composite` = equal-weighted z of the available sub-cohort signals at this epoch (on-chain holders always; corporate DAT 2020+; institutional ETF 2024+; exchange-side flow when added).
+- `holder_behavior_composite` = equal-weighted z of the available sub-cohort signals at this epoch (on-chain holders always; corporate DAT 2020+; institutional ETF 2024+).
 
 The score is a single number you can chart, compare against BTC price, and reason about over time.
 
-**The diagnostic trade-off is solved by the dashboard, not by the math.** An additive composite alone collapses *why* you're at a given score — "cheap + distribution" averages to neutral. The dashboard fixes this by surfacing four numbers, not one:
+**The diagnostic trade-off is solved by the dashboard, not by the math.** An additive composite alone collapses *why* you're at a given score — "cheap + distribution" averages to neutral. The dashboard fixes this by surfacing decomposition, while being explicit that the dimensions are partially overlapping rather than independent. At Phase D's `0.631` full-sample correlation, divergences between dimensions are still useful signal, but the user should not be told they are statistically clean axes. The dashboard surfaces four levels:
 
 1. **PI_score** — the headline composite, drives the sizing tier
 2. **Valuation dimension** — current z-score
 3. **Holder Behavior dimension** — current z-score
-4. **Four holder-behavior sub-cohort scores** — on-chain / DAT / ETF / exchange-flow, so the user can see *which cohort* is moving the holder-behavior score
+4. **Three holder-behavior sub-cohort scores** — on-chain / DAT / ETF, so the user can see *which cohort* is moving the holder-behavior score
 
-The aggregate drives the decision. The components explain the decision. Best of both — the additive math gives a chart-able decision signal, the decomposition prevents the framework from being a black box.
+The aggregate drives the decision. The components explain the decision. Best of both — the additive math gives a chart-able decision signal, the decomposition prevents the framework from being a black box without overselling independence.
 
 > **What changed from v0.2:** I leaned toward a 2×2 categorical matrix. Martin chose additive composite, which I now think is right. The 2×2's "preserves the diagnostic" argument is recovered by the dashboard decomposition without sacrificing the additive's "single chartable number." Additive wins on both fronts once the dashboard does its job.
 
@@ -136,7 +136,7 @@ Binary was rejected because BTC's regime structure has stacked timescales (withi
    
    My lean: **start with fixed z-score thresholds for v1 simplicity, validate against empirical regime transitions in Phase C as a sanity check.** Don't optimize either.
 
-4. **Diagnostic surface for holder-behavior sub-cohorts.** Should the dashboard prominently show all four sub-cohort scores (on-chain / DAT / ETF / exchange) alongside the headline PI_score? My lean: yes, prominently — when on-chain and ETF flows disagree, that's the single most decision-relevant signal the framework produces. Equivalent to macro-framework's morning page showing component sub-indicators alongside the MRMI value. *(Carried forward from v0.2.)*
+4. **Diagnostic surface for holder-behavior sub-cohorts.** Should the dashboard prominently show all three sub-cohort scores (on-chain / DAT / ETF) alongside the headline PI_score? My lean: yes, prominently — when on-chain and ETF flows disagree, that's the single most decision-relevant signal the framework produces. Equivalent to macro-framework's morning page showing component sub-indicators alongside the MRMI value. *(Carried forward from v0.2; exchange flow removed in v0.4.)*
 
 ### Resolved 2026-05-20
 
@@ -148,21 +148,20 @@ Binary was rejected because BTC's regime structure has stacked timescales (withi
 
 ## Next step
 
-With the v0.3 decisions in (additive composite, graded sizing tiers, strict separation from macro-framework), Phase C is now concrete:
+With the v0.4 framing in (additive composite, graded sizing tiers, strict separation from macro-framework, three holder cohorts, and partial-correlation disclosure), Phase C is concrete:
 
 1. Build the **Valuation composite** from Phase B's robust winners. Candidates: STH MVRV, RHODL Ratio (both 4/4 cycles positive), Puell Multiple (3/4 cycles, miner-revenue lens), and one of MVRV-Z / NUPL (not both — 0.88 correlated). Equal-weighted z-score of constituents.
-2. Build the **Holder Behavior composite** as four epoch-aware sub-cohort scores, equal-weighted within available coverage:
+2. Build the **Holder Behavior composite** as three epoch-aware sub-cohort scores, equal-weighted within available coverage:
    - On-chain holders (always available — STH MVRV is already in valuation; for holder-behavior, use HODL waves / dormancy / age-band metrics not already in valuation, to avoid double-counting)
-   - Corporate DAT (2020+) — MSTR/Strategy Δ holdings, future: Metaplanet, Marathon, etc.
+   - Corporate DAT (2020+) — MSTR/Strategy Δ holdings; future expansion to Metaplanet, Marathon, etc. would diversify the currently single-buyer DAT signal
    - Institutional ETF (2024+) — Farside spot ETF net flow
-   - Exchange-side flow (pending data-layer addition — Phase B flagged) — net coin flow to/from sell venues
 3. Compute **PI_score** = z(Valuation) + z(Holder Behavior).
 4. Set the four sizing-tier thresholds. Start with fixed z-score thresholds (>+1, 0–1, -1–0, <-1); sanity-check against historical cycle-transition values.
 5. Backtest the tier-driven sizing rule walk-forward by cycle (2014-17 / 2018-21 / 2022-24 / 2025-now). Output: per-cycle realized return, drawdown, time-in-each-tier breakdown.
 6. Build the dashboard:
    - Headline: current PI_score + current tier + suggested sizing
    - Dimension scores: Valuation z, Holder Behavior z
-   - Sub-cohort scores: 4 holder-behavior cohort z's, with epoch tag
+   - Sub-cohort scores: 3 holder-behavior cohort z's, with epoch tag and constituent concentration disclosure
    - Historical context: PI_score chart over time with tier-region shading + BTC price overlay
 
 Open calibration questions from Section 6 (sizing floor, tier naming, threshold calibration method) get resolved during Phase C empirics. Theory shape is locked.

@@ -72,7 +72,7 @@ def test_epoch_evolution_labels_and_available_cohorts() -> None:
     assert pd.notna(cohorts["on_chain"].loc[post_2024])
     assert pd.notna(cohorts["corporate_dat"].loc[post_2024])
     assert pd.notna(cohorts["institutional_etf"].loc[post_2024])
-    assert cohorts["exchange_flow"].isna().all()
+    assert set(cohorts) == {"on_chain", "corporate_dat", "institutional_etf"}
 
 
 def test_composite_has_no_same_day_lookahead() -> None:
