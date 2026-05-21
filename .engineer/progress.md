@@ -47,3 +47,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: none
+
+## 2026-05-21T09:13:43Z — Phase D optimization research
+- What: Added gated Phase D research optimizers, ran Step 1 cohort-weight walk-forward, stopped because optimized ratios underperformed equal-weight OOS; wrote the Phase D report.
+- Files touched: src/onchain_index/research/, research/optimization/, tests/test_optimization.py, reports/phase-d-optimization-2026-05-21.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: none — equal-weight production composite remains the recommendation; Step 2/3 were not reached on live data.
