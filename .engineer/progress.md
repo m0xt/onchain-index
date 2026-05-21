@@ -75,3 +75,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: none
+
+## 2026-05-21T10:48:15Z — Macro-family dashboard rebuild
+- What: Rebuilt the onchain-index dashboard renderer/page around macro-framework's dark visual language, hero/scale-bar/pillar/chart/details skeleton, while preserving PI_score math and three holder cohorts.
+- Files touched: src/onchain_index/build.py, docs/index.html, outputs/dashboard.html, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: none

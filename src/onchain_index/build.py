@@ -84,10 +84,24 @@ VALUATION_LABELS: dict[str, str] = {
 }
 
 TIER_COLORS: dict[str, str] = {
-    "Strong": "#166534",
-    "Sized": "#2563eb",
-    "Trim": "#92400e",
-    "Cash": "#991b1b",
+    "Strong": "#4CAF50",
+    "Sized": "#8BC34A",
+    "Trim": "#FF9800",
+    "Cash": "#E84B5A",
+}
+
+TIER_LABELS: dict[str, str] = {
+    "Strong": "STRONG",
+    "Sized": "SIZED",
+    "Trim": "TRIM",
+    "Cash": "CASH",
+}
+
+TIER_SUBTITLES: dict[str, str] = {
+    "Strong": "100% long · all BTC-specific lenses confirm risk-on.",
+    "Sized": "75% long · constructive, but not full-confirmation.",
+    "Trim": "50% long · mixed / caution zone.",
+    "Cash": "0% long · BTC-specific risk-off bucket.",
 }
 
 
@@ -333,6 +347,60 @@ def _concentration_disclosure(items: tuple[tuple[str, float | None], ...]) -> tu
     return f"{leader}: {share * 100:.0f}% of cohort", share
 
 
+def _state_label(value: float | None) -> str:
+    if value is None or not math.isfinite(value):
+        return "WARMING"
+    if value >= 1.0:
+        return "STRONG"
+    if value >= 0.0:
+        return "POSITIVE"
+    if value > -1.0:
+        return "SOFT"
+    return "WEAK"
+
+
+def _state_color(value: float | None) -> str:
+    return _score_color(value)
+
+
+def _make_pi_scale_bar(pi_value: float, tier_color: str) -> str:
+    """Horizontal Cash-to-Strong bar for PI_score, using fixed tier thresholds."""
+    scale_min, scale_max = -2.0, 2.0
+    clamped = max(scale_min, min(scale_max, pi_value))
+    pct = (clamped - scale_min) / (scale_max - scale_min) * 100
+    ticks = {
+        "-1": (-1 - scale_min) / (scale_max - scale_min) * 100,
+        "0": (0 - scale_min) / (scale_max - scale_min) * 100,
+        "+1": (1 - scale_min) / (scale_max - scale_min) * 100,
+    }
+    return f'''
+      <div class="scale-bar" aria-label="PI_score tier position">
+        <div class="scale-track">
+          <div class="scale-zone scale-zone-cash" style="width:25%;"></div>
+          <div class="scale-zone scale-zone-trim" style="width:25%;"></div>
+          <div class="scale-zone scale-zone-sized" style="width:25%;"></div>
+          <div class="scale-zone scale-zone-strong" style="width:25%;"></div>
+          <div class="scale-zero" style="left: {ticks['0']:.2f}%;"></div>
+          <div class="scale-threshold" style="left: {ticks['-1']:.2f}%;"></div>
+          <div class="scale-threshold" style="left: {ticks['+1']:.2f}%;"></div>
+          <div class="scale-marker" style="left: {pct:.2f}%; background: {tier_color}; box-shadow: 0 0 0 4px {tier_color}33;"></div>
+        </div>
+        <div class="scale-axis">
+          <span style="left:0%;">−2</span>
+          <span style="left:{ticks['-1']:.2f}%;">−1</span>
+          <span style="left:{ticks['0']:.2f}%; color:#888;">0</span>
+          <span style="left:{ticks['+1']:.2f}%;">+1</span>
+          <span style="left:100%;">+2</span>
+        </div>
+        <div class="scale-legend">
+          <span class="scale-cash-label">CASH</span>
+          <span class="scale-trim-label">TRIM</span>
+          <span class="scale-sized-label">SIZED</span>
+          <span class="scale-long-label">STRONG</span>
+        </div>
+      </div>'''
+
+
 def _cohort_cards(components: pd.DataFrame, latest: LatestScores) -> str:
     specs = (
         ("on_chain", "HODL 1Y+ 30d-change inverted z", "on-chain holder acceleration"),
@@ -341,104 +409,91 @@ def _cohort_cards(components: pd.DataFrame, latest: LatestScores) -> str:
     )
     constituent_map = _cohort_constituents(latest)
     cards: list[str] = []
-    dat_disclosure = "MSTR / Strategy: 100% of cohort"
     for key, constituents, description in specs:
         value = latest.holder_cohorts[key]
         label = COHORT_LABELS[key]
         availability = _availability(cast(pd.Series, components[f"cohort_{key}"]))
         tag = "active" if value is not None else "warming up"
         disclosure, share = _concentration_disclosure(constituent_map[key])
-        concentrated = share is not None and share >= COHORT_CONCENTRATION_THRESHOLD
         if key == "corporate_dat":
-            dat_disclosure = disclosure
+            disclosure = "MSTR / Strategy: 100% of cohort"
+            share = 1.0
+        concentrated = share is not None and share >= COHORT_CONCENTRATION_THRESHOLD
         cards.append(
-            f"""
-            <article class=\"card cohort\">
-              <div class=\"card-title-row\">
-                <h3>{escape(label)}</h3>
-                <span class=\"tag\">{escape(tag)}</span>
+            f'''
+            <article class="sub-card">
+              <div class="sub-card-top">
+                <div>
+                  <div class="sub-eyebrow">{escape(description)}</div>
+                  <h3>{escape(label)}</h3>
+                </div>
+                <span class="mini-chip {'warn' if concentrated else ''}">{escape(tag)}</span>
               </div>
-              <div class=\"score\" style=\"color:{_score_color(value)}\">{_format_score(value)}</div>
-              <p>{escape(description)}</p>
-              <div class=\"concentration {'hot' if concentrated else ''}\">
-                <span class=\"label\">Concentration disclosure</span>
-                <strong>{escape(disclosure)}</strong>
-              </div>
-              <dl>
-                <dt>Constituents</dt><dd>{escape(constituents)}</dd>
-                <dt>Epoch availability</dt><dd>{escape(availability)}</dd>
+              <div class="sub-score mono" style="color:{_state_color(value)}">{_format_score(value)}</div>
+              <div class="sub-state" style="color:{_state_color(value)}">{escape(_state_label(value))}</div>
+              <dl class="sub-meta">
+                <dt>Constituent</dt><dd>{escape(constituents)}</dd>
+                <dt>Coverage</dt><dd>{escape(availability)}</dd>
+                <dt>Disclosure</dt><dd class="{'hot' if concentrated else ''}">{escape(disclosure)}</dd>
               </dl>
             </article>
-            """
+            '''
         )
-    cards.append(
-        f"""
-        <article class=\"card cohort concentration-alert\">
-          <div class=\"card-title-row\">
-            <h3>DAT concentration warning</h3>
-            <span class=\"tag gap\">&gt;{COHORT_CONCENTRATION_THRESHOLD:.0%}</span>
-          </div>
-          <p><strong>{escape(dat_disclosure)}</strong></p>
-          <p>The Corporate DAT cohort is currently a single-buyer signal. Treat its holder-behavior contribution as concentrated until the DAT source expands beyond MSTR / Strategy.</p>
-        </article>
-        """
-    )
     return "\n".join(cards)
-
 
 def _dimension_card(title: str, value: float, items: dict[str, float | None], summary: str) -> str:
     rows = "".join(
-        f"<li><span>{escape(label)}</span><strong>{_format_score(score)}</strong></li>"
+        f"<li><span>{escape(label)}</span><strong class=\"mono\">{_format_score(score)}</strong></li>"
         for label, score in items.items()
     )
-    return f"""
-    <article class=\"card dimension\">
-      <h3>{escape(title)}</h3>
-      <div class=\"score\" style=\"color:{_score_color(value)}\">{_format_score(value)}</div>
+    return f'''
+    <article class="pillar-card">
+      <div class="pillar-card-head">
+        <span class="pillar-name">{escape(title)}</span>
+        <span class="pillar-state" style="color:{_state_color(value)}">{escape(_state_label(value))}</span>
+      </div>
+      <div class="pillar-score mono" style="color:{_state_color(value)}">{_format_score(value)}</div>
       <p>{escape(summary)}</p>
-      <ul class=\"metric-list\">{rows}</ul>
+      <ul class="metric-list">{rows}</ul>
     </article>
-    """
-
+    '''
 
 def _walk_forward_table(rows: list[dict[str, str | float | None]]) -> str:
     body = "".join(
         "<tr>"
         f"<td>{escape(str(row['window']))}</td>"
-        f"<td>{_format_pct(_json_float(row.get('bh_ann')))}</td>"
-        f"<td>{_format_pct(_json_float(row.get('strat_ann')))}</td>"
-        f"<td>{_format_pct(_json_float(row.get('alpha')))}</td>"
-        f"<td>{_format_pct(_json_float(row.get('bh_dd')))}</td>"
-        f"<td>{_format_pct(_json_float(row.get('strat_dd')))}</td>"
+        f"<td class=\"mono\">{_format_pct(_json_float(row.get('bh_ann')))}</td>"
+        f"<td class=\"mono\">{_format_pct(_json_float(row.get('strat_ann')))}</td>"
+        f"<td class=\"mono val {'pos' if (_json_float(row.get('alpha')) or 0) >= 0 else 'neg'}\">{_format_pct(_json_float(row.get('alpha')))}</td>"
+        f"<td class=\"mono\">{_format_pct(_json_float(row.get('bh_dd')))}</td>"
+        f"<td class=\"mono\">{_format_pct(_json_float(row.get('strat_dd')))}</td>"
         "</tr>"
         for row in rows
     )
-    return f"""
+    return f'''
     <table>
       <thead><tr><th>Window</th><th>BTC B&amp;H</th><th>PI tier</th><th>Alpha</th><th>BTC DD</th><th>PI DD</th></tr></thead>
       <tbody>{body}</tbody>
     </table>
-    """
-
+    '''
 
 def _indicator_table(rows: list[dict[str, str | float | None]]) -> str:
     body = "".join(
         "<tr>"
-        f"<td>{escape(str(row['indicator']))}</td>"
+        f"<td><span class=\"ind-name\">{escape(str(row['indicator']))}</span><div class=\"muted small\">{escape(str(row['rule']))}</div></td>"
         f"<td>{escape(str(row['decision']))}</td>"
         f"<td>{escape(str(row['dimension']))}</td>"
-        f"<td>{_format_pct(_json_float(row.get('alpha')))}</td>"
-        f"<td>{escape(str(row['note']))}</td>"
+        f"<td class=\"mono\">{_format_pct(_json_float(row.get('alpha')))}</td>"
+        f"<td class=\"muted\">{escape(str(row['note']))}</td>"
         "</tr>"
         for row in rows
     )
-    return f"""
+    return f'''
     <table>
       <thead><tr><th>Indicator</th><th>Decision</th><th>Composite</th><th>Phase B alpha</th><th>Note</th></tr></thead>
       <tbody>{body}</tbody>
     </table>
-    """
-
+    '''
 
 def _edit_link(path: str, label: str = "Suggest edit") -> str:
     return f'<a class="suggest" href="{GITHUB_EDIT_BASE}/{escape(path)}" target="_blank" rel="noreferrer">{escape(label)} ↗</a>'
@@ -457,6 +512,8 @@ def _render_html(
     sha, message = _latest_git_summary()
     status_label, status_class = _status_label(latest.date, generated_at)
     tier_color = TIER_COLORS[latest.tier]
+    tier_label = TIER_LABELS[latest.tier]
+    tier_subtitle = TIER_SUBTITLES[latest.tier]
     valuation_items = {
         VALUATION_LABELS[name]: latest.valuation_constituents[name]
         for name in VALUATION_LABELS
@@ -464,217 +521,418 @@ def _render_html(
     holder_items = {COHORT_LABELS[name]: latest.holder_cohorts[name] for name in COHORT_LABELS}
     chart_json = json.dumps(historical, separators=(",", ":"))
     markers_json = json.dumps(markers, separators=(",", ":"))
+    scale_html = _make_pi_scale_bar(latest.pi, tier_color)
+    info_svg = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="4" r="0.9" fill="currentColor"/><line x1="7" y1="6.5" x2="7" y2="10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>'
 
-    return f"""<!doctype html>
+    return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>onchain-index — BTC regime score</title>
+<title>Onchain Index · {latest.date.strftime('%Y-%m-%d')}</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 <style>
-  * {{ box-sizing: border-box; }}
-  body {{ font: 14px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif; max-width: 1120px; margin: 2em auto; padding: 0 1em; color: #111827; background: #ffffff; }}
-  h1 {{ font-size: 24px; margin: 0 0 .25em; letter-spacing: -0.02em; }}
-  h2 {{ font-size: 17px; margin: 0 0 .75em; }}
-  h3 {{ font-size: 14px; margin: 0 0 .4em; }}
-  a {{ color: #2563eb; }}
-  .muted {{ color: #6b7280; }}
-  .status-row, .hero, .grid, .cohort-grid {{ display: grid; gap: 12px; }}
-  .status-row {{ grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 1em 0 1.5em; }}
-  .hero {{ grid-template-columns: 1.3fr repeat(3, 1fr); align-items: stretch; margin-bottom: 1.5em; }}
-  .grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 1.5em; }}
-  .cohort-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 1.5em; }}
-  .card, .stat, details {{ border: 1px solid #d1d5db; border-radius: 10px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.04); padding: 12px 14px; }}
-  .stat {{ background: #f9fafb; }}
-  .label {{ display: block; color: #6b7280; font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; }}
-  .value {{ display: block; font-weight: 700; margin-top: 2px; }}
-  .big-score {{ font-size: clamp(42px, 8vw, 76px); line-height: .95; font-weight: 800; letter-spacing: -.06em; color: {tier_color}; }}
-  .tier-badge, .status-badge, .tag {{ display: inline-block; border-radius: 999px; padding: 3px 9px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }}
-  .tier-badge {{ background: {tier_color}; color: #fff; }}
-  .status-badge.green {{ background: #dcfce7; color: #166534; }}
-  .status-badge.yellow {{ background: #fef3c7; color: #92400e; }}
-  .status-badge.red {{ background: #fee2e2; color: #991b1b; }}
-  .tag {{ background: #e5e7eb; color: #374151; }}
-  .tag.gap {{ background: #fee2e2; color: #991b1b; }}
-  .score {{ font-size: 30px; line-height: 1; font-weight: 800; letter-spacing: -.04em; margin: 8px 0; }}
-  .concentration {{ border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 10px; background: #f9fafb; margin: 10px 0; }}
-  .concentration.hot, .concentration-alert {{ border-color: #f59e0b; background: #fffbeb; }}
-  .metric-list {{ list-style: none; margin: 12px 0 0; padding: 0; }}
-  .metric-list li {{ display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; border-bottom: 1px solid #f3f4f6; }}
-  .card-title-row {{ display: flex; align-items: start; justify-content: space-between; gap: 10px; }}
-  dl {{ display: grid; grid-template-columns: 105px 1fr; gap: 4px 10px; margin: 10px 0 0; }}
-  dt {{ color: #6b7280; }}
-  dd {{ margin: 0; }}
-  table {{ width: 100%; border-collapse: collapse; margin: .5em 0 0; }}
-  th, td {{ text-align: left; padding: 7px 8px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }}
-  th {{ color: #374151; font-size: 12px; }}
-  .chart-card {{ padding: 14px; margin-bottom: 1.5em; }}
-  .chart-wrap {{ position: relative; height: 430px; background: linear-gradient(to bottom, rgba(22,101,52,.06) 0 41.7%, rgba(37,99,235,.05) 41.7% 50%, rgba(146,64,14,.06) 50% 58.3%, rgba(153,27,27,.06) 58.3% 100%); border: 1px solid #e5e7eb; border-radius: 10px; padding: 8px; }}
-  .range-buttons {{ display: flex; gap: 6px; margin: 0 0 10px; }}
-  .range-buttons button {{ border: 1px solid #d1d5db; background: #fff; border-radius: 8px; padding: 4px 9px; cursor: pointer; }}
-  .range-buttons button.active {{ background: #111827; color: #fff; border-color: #111827; }}
-  details {{ padding: 0; margin-bottom: 10px; overflow: hidden; }}
-  summary {{ cursor: pointer; user-select: none; padding: 12px 14px; font-weight: 700; }}
-  details[open] summary {{ border-bottom: 1px solid #e5e7eb; }}
-  .details-body {{ padding: 12px 14px 14px; }}
-  .formula {{ font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; font-size: 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; white-space: pre-wrap; }}
-  .suggest {{ float: right; font-size: 12px; font-weight: 500; }}
-  footer {{ margin: 2em 0 0; color: #6b7280; font-size: 12px; border-top: 1px solid #e5e7eb; padding-top: 12px; }}
-  @media (max-width: 820px) {{ .status-row, .hero, .grid, .cohort-grid {{ grid-template-columns: 1fr; }} .chart-wrap {{ height: 340px; }} }}
+  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+  body {{
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+    background: #0a0a0a; color: #ccc;
+    padding: 24px 32px 48px; max-width: 1280px; margin: 0 auto;
+  }}
+  a {{ color: #cdaa6a; text-decoration: none; border-bottom: 1px dotted #6c5a36; }}
+  a:hover {{ color: #e6c98a; border-bottom-color: #cdaa6a; }}
+  .mono {{ font-family: 'SF Mono', Menlo, monospace; }}
+  .muted {{ color: #666; }}
+  .small {{ font-size: 13px; }}
+  .val.pos {{ color: #4CAF50; }}
+  .val.neg {{ color: #E84B5A; }}
+
+  .meta-bar {{
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 18px; font-size: 13px; color: #555;
+  }}
+  .meta-bar .brand {{ color: #888; font-weight: 600; letter-spacing: 0.5px; }}
+  .meta-bar .meta-right {{ display:flex; gap: 14px; align-items: baseline; flex-wrap: wrap; justify-content: flex-end; }}
+  .status-dot {{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:7px; }}
+  .status-dot.green {{ background:#4CAF50; }}
+  .status-dot.yellow {{ background:#FF9800; }}
+  .status-dot.red {{ background:#E84B5A; }}
+
+  .hero {{ margin-bottom: 36px; padding: 8px 4px 0; }}
+  .hero-eyebrow {{
+    font-size: 11px; text-transform: uppercase; letter-spacing: 2px;
+    color: #555; font-weight: 500; margin-bottom: 18px;
+  }}
+  .hero-grid {{
+    display: grid; grid-template-columns: minmax(0, 1fr) auto;
+    gap: 48px; align-items: start;
+  }}
+  .hero-main {{ min-width: 0; }}
+  .hero-row {{ display:flex; align-items: baseline; gap:28px; margin-bottom: 24px; }}
+  .hero-value {{ font-size: 80px; font-weight: 600; line-height: 1; letter-spacing: -3px; }}
+  .hero-action-label {{ font-size: 22px; font-weight: 600; letter-spacing: -0.4px; line-height: 1.1; }}
+  .hero-action-sub {{ font-size: 13px; color: #777; margin-top: 4px; }}
+  .hero-story {{ margin: 22px 0 0; color: #999; font-size: 14px; line-height: 1.55; max-width: 820px; }}
+
+  .hero-pillars {{ border-left: 1px solid #1f1f1f; padding: 4px 0 4px 32px; min-width: 285px; }}
+  .hero-pillars-title {{ font-size: 10px; text-transform: uppercase; letter-spacing: 1.8px; color: #555; font-weight: 500; margin-bottom: 14px; }}
+  .hero-pillar {{ display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 10px 0; }}
+  .hero-pillar + .hero-pillar {{ border-top: 1px solid #161616; }}
+  .hero-pillar-name {{ font-size: 13px; color: #aaa; }}
+  .hero-pillar-right {{ display: flex; align-items: baseline; gap: 10px; }}
+  .hero-pillar-state {{ font-size: 13px; font-weight: 600; letter-spacing: 0.4px; }}
+  .hero-pillar-value {{ font-size: 13px; color: #777; }}
+  .hero-pillar-note {{ margin-top: 14px; font-size: 11px; color: #555; line-height: 1.5; }}
+
+  .scale-bar {{ max-width: 720px; margin-top: 4px; }}
+  .scale-track {{ position: relative; height: 8px; border-radius: 4px; background: #1a1a1a; display: flex; overflow: visible; }}
+  .scale-zone {{ height: 100%; }}
+  .scale-zone:first-child {{ border-radius: 4px 0 0 4px; }}
+  .scale-zone:nth-child(4) {{ border-radius: 0 4px 4px 0; }}
+  .scale-zone-cash {{ background: linear-gradient(to right, #E84B5A28, #E84B5A12); }}
+  .scale-zone-trim {{ background: linear-gradient(to right, #FF980020, #FF980010); }}
+  .scale-zone-sized {{ background: linear-gradient(to right, #8BC34A10, #8BC34A18); }}
+  .scale-zone-strong {{ background: linear-gradient(to right, #4CAF5014, #4CAF5028); }}
+  .scale-zero, .scale-threshold {{ position: absolute; top: -3px; bottom: -3px; width: 1px; background: #333; }}
+  .scale-zero {{ background: #555; }}
+  .scale-marker {{ position: absolute; top: -4px; width: 16px; height: 16px; border-radius: 50%; transform: translateX(-50%); transition: left 0.3s; }}
+  .scale-axis {{ position: relative; height: 14px; margin-top: 8px; font-size: 10px; color: #555; font-family: 'SF Mono', Menlo, monospace; }}
+  .scale-axis span {{ position: absolute; transform: translateX(-50%); }}
+  .scale-axis span:first-child {{ transform: translateX(0); }}
+  .scale-axis span:last-child {{ transform: translateX(-100%); }}
+  .scale-legend {{ display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 4px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; }}
+  .scale-cash-label {{ color: #E84B5A88; }}
+  .scale-trim-label {{ color: #FF980088; text-align:center; }}
+  .scale-sized-label {{ color: #8BC34A88; text-align:center; }}
+  .scale-long-label {{ color: #4CAF5088; text-align:right; }}
+
+  .section-title {{
+    font-size: 19px; letter-spacing: -0.3px; color: #e0e0e0;
+    margin: 56px 0 14px; font-weight: 600; display: flex; align-items: center; gap: 14px;
+  }}
+  .step-num {{
+    display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; flex:0 0 30px;
+    background:#1a1a1a; border:1px solid #2a2a2a; color:#888; font-size:13px; font-weight:600;
+    border-radius:50%; font-family:'SF Mono', Menlo, monospace;
+  }}
+  .pillar-chip {{ display:inline-block; padding:2px 9px; border-radius:4px; font-size:10px; text-transform:uppercase; letter-spacing:1.5px; font-weight:600; margin-left:auto; }}
+  .pillar-chip.onchain {{ background: rgba(205,170,106,0.10); color:#cdaa6a; border:1px solid rgba(205,170,106,0.25); }}
+  .section-intro {{ color:#aaa; font-size:13px; line-height:1.55; margin:0 0 16px 0; }}
+  .section-intro strong {{ color:#ddd; }}
+
+  .pillars-grid {{ display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:36px; margin-bottom: 36px; padding-top: 26px; border-top: 1px solid #1a1a1a; }}
+  .pillar-card {{ background:#111; border:1px solid #222; border-radius:10px; padding:22px 26px; }}
+  .pillar-card-head {{ display:flex; align-items: baseline; justify-content: space-between; gap:16px; margin-bottom: 10px; }}
+  .pillar-name {{ font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #888; font-weight: 500; }}
+  .pillar-state {{ font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; }}
+  .pillar-score {{ font-size: 38px; font-weight: 600; line-height: 1; letter-spacing: -1px; margin-bottom: 12px; }}
+  .pillar-card p {{ color:#777; font-size: 13px; line-height:1.55; }}
+  .metric-list {{ list-style:none; margin:16px 0 0; padding:0; }}
+  .metric-list li {{ display:flex; justify-content:space-between; gap:16px; padding:8px 0; border-top:1px solid #1a1a1a; font-size:13px; }}
+  .metric-list span {{ color:#aaa; }}
+  .metric-list strong {{ color:#ddd; }}
+
+  .sub-grid {{ display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:16px; margin-bottom:36px; }}
+  .sub-card {{ background:#111; border:1px solid #222; border-radius:10px; padding:18px 20px; min-width:0; }}
+  .sub-card-top {{ display:flex; justify-content:space-between; gap:14px; align-items:flex-start; }}
+  .sub-eyebrow {{ font-size:10px; text-transform:uppercase; letter-spacing:1.4px; color:#555; font-weight:600; margin-bottom:5px; }}
+  .sub-card h3 {{ color:#ddd; font-size:16px; font-weight:600; letter-spacing:-0.2px; }}
+  .mini-chip {{ display:inline-block; padding:2px 8px; border-radius:4px; font-size:10px; text-transform:uppercase; letter-spacing:1px; color:#999; border:1px solid #2a2a2a; background:#161616; white-space:nowrap; }}
+  .mini-chip.warn {{ color:#f59e0b; border-color:#f59e0b44; background:#1a1100; }}
+  .sub-score {{ font-size:34px; font-weight:600; line-height:1; letter-spacing:-1px; margin:16px 0 4px; }}
+  .sub-state {{ font-size:11px; text-transform:uppercase; letter-spacing:1.2px; font-weight:600; margin-bottom:14px; }}
+  .sub-meta {{ display:grid; grid-template-columns: 94px 1fr; gap:7px 12px; font-size:12px; line-height:1.35; border-top:1px solid #1a1a1a; padding-top:13px; }}
+  .sub-meta dt {{ color:#555; }}
+  .sub-meta dd {{ color:#aaa; margin:0; }}
+  .sub-meta dd.hot {{ color:#f59e0b; }}
+
+  .mrmi-chart {{ background:#111; border:1px solid #222; border-radius:10px; padding:18px 24px 18px; margin-bottom:24px; }}
+  .mrmi-chart-header {{ display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:6px; }}
+  .mrmi-chart-header h3 {{ color:#ddd; font-size:16px; font-weight:600; display:inline-flex; align-items:center; gap:8px; }}
+  .mrmi-chart-subtitle {{ color:#777; font-size:13px; line-height:1.5; margin-bottom:12px; }}
+  .chart-container {{ position:relative; height:330px; width:100%; }}
+  .legend {{ font-size:12px; color:#888; margin-bottom:10px; }}
+  .legend-item {{ margin-right:14px; display:inline-flex; align-items:center; cursor:pointer; user-select:none; transition: opacity .15s, color .15s; }}
+  .legend-item:hover {{ color:#fff; }}
+  .legend-item.inactive {{ opacity:.4; color:#555; }}
+  .legend-dot {{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }}
+  .range-tabs {{ display:inline-flex; gap:2px; }}
+  .range-tabs button {{ background:#161616; border:1px solid #222; color:#777; font-size:11px; padding:4px 10px; border-radius:4px; cursor:pointer; font-family:inherit; font-weight:500; letter-spacing:.5px; }}
+  .range-tabs button:hover {{ color:#ccc; border-color:#333; }}
+  .range-tabs button.active {{ color:#fff; background:#1f1f1f; border-color:#333; }}
+  .chart-description {{ margin-top:18px; padding-top:16px; border-top:1px solid #1f1f1f; }}
+  .chart-description p {{ font-size:13px; color:#aaa; line-height:1.6; margin:0 0 10px 0; }}
+  .chart-description strong {{ color:#ddd; }}
+
+  .panel {{ background:#111; border:1px solid #222; border-radius:10px; padding:22px 26px; margin-bottom:24px; }}
+  .panel h3 {{ color:#ddd; font-size:16px; font-weight:600; margin-bottom:6px; }}
+  table {{ width:100%; border-collapse:collapse; margin-top:8px; }}
+  th {{ text-align:left; padding:10px 8px; border-bottom:1px solid #222; color:#555; font-size:10px; text-transform:uppercase; letter-spacing:1px; font-weight:600; }}
+  th:first-child {{ padding-left:0; }}
+  td {{ padding:12px 8px; border-bottom:1px solid #1a1a1a; font-size:13px; vertical-align:top; }}
+  td:first-child {{ padding-left:0; }}
+  tr:last-child td {{ border-bottom:none; }}
+  .ind-name {{ color:#ddd; font-weight:500; }}
+
+  details.drivers {{ background:#111; border:1px solid #222; border-radius:10px; padding:0; margin-bottom:12px; overflow:hidden; }}
+  details.drivers > summary {{ list-style:none; padding:14px 24px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; color:#aaa; font-size:12px; text-transform:uppercase; letter-spacing:1.5px; font-weight:600; }}
+  details.drivers > summary::-webkit-details-marker {{ display:none; }}
+  details.drivers > summary::after {{ content:'▾'; color:#555; font-size:12px; transition: transform .15s; }}
+  details.drivers[open] > summary::after {{ transform: rotate(180deg); }}
+  details.drivers > summary:hover {{ color:#fff; }}
+  .drivers-body {{ padding:0 24px 18px; }}
+  .details-copy {{ font-size:13px; color:#aaa; line-height:1.6; margin:12px 0; }}
+  .formula {{ font-family:'SF Mono', Menlo, monospace; font-size:12px; color:#ccc; background:#0e0e0e; border:1px solid #1f1f1f; border-radius:6px; padding:12px 14px; white-space:pre-wrap; }}
+  .suggest {{ margin-left:10px; font-size:11px; text-transform:none; letter-spacing:0; font-weight:500; }}
+  code {{ font-family:'SF Mono', Menlo, monospace; color:#ddd; background:#171717; padding:1px 4px; border-radius:3px; }}
+
+  .info-icon {{ color:#555; cursor:help; display:inline-flex; vertical-align:middle; margin-left:4px; transition:color .15s; position:relative; }}
+  .info-icon:hover {{ color:#ccc; }}
+  .info-icon .tip-pop {{ position:absolute; left:100%; top:50%; transform:translateY(-50%); margin-left:8px; z-index:50; width:420px; background:#1c1c1c; color:#ddd; font-size:12px; padding:10px 14px; border:1px solid #333; border-radius:6px; line-height:1.5; opacity:0; pointer-events:none; transition:opacity .15s; box-shadow:0 4px 12px rgba(0,0,0,.5); font-weight:400; text-transform:none; letter-spacing:normal; }}
+  .info-icon:hover .tip-pop {{ opacity:1; }}
+  .info-icon .tip-pop strong {{ color:#fff; }}
+  .info-icon .tip-pop em {{ color:#cdaa6a; font-style:normal; }}
+
+  footer {{ margin:44px 0 0; color:#666; font-size:12px; border-top:1px solid #1a1a1a; padding-top:16px; line-height:1.7; }}
+
+  @media (max-width: 920px) {{
+    body {{ padding:20px 18px 40px; }}
+    .meta-bar {{ flex-direction:column; gap:6px; }}
+    .meta-bar .meta-right {{ justify-content:flex-start; }}
+    .hero-grid, .pillars-grid, .sub-grid {{ grid-template-columns:1fr; gap:22px; }}
+    .hero-pillars {{ border-left:none; border-top:1px solid #1f1f1f; padding:20px 0 0; }}
+    .hero-row {{ flex-direction:column; align-items:flex-start; gap:10px; }}
+    .hero-value {{ font-size:64px; }}
+    .chart-container {{ height:280px; }}
+  }}
 </style>
 </head>
 <body>
-  <header>
-    <h1>onchain-index — BTC regime score</h1>
-    <div class="muted">PI_score = Valuation + Holder Behavior. Complementary BTC lenses with measured overlap, not independent axes.</div>
-    <div class="status-row">
-      <div class="stat"><span class="label">As-of data</span><span class="value">{latest.date.strftime('%Y-%m-%d')}</span></div>
-      <div class="stat"><span class="label">Last refresh</span><span class="value">{generated_at.strftime('%Y-%m-%d %H:%M UTC')}</span></div>
-      <div class="stat"><span class="label">Status</span><span class="status-badge {status_class}">{status_label}</span></div>
-      <div class="stat"><span class="label">Epoch</span><span class="value">{escape(latest.epoch)} — on-chain + DAT + ETF</span></div>
+
+<div class="meta-bar">
+  <span class="brand">MILK ROAD · ONCHAIN INDEX</span>
+  <span class="meta-right">
+    <span>data {latest.date.strftime('%Y-%m-%d')}</span>
+    <span>built {generated_at.strftime('%Y-%m-%d %H:%M UTC')}</span>
+    <span>epoch {escape(latest.epoch)}</span>
+    <span><i class="status-dot {status_class}"></i>{status_label}</span>
+  </span>
+</div>
+
+<header class="hero">
+  <div class="hero-eyebrow">BTC-specific regime score · {latest.date.strftime('%Y-%m-%d')}</div>
+  <div class="hero-grid">
+    <div class="hero-main">
+      <div class="hero-row">
+        <div class="hero-value mono" style="color:{tier_color};">{_format_score(latest.pi)}</div>
+        <div class="hero-action">
+          <div class="hero-action-label" style="color:{tier_color};">{tier_label} · {latest.allocation_pct:.0f}% long</div>
+          <div class="hero-action-sub">{tier_subtitle}</div>
+        </div>
+      </div>
+      {scale_html}
     </div>
-  </header>
 
-  <section class="hero">
-    <article class="card">
-      <span class="label">Current PI_score</span>
-      <div class="big-score">{_format_score(latest.pi)}</div>
-      <div class="muted">Valuation {_format_score(latest.valuation)} + Holder Behavior {_format_score(latest.holder_behavior)}</div>
-    </article>
-    <article class="card"><span class="label">Tier</span><p><span class="tier-badge">{escape(latest.tier.upper())}</span></p><div class="muted">Fixed thresholds: -1, 0, +1</div></article>
-    <article class="card"><span class="label">Allocation</span><div class="score">{latest.allocation_pct:.0f}%</div><div class="muted">Tier-driven BTC exposure</div></article>
-    <article class="card"><span class="label">BTC spot</span><div class="score">${latest.btc_price:,.0f}</div><div class="muted">Last data point used: {latest.date.strftime('%Y-%m-%d')}</div></article>
-  </section>
+    <aside class="hero-pillars">
+      <div class="hero-pillars-title">What's behind it</div>
+      <div class="hero-pillar">
+        <span class="hero-pillar-name">Valuation</span>
+        <span class="hero-pillar-right">
+          <span class="hero-pillar-state" style="color:{_state_color(latest.valuation)};">{_state_label(latest.valuation)}</span>
+          <span class="hero-pillar-value mono">{_format_score(latest.valuation)}</span>
+        </span>
+      </div>
+      <div class="hero-pillar">
+        <span class="hero-pillar-name">Holder Behavior</span>
+        <span class="hero-pillar-right">
+          <span class="hero-pillar-state" style="color:{_state_color(latest.holder_behavior)};">{_state_label(latest.holder_behavior)}</span>
+          <span class="hero-pillar-value mono">{_format_score(latest.holder_behavior)}</span>
+        </span>
+      </div>
+      <div class="hero-pillar">
+        <span class="hero-pillar-name">BTC spot</span>
+        <span class="hero-pillar-right"><span class="hero-pillar-value mono">${latest.btc_price:,.0f}</span></span>
+      </div>
+      <div class="hero-pillar-note">PI_score = Valuation + Holder Behavior. Two complementary BTC lenses, partially correlated (0.631), not independent axes.</div>
+    </aside>
+  </div>
+  <p class="hero-story">Macro-framework reads the outside risk-asset regime. This page now uses the same product skeleton for BTC’s inside view: realized-cost valuation plus what meaningful holder cohorts are doing across on-chain, DAT and ETF channels.</p>
+</header>
 
-  <section class="grid">
-    {_dimension_card('Valuation', latest.valuation, valuation_items, 'Mean of available z-scored valuation constituents; partially overlaps Holder Behavior (Pearson 0.631 in Phase D).')}
-    {_dimension_card('Holder Behavior', latest.holder_behavior, holder_items, 'Epoch-aware mean of three holder cohorts; a complementary cross-check, not an independent axis.')}
-  </section>
+<div class="section-title"><span class="step-num">1</span>What's behind it<span class="pillar-chip onchain">Two BTC lenses</span></div>
+<p class="section-intro"><strong>Valuation × Holder Behavior.</strong> The score is additive, but the dashboard keeps the diagnosis visible: valuation says where price sits relative to realized cost basis; holder behavior says whether meaningful cohorts are adding or shedding conviction.</p>
+<section class="pillars-grid">
+  {_dimension_card('Valuation', latest.valuation, valuation_items, 'Mean of available z-scored valuation constituents; strongest BTC-specific multi-month lens.')}
+  {_dimension_card('Holder Behavior', latest.holder_behavior, holder_items, 'Epoch-aware mean of holder cohorts; useful confirmation/contradiction against valuation.')}
+</section>
 
-  <section>
-    <h2>Holder sub-cohorts</h2>
-    <div class="cohort-grid">{_cohort_cards(components, latest)}</div>
-  </section>
+<div class="section-title"><span class="step-num">2</span>Holder cohort breakdown<span class="pillar-chip onchain">Composition visible</span></div>
+<p class="section-intro">Holder Behavior is equal-weighted across available cohorts in the current epoch. Exchange flow is intentionally absent after the Phase E canonical-rule gate failed.</p>
+<section class="sub-grid">
+  {_cohort_cards(components, latest)}
+</section>
 
-  <section class="card chart-card">
-    <h2>Historical chart</h2>
-    <div class="range-buttons" aria-label="Date range">
-      <button data-range="365">1y</button><button data-range="1095">3y</button><button data-range="1825">5y</button><button data-range="all" class="active">all</button>
+<div class="section-title"><span class="step-num">3</span>How the index has evolved</div>
+<div class="mrmi-chart">
+  <div class="mrmi-chart-header">
+    <h3>PI_score history
+      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>Reading the chart:</strong> white line is PI_score on the left axis. Purple line is BTC spot on a log right axis. Background bands show fixed tier thresholds: Cash &lt; -1, Trim -1 to 0, Sized 0 to +1, Strong ≥ +1. Cycle markers are Phase C reference points.</span></span>
+    </h3>
+    <div class="range-tabs">
+      <button data-range="1y" class="active">1Y</button>
+      <button data-range="3y">3Y</button>
+      <button data-range="5y">5Y</button>
+      <button data-range="all">ALL</button>
     </div>
-    <div class="chart-wrap"><canvas id="historyChart"></canvas></div>
-    <p class="muted">Gray line is BTC log price on the right axis. PI_score is on the left axis with tier bands: Cash, Trim, Sized, Strong. Markers show Phase C cycle reference points.</p>
-  </section>
+  </div>
+  <p class="mrmi-chart-subtitle">BTC log price overlay + PI_score line with the same dark chart treatment and threshold-band language as macro-framework.</p>
+  <div class="legend">
+    <span class="legend-item" data-series="pi"><span class="legend-dot" style="background:#fff"></span>PI_score</span>
+    <span class="legend-item" data-series="btc"><span class="legend-dot" style="background:#A78BFA"></span>BTC log price</span>
+    <span class="legend-item" data-series="markers"><span class="legend-dot" style="background:#cdaa6a"></span>Cycle references</span>
+  </div>
+  <div class="chart-container"><canvas id="historyChart"></canvas></div>
+  <div class="chart-description"><p><strong>Decision rule:</strong> PI_score &lt; -1 → Cash / 0%; -1 to 0 → Trim / 50%; 0 to +1 → Sized / 75%; ≥ +1 → Strong / 100%.</p></div>
+</div>
 
-  <section class="card">
-    <h2>Walk-forward backtest</h2>
-    {_walk_forward_table(walk_forward_rows)}
-  </section>
+<div class="section-title"><span class="step-num">4</span>Walk-forward backtest</div>
+<section class="panel">
+  <h3>Tiered sizing by BTC cycle</h3>
+  <p class="mrmi-chart-subtitle">Same Phase C table, restyled into the macro-framework panel language. No composite math changed in this rebuild.</p>
+  {_walk_forward_table(walk_forward_rows)}
+</section>
 
-  <section>
-    <h2>Iteration surface</h2>
-    <details open>
-      <summary>Composite formulas {_edit_link('src/onchain_index/composite.py')}</summary>
-      <div class="details-body">
-        <div class="formula">Valuation = mean_available(z(STH MVRV), z(RHODL), z(Puell Multiple), z(MVRV-Z))\nHolder Behavior = mean_available(on-chain, corporate DAT, institutional ETF)\nPI_score = Valuation + Holder Behavior</div>
-        <p>The renderer imports the production composite functions directly; there is no dashboard-only signal path.</p>
-      </div>
-    </details>
+<div class="section-title"><span class="step-num">5</span>Iteration surface</div>
+<section>
+  <details class="drivers" open>
+    <summary><span>Composite formulas {_edit_link('src/onchain_index/composite.py')}</span></summary>
+    <div class="drivers-body">
+      <div class="formula">Valuation = mean_available(z(STH MVRV), z(RHODL), z(Puell Multiple), z(MVRV-Z))\nHolder Behavior = mean_available(on-chain, corporate DAT, institutional ETF)\nPI_score = Valuation + Holder Behavior</div>
+      <p class="details-copy">The renderer imports production composite functions directly; there is no dashboard-only signal path.</p>
+    </div>
+  </details>
 
-    <details id="indicator-slate">
-      <summary>Indicator slate {_edit_link('reports/phase-b-indicator-audit-2026-05-20.md', 'Suggest edit Phase B')} {_edit_link('reports/phase-c-composite-2026-05-20.md', 'Suggest edit Phase C')}</summary>
-      <div class="details-body">{_indicator_table(indicator_rows)}</div>
-    </details>
+  <details class="drivers" id="indicator-slate">
+    <summary><span>Indicator slate {_edit_link('reports/phase-b-indicator-audit-2026-05-20.md', 'Suggest edit Phase B')} {_edit_link('reports/phase-c-composite-2026-05-20.md', 'Suggest edit Phase C')}</span></summary>
+    <div class="drivers-body">{_indicator_table(indicator_rows)}</div>
+  </details>
 
-    <details>
-      <summary>Tier thresholds {_edit_link('src/onchain_index/composite.py')}</summary>
-      <div class="details-body">
-        <table><thead><tr><th>PI_score bucket</th><th>Tier</th><th>Allocation</th></tr></thead><tbody>
-          <tr><td>&lt; -1.0</td><td>Cash</td><td>0%</td></tr>
-          <tr><td>[-1.0, 0.0)</td><td>Trim</td><td>50%</td></tr>
-          <tr><td>[0.0, +1.0)</td><td>Sized</td><td>75%</td></tr>
-          <tr><td>&gt;= +1.0</td><td>Strong</td><td>100%</td></tr>
-        </tbody></table>
-      </div>
-    </details>
+  <details class="drivers">
+    <summary><span>Tier thresholds {_edit_link('src/onchain_index/composite.py')}</span></summary>
+    <div class="drivers-body">
+      <table><thead><tr><th>PI_score bucket</th><th>Tier</th><th>Allocation</th></tr></thead><tbody>
+        <tr><td class="mono">&lt; -1.0</td><td>Cash</td><td class="mono">0%</td></tr>
+        <tr><td class="mono">[-1.0, 0.0)</td><td>Trim</td><td class="mono">50%</td></tr>
+        <tr><td class="mono">[0.0, +1.0)</td><td>Sized</td><td class="mono">75%</td></tr>
+        <tr><td class="mono">&gt;= +1.0</td><td>Strong</td><td class="mono">100%</td></tr>
+      </tbody></table>
+    </div>
+  </details>
 
-    <details>
-      <summary>Walk-forward methodology {_edit_link('src/onchain_index/backtest.py')}</summary>
-      <div class="details-body">
-        <p>Backtests use BTC daily returns from BMP <code>btc_price</code>, apply the tier allocation to each day's return, and evaluate fixed cycle windows: 2014-2017, 2018-2021, 2022-2024, and 2025-now. Composite inputs are lagged through the rolling z-score helper, so a score dated T uses source data through T-1.</p>
-      </div>
-    </details>
+  <details class="drivers">
+    <summary><span>Walk-forward methodology {_edit_link('src/onchain_index/backtest.py')}</span></summary>
+    <div class="drivers-body"><p class="details-copy">Backtests use BTC daily returns from BMP <code>btc_price</code>, apply the tier allocation to each day's return, and evaluate fixed cycle windows: 2014-2017, 2018-2021, 2022-2024, and 2025-now. Composite inputs are lagged through the rolling z-score helper, so a score dated T uses source data through T-1.</p></div>
+  </details>
 
-    <details>
-      <summary>Open questions {_edit_link('docs/theory.md')}</summary>
-      <div class="details-body">
-        <ul>
-          <li><strong>Sizing floor:</strong> v1 default locked at 0% Cash; revisit only as a portfolio-policy choice.</li>
-          <li><strong>Tier naming:</strong> v1 labels locked as Strong / Sized / Trim / Cash.</li>
-          <li><strong>Threshold method:</strong> v1 uses fixed (-1, 0, +1); future work can compare rolling percentiles or transition-calibrated thresholds.</li>
-          <li><strong>Diagnostic surface:</strong> keep holder sub-cohorts prominent so composition drift is visible.</li>
-        </ul>
-      </div>
-    </details>
-  </section>
+  <details class="drivers">
+    <summary><span>Open questions {_edit_link('docs/theory.md')}</span></summary>
+    <div class="drivers-body">
+      <table><thead><tr><th>Question</th><th>Current v1 posture</th></tr></thead><tbody>
+        <tr><td>Sizing floor</td><td>0% Cash by default; revisit only as a portfolio-policy choice.</td></tr>
+        <tr><td>Tier naming</td><td>Strong / Sized / Trim / Cash.</td></tr>
+        <tr><td>Threshold method</td><td>Fixed (-1, 0, +1); future work can compare rolling percentiles or transition-calibrated thresholds.</td></tr>
+        <tr><td>Diagnostic surface</td><td>Keep holder sub-cohorts prominent so composition drift is visible.</td></tr>
+      </tbody></table>
+    </div>
+  </details>
+</section>
 
-  <footer>
-    Repo: <a href="{PROJECT_REPO_URL}">{PROJECT_REPO_URL}</a> · Last commit: {escape(sha)} {escape(message)} · Last refresh UTC: {generated_at.strftime('%Y-%m-%d %H:%M:%S')} · Theory doc: {THEORY_VERSION}
-  </footer>
+<footer>
+  Repo: <a href="{PROJECT_REPO_URL}">{PROJECT_REPO_URL}</a> · Last commit: <span class="mono">{escape(sha)}</span> {escape(message)} · Last refresh UTC: <span class="mono">{generated_at.strftime('%Y-%m-%d %H:%M:%S')}</span> · Theory doc: {THEORY_VERSION}
+</footer>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const ALL_POINTS = {chart_json};
 const MARKERS = {markers_json};
-const ctx = document.getElementById('historyChart');
-let chart;
-function slicePoints(range) {{
-  if (range === 'all') return ALL_POINTS;
-  return ALL_POINTS.slice(Math.max(ALL_POINTS.length - Number(range), 0));
+const RANGE_DAYS = {{ '1y': 365, '3y': 1095, '5y': 1825, 'all': 0 }};
+const visibleSeries = {{ pi: true, btc: true, markers: true }};
+let chart = null;
+
+function slicePoints(rangeKey) {{
+  const n = RANGE_DAYS[rangeKey] || 0;
+  return n > 0 ? ALL_POINTS.slice(Math.max(ALL_POINTS.length - n, 0)) : ALL_POINTS.slice();
 }}
 function markerPoints(points) {{
   const dates = new Set(points.map(p => p.date));
   return MARKERS.filter(m => dates.has(m.date) && m.pi !== null).map(m => ({{x: m.date, y: m.pi, label: m.label}}));
 }}
-function render(range) {{
-  const points = slicePoints(range);
-  const labels = points.map(p => p.date);
-  const data = {{
-    labels,
-    datasets: [
-      {{label: 'PI_score', data: points.map(p => p.pi), borderColor: '#111827', borderWidth: 2, pointRadius: 0, yAxisID: 'y'}},
-      {{label: 'BTC log price', data: points.map(p => p.price), borderColor: 'rgba(107,114,128,.45)', borderWidth: 1.5, pointRadius: 0, yAxisID: 'y1'}},
-      {{type: 'scatter', label: 'Cycle references', data: markerPoints(points), parsing: false, backgroundColor: '#991b1b', borderColor: '#991b1b', pointRadius: 4, yAxisID: 'y'}}
-    ]
-  }};
-  const options = {{
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: {{mode: 'index', intersect: false}},
-    scales: {{
-      x: {{ticks: {{maxTicksLimit: 10}}}},
-      y: {{min: -6, max: 6, title: {{display: true, text: 'PI_score'}}}},
-      y1: {{type: 'logarithmic', position: 'right', grid: {{drawOnChartArea: false}}, title: {{display: true, text: 'BTC price'}}}}
-    }},
-    plugins: {{
-      legend: {{display: true}}
-    }}
-  }};
-  if (chart) chart.destroy();
-  chart = new Chart(ctx, {{type: 'line', data, options}});
+function buildDatasets(points) {{
+  const datasets = [];
+  if (visibleSeries.btc) datasets.push({{ label: 'BTC log price', data: points.map(p => p.price), borderColor: '#A78BFA', borderWidth: 1.5, pointRadius: 0, tension: 0.1, spanGaps: true, yAxisID: 'yPrice', order: 2 }});
+  if (visibleSeries.pi) datasets.push({{ label: 'PI_score', data: points.map(p => p.pi), borderColor: '#ffffff', borderWidth: 2.0, pointRadius: 0, tension: 0.1, spanGaps: true, yAxisID: 'y', order: 0 }});
+  if (visibleSeries.markers) datasets.push({{ type: 'scatter', label: 'Cycle references', data: markerPoints(points), parsing: false, backgroundColor: '#cdaa6a', borderColor: '#0a0a0a', borderWidth: 1, pointRadius: 4, yAxisID: 'y', order: -1 }});
+  return datasets;
 }}
-document.querySelectorAll('.range-buttons button').forEach(button => {{
+function render(rangeKey) {{
+  const points = slicePoints(rangeKey);
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById('historyChart'), {{
+    type: 'line',
+    data: {{ labels: points.map(p => p.date), datasets: buildDatasets(points) }},
+    options: {{
+      responsive: true, maintainAspectRatio: false, animation: false,
+      interaction: {{ mode: 'index', intersect: false }},
+      plugins: {{
+        legend: {{ display: false }},
+        tooltip: {{
+          backgroundColor: '#1a1a1a', borderColor: '#333', borderWidth: 1,
+          titleColor: '#999', bodyColor: '#e0e0e0', titleFont: {{ size: 11 }},
+          bodyFont: {{ size: 11, family: "'SF Mono', Menlo, monospace" }}, padding: 8,
+          callbacks: {{
+            label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y.toFixed(2) : '—'),
+            afterLabel: ctx => ctx.raw && ctx.raw.label ? ctx.raw.label : '',
+          }},
+        }},
+        annotation: {{ annotations: {{
+          cash: {{ type: 'box', yMin: -6, yMax: -1, backgroundColor: 'rgba(232,75,90,0.10)', borderWidth: 0, scaleID: 'y' }},
+          trim: {{ type: 'box', yMin: -1, yMax: 0, backgroundColor: 'rgba(255,152,0,0.07)', borderWidth: 0, scaleID: 'y' }},
+          sized: {{ type: 'box', yMin: 0, yMax: 1, backgroundColor: 'rgba(139,195,74,0.06)', borderWidth: 0, scaleID: 'y' }},
+          strong: {{ type: 'box', yMin: 1, yMax: 6, backgroundColor: 'rgba(76,175,80,0.09)', borderWidth: 0, scaleID: 'y' }},
+          zero: {{ type: 'line', yMin: 0, yMax: 0, borderColor: '#444', borderWidth: 1, scaleID: 'y' }},
+          minusOne: {{ type: 'line', yMin: -1, yMax: -1, borderColor: '#333', borderWidth: 1, borderDash: [4,3], scaleID: 'y' }},
+          plusOne: {{ type: 'line', yMin: 1, yMax: 1, borderColor: '#333', borderWidth: 1, borderDash: [4,3], scaleID: 'y' }},
+        }} }},
+      }},
+      scales: {{
+        x: {{ type: 'category', ticks: {{ color: '#555', font: {{ size: 10 }}, maxTicksLimit: 12, maxRotation: 0 }}, grid: {{ display: false }} }},
+        y: {{ position: 'left', min: -6, max: 6, ticks: {{ color: '#555', font: {{ size: 10, family: "'SF Mono', Menlo, monospace" }}, maxTicksLimit: 7 }}, grid: {{ color: '#1a1a1a' }} }},
+        yPrice: {{ display: visibleSeries.btc, type: 'logarithmic', position: 'right', ticks: {{ color: '#444', font: {{ size: 9, family: "'SF Mono', Menlo, monospace" }}, maxTicksLimit: 5 }}, grid: {{ display: false }} }},
+      }},
+    }},
+  }});
+}}
+
+document.querySelectorAll('.range-tabs button').forEach(button => {{
   button.addEventListener('click', () => {{
-    document.querySelectorAll('.range-buttons button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.range-tabs button').forEach(b => b.classList.remove('active'));
     button.classList.add('active');
-    render(button.dataset.range);
+    render(button.dataset.range || '1y');
   }});
 }});
-render('all');
+document.querySelectorAll('.legend-item').forEach(item => {{
+  item.addEventListener('click', () => {{
+    const key = item.dataset.series;
+    visibleSeries[key] = !visibleSeries[key];
+    item.classList.toggle('inactive', !visibleSeries[key]);
+    const active = document.querySelector('.range-tabs button.active');
+    render((active && active.dataset.range) || '1y');
+  }});
+}});
+render('1y');
 </script>
 </body>
 </html>
 """
-
 
 def _write_status(paths: DashboardPaths, payload: dict[str, Any]) -> None:
     paths.status_json.parent.mkdir(parents=True, exist_ok=True)
