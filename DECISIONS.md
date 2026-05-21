@@ -11,3 +11,7 @@ Reason: April 2026 prototype at `~/Projects/on-chain-index-archive/` exists but 
 ## 2026-05-20 — Secret relocation created, git-crypt tracking blocked by ops state
 
 Reason: Runtime secret file exists at `~/ops/secrets/onchain-index/.env`, but `~/ops/.gitignore` currently ignores `secrets/**` until git-crypt phase 2 and no `git-crypt` command/config is available in this environment. Do not commit the plaintext secret to force tracking; finish ops git-crypt setup separately.
+
+## 2026-05-21 — LAN HTTP serve on :8002 + webloc shortcut shipped (Phase C.5.1)
+
+Reason: Pattern mirrors macro-framework's :8001 setup; consolidated port allocation in repo_map.md.

@@ -25,6 +25,7 @@
 - Fetch data: `uv run python -m onchain_index.data`
 - Force fresh data: `uv run python -m onchain_index.data --no-cache`
 - Dry-run entry point: `uv run python -m onchain_index.data --dry-run`
+- LAN dashboard serve: `com.milkroad.onchain-index-serve` exposes `outputs/dashboard.html` at `http://Felixs-Mac-mini.local:8002/dashboard.html`.
 
 ## Conventions
 
