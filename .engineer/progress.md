@@ -61,3 +61,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: Dashboard/report wording should avoid claiming independent dimensions; consider adding rolling correlation panel after DAT concentration rebuild.
+
+## 2026-05-21T10:22:14Z — Phase E exchange-flow gate stopped
+- What: Found Coin Metrics Community as a free daily BTC exchange inflow/outflow source, ran the canonical 30d net-flow z-score tiered audit, and stopped because canonical exchange flow was negative in 2/4 cycles while the inverted sign also failed.
+- Files touched: reports/phase-e-exchange-flow-2026-05-21.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: Exchange-flow data availability is solved, but the locked Phase B/C rule fails; do not integrate without a new Martin-approved thesis/rule change.
