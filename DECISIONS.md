@@ -15,3 +15,7 @@ Reason: Runtime secret file exists at `~/ops/secrets/onchain-index/.env`, but `~
 ## 2026-05-21 — LAN HTTP serve on :8002 + webloc shortcut shipped (Phase C.5.1)
 
 Reason: Pattern mirrors macro-framework's :8001 setup; consolidated port allocation in repo_map.md.
+
+## 2026-05-21 — Auto-refresh wired via launchd
+
+Reason: Auto-refresh wired via launchd Mon–Fri 22:30 CEST, mirroring macro-framework's pattern. See `scripts/com.milkroad.onchain-index-refresh-daily.plist`.

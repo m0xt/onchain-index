@@ -82,3 +82,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: none
+
+## 2026-05-21T10:56:45Z — Nightly dashboard refresh launchd wiring
+- What: Added macro-pattern `scripts/refresh.sh`, weekday 22:30 Prague refresh plist, recovery runbook, launchd install/smoke verification, and docs/decision notes for onchain dashboard auto-refresh.
+- Files touched: scripts/refresh.sh, scripts/com.milkroad.onchain-index-refresh-daily.plist, agent_docs/cron_failure_recovery.md, AGENTS.md, DECISIONS.md, docs/index.html, outputs/dashboard.html, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: none
