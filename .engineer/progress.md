@@ -33,3 +33,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: Phase C.5 dashboard surface; exchange-flow data remains missing and Coinbase Premium is not a valid substitute.
+
+## 2026-05-21T08:50:26Z — Phase C.5 dashboard iteration surface
+- What: Added `onchain_index.build` to refresh/cache data, render the single-page PI_score dashboard/iteration surface, mirror it to `outputs/dashboard.html`, and write `.cache/status.json`; added build smoke/status tests.
+- Files touched: src/onchain_index/build.py, tests/test_build.py, docs/index.html, outputs/dashboard.html, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: Review dashboard layout with Martin; launchd/cron wiring intentionally deferred.
