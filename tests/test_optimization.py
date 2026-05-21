@@ -12,6 +12,9 @@ from onchain_index.research.optimization.optimize_constituent_weights import (
     run_optimization as run_step3,
 )
 from onchain_index.research.optimization.optimize_thresholds import run_optimization as run_step2
+from onchain_index.research.optimization.optimize_tier_structure import (
+    run_optimization as run_tier_structure,
+)
 
 
 def _optimization_sample_frame() -> pd.DataFrame:
@@ -79,3 +82,21 @@ def test_step3_optimizer_writes_expected_json_shape(tmp_path) -> None:
     saved = _assert_optimizer_json(output, "valuation_constituent_weights")
     assert saved["grid_results"]
     assert "max_abs_oos_alpha_delta_pp" in saved["perturbation"]
+
+
+def test_tier_structure_optimizer_writes_expected_json_shape(tmp_path) -> None:
+    output = tmp_path / "tier_structure.json"
+
+    payload = run_tier_structure(_optimization_sample_frame(), output_path=output)
+
+    assert payload["step"] == "tier_structure_parsimony"
+    saved = json.loads(output.read_text())
+    assert len(saved["results"]) == 4
+    assert [row["candidate"]["id"] for row in saved["results"]] == [
+        "2_tier",
+        "3_tier",
+        "4_tier",
+        "5_tier",
+    ]
+    assert "delta_vs_4tier_pp" in saved["results"][0]
+    assert saved["recommendation"]["action"]

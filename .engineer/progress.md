@@ -103,3 +103,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: Martin review of the rebuilt structure; no macro-framework changes made.
+
+## 2026-05-21T11:54:54Z — Phase F tier-structure parsimony audit
+- What: Added fixed 2/3/4/5-tier PI_score comparison CLI, wrote structured JSON output, and reported that binary 2-tier beats the 4-tier baseline on OOS median alpha while 5-tier does not clear the +1pp bar.
+- Files touched: src/onchain_index/research/optimization/optimize_tier_structure.py, tests/test_optimization.py, reports/phase-f-tier-structure-2026-05-21.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: Production tier simplification decision remains separate; no dashboard/composite change made.
