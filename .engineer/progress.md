@@ -131,3 +131,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: none
+
+## 2026-05-27T11:17:27Z — Docs LAN serve on 8012
+- What: Added a launchd docs server for `docs/index.html` on port 8012, installed/loaded the LaunchAgent, and smoke-tested the local docs URL with HTTP 200.
+- Files touched: scripts/com.milkroad.onchain-index-docs-serve.plist, AGENTS.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: none

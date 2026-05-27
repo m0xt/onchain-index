@@ -32,6 +32,7 @@ Milk Road on-chain index is the product-facing BTC regime dashboard; `MROI` rema
 - Force dashboard refresh: `uv run python -m onchain_index.build --no-cache`
 - Cron path: `scripts/refresh.sh` (LaunchAgent `com.milkroad.onchain-refresh-daily`, Mon–Fri 22:30 Prague, logs to `.cache/launchd-refresh-daily.log` and `.cache/refresh.log`.)
 - LAN dashboard serve: `com.milkroad.onchain-index-serve` exposes `outputs/dashboard.html` at `http://Felixs-Mac-mini.local:8002/dashboard.html`.
+- LAN docs serve: `com.milkroad.onchain-index-docs-serve` exposes `docs/index.html` at `http://Felixs-Mac-mini.local:8012/index.html`.
 
 ## Conventions
 
