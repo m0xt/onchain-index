@@ -89,6 +89,7 @@ def test_index_page_imports_live_iteration_constants(tmp_path) -> None:
     from onchain_index.build import THEORY_VERSION
     from onchain_index.build_index_page import build_index_page
     from onchain_index.composite import MROI_THRESHOLD, TIER_PCT, VALUATION_CONSTITUENTS
+    from onchain_index.cost import COST_ESTIMATES, MODEL_PRICES_USD_PER_MTOK
     from onchain_index.data import BMP_BASE, START_DATE
 
     output_root = tmp_path / "site"
@@ -117,3 +118,9 @@ def test_index_page_imports_live_iteration_constants(tmp_path) -> None:
     assert BMP_BASE in html
     assert START_DATE in html
     assert THEORY_VERSION in html
+    assert "Estimated weekly Claude spend" in html
+    assert "$0.00 / week" in html
+    assert "Phase C composite-design" in html
+    assert "cost.py" in html
+    assert COST_ESTIMATES == []
+    assert MODEL_PRICES_USD_PER_MTOK["claude-haiku-4-5-20251001"] == (0.80, 4.00)

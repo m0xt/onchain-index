@@ -45,6 +45,7 @@ from onchain_index.composite import (
     TIER_PCT,
     VALUATION_CONSTITUENTS,
 )
+from onchain_index.cost import COST_ESTIMATES, MODEL_PRICES_USD_PER_MTOK
 from onchain_index.data import (
     BINANCE_KLINES_URL,
     BMP_BASE,
@@ -66,10 +67,12 @@ STATUS_FILE = PROJECT_ROOT / ".cache" / "status.json"
 SOURCE_COMPOSITE = "src/onchain_index/composite.py"
 SOURCE_BUILD = "src/onchain_index/build.py"
 SOURCE_DATA = "src/onchain_index/data.py"
+SOURCE_COST = "src/onchain_index/cost.py"
 SOURCE_BACKTEST = "src/onchain_index/backtest.py"
 SOURCE_REFRESH = "scripts/refresh.sh"
 SOURCE_ARCHITECTURE = "docs/architecture.md"
 SOURCE_THEORY = "docs/theory.md"
+ANTHROPIC_PRICING_AS_OF = "2026-05-27"
 
 
 CSS = """
@@ -222,6 +225,29 @@ def render_table(headers: list[str], rows: list[list[str]]) -> str:
         "<tr>" + "".join(f"<td>{cell}</td>" for cell in row) + "</tr>" for row in rows
     )
     return f"<table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>"
+
+
+def _estimate_float(row: dict[str, object], key: str) -> float:
+    value = row[key]
+    if isinstance(value, int | float | str):
+        return float(value)
+    raise TypeError(f"cost estimate {key} must be numeric")
+
+
+def _cost_usd_per_week(row: dict[str, object]) -> float:
+    model = str(row["model"])
+    input_price, output_price = MODEL_PRICES_USD_PER_MTOK[model]
+    calls = _estimate_float(row, "calls_per_week")
+    tokens_in = _estimate_float(row, "tokens_in")
+    tokens_out = _estimate_float(row, "tokens_out")
+    return calls * ((tokens_in * input_price) + (tokens_out * output_price)) / 1_000_000
+
+
+def _model_short_name(model: str) -> str:
+    for name in ("haiku", "sonnet", "opus"):
+        if name in model:
+            return name.title()
+    return model
 
 
 def _load_status(output_root: Path) -> dict[str, str]:
@@ -392,6 +418,50 @@ def render_data_card() -> str:
       </article>"""
 
 
+def render_cost_card() -> str:
+    rows = []
+    total = 0.0
+    for estimate in COST_ESTIMATES:
+        weekly_cost = _cost_usd_per_week(estimate)
+        total += weekly_cost
+        model = str(estimate["model"])
+        rows.append(
+            [
+                f'<code>{esc(estimate["site"])}</code>',
+                esc(_model_short_name(model)),
+                esc(f'{_estimate_float(estimate, "calls_per_week"):,.0f}'),
+                esc(f'{_estimate_float(estimate, "tokens_in"):,.0f}'),
+                esc(f'{_estimate_float(estimate, "tokens_out"):,.0f}'),
+                esc(f'${weekly_cost:,.2f}'),
+            ]
+        )
+
+    if rows:
+        table = render_table(
+            ["Site", "Model", "Calls / week", "Est in", "Est out", "Est $ / week"],
+            rows,
+        )
+        body_note = ""
+    else:
+        table = ""
+        body_note = '<p class="hint">Phase A has no Claude call sites, so the estimate is zero. Phase C composite-design will populate <code>cost.py</code> when Claude calls land.</p>'
+
+    return f"""
+      <article class="card wide" style="--accent: #06b6d4">
+        <div class="card-top"><div><h2>Estimated weekly Claude spend <span>💸</span></h2><p>Static token estimate for Anthropic API usage imported from <code>{SOURCE_COST}</code>.</p></div><div class="shortcut">${total:,.2f} / week</div></div>
+        {source_link(SOURCE_COST, "cost.py")}
+        <div class="card-body">
+          <div class="metrics">
+            {render_metric("weekly estimate", f"${total:,.2f} / week", "Anthropic API costs only.")}
+            {render_metric("Claude call sites", str(len(COST_ESTIMATES)), "Enumerated in cost.py.")}
+          </div>
+          {table}
+          {body_note}
+          <p class="hint">Prices from Anthropic public pricing as of {ANTHROPIC_PRICING_AS_OF}. Token counts are hand-tuned estimates, not metered usage.</p>
+        </div>
+      </article>"""
+
+
 def render_backtest_card() -> str:
     cycle_rows = [
         [esc(name), esc(start), esc(end)] for name, (start, end) in BTC_CYCLES.items()
@@ -471,6 +541,7 @@ def render_html(*, output_root: Path = PROJECT_ROOT) -> str:
     {render_decision_card()}
     {render_data_card()}
     {render_backtest_card()}
+    {render_cost_card()}
     {render_docs_card()}
   </section>
 

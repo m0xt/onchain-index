@@ -145,3 +145,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: none
+
+## 2026-05-27T13:12:42Z — Task 62c weekly Claude cost placeholder
+- What: Confirmed no Claude API call sites, added `onchain_index.cost` with Anthropic price constants and an empty estimate list, and rendered the iteration-surface weekly Claude spend card at $0.00/week with a Phase C placeholder note.
+- Files touched: src/onchain_index/cost.py, src/onchain_index/build_index_page.py, tests/test_build.py, docs/index.html, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: none

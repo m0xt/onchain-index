@@ -115,10 +115,10 @@
     <div class="eyebrow">onchain-index / iteration surface</div>
     <h1>Inputs Martin can challenge.</h1>
     <p class="intro">A static, regenerated view of Milk Road on-chain index's iterable inputs: MROI construction, source contracts, backtest assumptions, architecture flow, and status. Values below are imported from production code at build time.</p>
-    <div class="meta"><span class="pill">feedback: composite</span><span class="pill">feedback: sources</span><span class="pill">feedback: backtests</span><span class="pill">feedback: architecture</span><span class="pill">built 2026-05-27 11:45 UTC</span></div>
+    <div class="meta"><span class="pill">feedback: composite</span><span class="pill">feedback: sources</span><span class="pill">feedback: backtests</span><span class="pill">feedback: architecture</span><span class="pill">built 2026-05-27 13:10 UTC</span></div>
   </header>
 
-  <section class="status-strip"><div class="status-cell"><div class="status-label">Last run</div><div class="status-value" title="2026-05-27T11:44:23.805634Z">2026-05-27T11:44:23.805634Z</div></div><div class="status-cell"><div class="status-label">Status</div><div class="status-value" title="ok · CASH · MROI -1.34">ok · CASH · MROI -1.34</div></div><div class="status-cell"><div class="status-label">Last commit</div><div class="status-value" title="acfecc6 serve: add docs LAN LaunchAgent">acfecc6 serve: add docs LAN LaunchAgent</div></div><div class="status-cell"><div class="status-label">Last error</div><div class="status-value" title="none">none</div></div></section>
+  <section class="status-strip"><div class="status-cell"><div class="status-label">Last run</div><div class="status-value" title="2026-05-27T11:44:23.805634Z">2026-05-27T11:44:23.805634Z</div></div><div class="status-cell"><div class="status-label">Status</div><div class="status-value" title="ok · CASH · MROI -1.34">ok · CASH · MROI -1.34</div></div><div class="status-cell"><div class="status-label">Last commit</div><div class="status-value" title="10d51c6 task-58a: build onchain iteration surface">10d51c6 task-58a: build onchain iteration surface</div></div><div class="status-cell"><div class="status-label">Last error</div><div class="status-value" title="none">none</div></div></section>
 
       <section class="flow-card">
         <div>
@@ -204,6 +204,30 @@
           </div>
           <details open><summary>BTC cycle splits</summary><table><thead><tr><th>Cycle</th><th>Start</th><th>End</th></tr></thead><tbody><tr><td>2014-2017</td><td>2014-01-01</td><td>2017-12-31</td></tr><tr><td>2018-2021</td><td>2018-01-01</td><td>2021-12-31</td></tr><tr><td>2022-2024</td><td>2022-01-01</td><td>2024-12-31</td></tr><tr><td>2025-now</td><td>2025-01-01</td><td>2100-01-01</td></tr></tbody></table></details>
           <details><summary>Standalone Phase B indicator specs</summary><table><thead><tr><th>Indicator</th><th>Rule</th><th>Columns</th></tr></thead><tbody><tr><td>MVRV-Z</td><td>504d trailing z-score &gt; 0</td><td>mvrv_zscore</td></tr><tr><td>NUPL</td><td>504d trailing z-score &gt; 0</td><td>nupl</td></tr><tr><td>LTH MVRV</td><td>504d trailing z-score &gt; 0</td><td>lth_mvrv</td></tr><tr><td>STH MVRV</td><td>504d trailing z-score &gt; 0</td><td>sth_mvrv</td></tr><tr><td>Puell Multiple</td><td>504d trailing z-score &gt; 0</td><td>puell_multiple</td></tr><tr><td>Hash Ribbon</td><td>lagged 30d hashrate MA &gt; 60d MA</td><td>hash_30dma, hash_60dma</td></tr><tr><td>Address Growth</td><td>504d trailing z-score of (30d active-address MA / 365d MA − 1) &gt; 0</td><td>adr_dma30, adr_dma365</td></tr><tr><td>HODL 1Y+</td><td>504d trailing z-score &gt; 0</td><td>hodl_1yr_pct</td></tr><tr><td>Reserve Risk</td><td>504d trailing z-score &gt; 0; not inverted</td><td>reserve_risk</td></tr><tr><td>RHODL Ratio</td><td>504d trailing z-score &gt; 0</td><td>rhodl_ratio</td></tr><tr><td>ETF Net Flow</td><td>30d trailing net-flow sum &gt; 0</td><td>etf_net_flow_m</td></tr><tr><td>MSTR Holdings Δ</td><td>30d trailing holdings change &gt; 0</td><td>mstr_btc</td></tr><tr><td>Coinbase Premium</td><td>30d trailing premium mean &gt; 0</td><td>cb_premium_pct</td></tr></tbody></table></details>
+        </div>
+      </article>
+
+      <article class="card wide" style="--accent: #06b6d4">
+        <div class="card-top"><div><h2>Estimated weekly Claude spend <span>💸</span></h2><p>Static token estimate for Anthropic API usage imported from <code>src/onchain_index/cost.py</code>.</p></div><div class="shortcut">$0.00 / week</div></div>
+        <a class="suggest" href="https://github.com/m0xt/onchain-index/edit/main/src/onchain_index/cost.py" target="_blank" rel="noreferrer">Suggest edit → cost.py</a>
+        <div class="card-body">
+          <div class="metrics">
+
+      <div class="metric">
+        <div class="metric-label">weekly estimate</div>
+        <div class="metric-value">$0.00 / week</div>
+        <div class="metric-note">Anthropic API costs only.</div>
+      </div>
+
+      <div class="metric">
+        <div class="metric-label">Claude call sites</div>
+        <div class="metric-value">0</div>
+        <div class="metric-note">Enumerated in cost.py.</div>
+      </div>
+          </div>
+
+          <p class="hint">Phase A has no Claude call sites, so the estimate is zero. Phase C composite-design will populate <code>cost.py</code> when Claude calls land.</p>
+          <p class="hint">Prices from Anthropic public pricing as of 2026-05-27. Token counts are hand-tuned estimates, not metered usage.</p>
         </div>
       </article>
 
