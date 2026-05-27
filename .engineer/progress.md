@@ -138,3 +138,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: none
+
+## 2026-05-27T11:45:53Z — Task 58a iteration surface
+- What: Replaced the docs/dashboard duplicate with a generated iteration surface for MROI construction, data sources, backtest params, architecture flow, and status; dashboard output remains in outputs/dashboard.html.
+- Files touched: src/onchain_index/build_index_page.py, src/onchain_index/build.py, src/onchain_index/composite.py, src/onchain_index/data.py, scripts/refresh.sh, tests/test_build.py, docs/index.html, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: none

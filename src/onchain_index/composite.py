@@ -22,6 +22,11 @@ VALUATION_CONSTITUENTS: tuple[str, ...] = (
     "mvrv_zscore",
 )
 
+MROI_THRESHOLD = 0.0
+HODL_DELTA_DAYS = 30
+DAT_DELTA_DAYS = 30
+ETF_FLOW_SUM_DAYS = 30
+
 TIER_ORDER: tuple[str, ...] = ("CASH", "STAY LONG")
 TIER_PCT: dict[str, float] = {
     "CASH": 0.0,
@@ -70,7 +75,7 @@ def _on_chain_holder_cohort(data: pd.DataFrame, window: int) -> pd.Series:
     below-trend 30d change in 1Y+ HODL share. Level-based HODL, address-growth,
     Reserve Risk, and LTH MVRV rules failed the standalone gate.
     """
-    hodl_delta_30d = _column(data, "hodl_1yr_pct").astype(float).diff(30)
+    hodl_delta_30d = _column(data, "hodl_1yr_pct").astype(float).diff(HODL_DELTA_DAYS)
     result = -rolling_zscore(hodl_delta_30d, window=window)
     result.name = "on_chain"
     return result
@@ -79,7 +84,7 @@ def _on_chain_holder_cohort(data: pd.DataFrame, window: int) -> pd.Series:
 def _corporate_dat_cohort(data: pd.DataFrame, window: int) -> pd.Series:
     """Corporate DAT cohort from Strategy/MSTR 30d holdings change."""
     mstr = _column(data, "mstr_btc").astype(float).where(data.index >= MSTR_START)
-    result = rolling_zscore(mstr.diff(30), window=window)
+    result = rolling_zscore(mstr.diff(DAT_DELTA_DAYS), window=window)
     result.name = "corporate_dat"
     return result
 
@@ -87,7 +92,10 @@ def _corporate_dat_cohort(data: pd.DataFrame, window: int) -> pd.Series:
 def _institutional_etf_cohort(data: pd.DataFrame, window: int) -> pd.Series:
     """Institutional ETF cohort from 30d net spot BTC ETF flow."""
     etf_flow = _column(data, "etf_net_flow_m").astype(float).where(data.index >= ETF_START)
-    flow_sum = cast(pd.Series, etf_flow.rolling(window=30, min_periods=30).sum())
+    flow_sum = cast(
+        pd.Series,
+        etf_flow.rolling(window=ETF_FLOW_SUM_DAYS, min_periods=ETF_FLOW_SUM_DAYS).sum(),
+    )
     result = rolling_zscore(flow_sum, window=window)
     result.name = "institutional_etf"
     return result
@@ -135,8 +143,8 @@ def sizing_tier(mroi: pd.Series) -> pd.Series:
     "invested when score > 0" convention.
     """
     values = pd.Series(pd.NA, index=mroi.index, dtype="object")
-    values = values.mask(mroi <= 0.0, "CASH")
-    values = values.mask(mroi > 0.0, "STAY LONG")
+    values = values.mask(mroi <= MROI_THRESHOLD, "CASH")
+    values = values.mask(mroi > MROI_THRESHOLD, "STAY LONG")
     return values.astype(TIER_DTYPE)
 
 

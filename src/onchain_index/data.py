@@ -29,6 +29,12 @@ CACHE_MAX_AGE = timedelta(hours=12)
 OPS_SECRET_ENV = Path.home() / "ops" / "secrets" / "onchain-index" / ".env"
 
 BMP_BASE = "https://api.bitcoinmagazinepro.com"
+FARSIDE_ETF_FLOW_URL = "https://farside.co.uk/bitcoin-etf-flow-all-data/"
+STRATEGY_TRACKER_MANIFEST_URL = "https://data.strategytracker.com/latest.json"
+STRATEGY_TRACKER_BASE = "https://data.strategytracker.com"
+COINBASE_CANDLES_URL = "https://api.exchange.coinbase.com/products/BTC-USD/candles"
+BINANCE_KLINES_URL = "https://api.binance.com/api/v3/klines"
+COINBASE_PREMIUM_START = datetime(2023, 1, 1, tzinfo=UTC)
 START_DATE = "2012-01-01"
 
 UA_HEADERS = {
@@ -153,7 +159,7 @@ def fetch_bmp(*, api_key: str | None = None, start_date: str = START_DATE) -> pd
 def fetch_etf_flows() -> pd.DataFrame:
     """Fetch Farside daily spot BTC ETF flows in $M."""
     response = requests.get(
-        "https://farside.co.uk/bitcoin-etf-flow-all-data/",
+        FARSIDE_ETF_FLOW_URL,
         headers=UA_HEADERS,
         timeout=30,
     )
@@ -190,7 +196,7 @@ def fetch_etf_flows() -> pd.DataFrame:
 def fetch_strategy_holdings() -> pd.DataFrame:
     """Fetch Strategy/MSTR BTC holdings from strategytracker.com."""
     manifest_response = requests.get(
-        "https://data.strategytracker.com/latest.json",
+        STRATEGY_TRACKER_MANIFEST_URL,
         headers=UA_HEADERS,
         timeout=20,
     )
@@ -203,7 +209,7 @@ def fetch_strategy_holdings() -> pd.DataFrame:
         raise ValueError("strategytracker manifest is missing files.full") from exc
 
     data_response = requests.get(
-        f"https://data.strategytracker.com/{full_file}",
+        f"{STRATEGY_TRACKER_BASE}/{full_file}",
         headers=UA_HEADERS,
         timeout=60,
     )
@@ -234,7 +240,7 @@ def _coinbase_daily_closes(start: datetime, end: datetime) -> pd.DataFrame:
     while current < end:
         chunk_end = min(current + timedelta(days=290), end)
         response = requests.get(
-            "https://api.exchange.coinbase.com/products/BTC-USD/candles",
+            COINBASE_CANDLES_URL,
             params={
                 "granularity": 86400,
                 "start": current.isoformat(),
@@ -263,7 +269,7 @@ def _coinbase_daily_closes(start: datetime, end: datetime) -> pd.DataFrame:
 
 def _binance_daily_closes() -> pd.DataFrame:
     response = requests.get(
-        "https://api.binance.com/api/v3/klines",
+        BINANCE_KLINES_URL,
         params={"symbol": "BTCUSDT", "interval": "1d", "limit": 1000},
         timeout=30,
     )
@@ -290,7 +296,7 @@ def fetch_coinbase_premium(
     *, start: datetime | None = None, end: datetime | None = None
 ) -> pd.DataFrame:
     """Fetch daily Coinbase premium versus Binance BTCUSDT close."""
-    resolved_start = start or datetime(2023, 1, 1, tzinfo=UTC)
+    resolved_start = start or COINBASE_PREMIUM_START
     resolved_end = end or datetime.now(tz=UTC)
 
     coinbase = _coinbase_daily_closes(resolved_start, resolved_end)

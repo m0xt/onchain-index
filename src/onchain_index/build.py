@@ -7,7 +7,6 @@ from __future__ import annotations
 import argparse
 import json
 import math
-import shutil
 import subprocess
 import webbrowser
 from collections.abc import Sequence
@@ -978,7 +977,7 @@ def build_dashboard(
     cache_dir: Path = DEFAULT_CACHE_DIR,
     output_root: Path = PROJECT_ROOT,
 ) -> DashboardPaths:
-    """Build ``docs/index.html`` and mirrored ``outputs/dashboard.html``."""
+    """Build ``outputs/dashboard.html`` and dashboard status."""
     paths = _paths(output_root)
     generated_at = datetime.now(tz=UTC)
     try:
@@ -992,10 +991,8 @@ def build_dashboard(
             indicator_rows=_indicator_rows(data),
             generated_at=generated_at,
         )
-        paths.docs_index.parent.mkdir(parents=True, exist_ok=True)
         paths.outputs_dashboard.parent.mkdir(parents=True, exist_ok=True)
-        paths.docs_index.write_text(html, encoding="utf-8")
-        shutil.copyfile(paths.docs_index, paths.outputs_dashboard)
+        paths.outputs_dashboard.write_text(html, encoding="utf-8")
         _write_status(
             paths,
             {
@@ -1022,7 +1019,7 @@ def build_dashboard(
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Build the onchain-index dashboard.")
     parser.add_argument("--no-cache", action="store_true", help="Force fresh source fetches.")
-    parser.add_argument("--open", action="store_true", help="Open docs/index.html after build.")
+    parser.add_argument("--open", action="store_true", help="Open outputs/dashboard.html after build.")
     parser.add_argument(
         "--cache-dir",
         type=Path,
@@ -1042,11 +1039,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         cache_dir=cast(Path, args.cache_dir),
         output_root=cast(Path, args.output_root),
     )
-    print(f"wrote {paths.docs_index}")
-    print(f"mirrored {paths.outputs_dashboard}")
+    print(f"wrote {paths.outputs_dashboard}")
     print(f"status {paths.status_json}")
     if args.open:
-        webbrowser.open(paths.docs_index.resolve().as_uri())
+        webbrowser.open(paths.outputs_dashboard.resolve().as_uri())
     return 0
 
 
