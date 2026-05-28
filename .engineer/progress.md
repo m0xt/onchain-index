@@ -166,3 +166,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: Martin review of the Phase H keep-additive recommendation; no production MROI/dashboard changes made.
+
+## 2026-05-28T12:23:01Z — Phase I blended-spine audit
+- What: Added Phase I blended BTC/equity spine research script, generated `.cache/optim/phase_i.json`, and wrote the report; no candidate cleared the +19.1% switch hurdle, with I4 best at +10.7% OOS, so recommendation is keep-additive.
+- Files touched: src/onchain_index/research/equity_data.py, src/onchain_index/research/optimization/phase_i_blended_spines.py, reports/phase-i-blended-spines-2026-05-28.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: docs/theory honesty update should frame MROI as empirical-first additive evidence rather than an MRMI-shaped spine+modifier system.

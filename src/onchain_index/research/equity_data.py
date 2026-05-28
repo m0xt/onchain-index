@@ -8,6 +8,7 @@ from typing import cast
 import pandas as pd
 import yfinance as yf
 
+from onchain_index.backtest import DEFAULT_ZSCORE_WINDOW, rolling_zscore
 from onchain_index.data import DEFAULT_CACHE_DIR
 
 YAHOO_TICKERS: dict[str, str] = {
@@ -97,3 +98,44 @@ def yahoo_daily_closes(
     aligned = closes.reindex(daily_index).ffill()
     aligned.index = pd.DatetimeIndex(index)
     return aligned
+
+
+def relative_strength_z(
+    closes: pd.DataFrame, numerator: str, denominator: str, lookback: int
+) -> pd.Series:
+    """Return trailing z-score of BTC relative strength over a fixed lookback."""
+    ratio = cast(pd.Series, closes[numerator].astype(float) / closes[denominator].astype(float))
+    strength = cast(pd.Series, ratio.pct_change(lookback))
+    result = rolling_zscore(strength, window=DEFAULT_ZSCORE_WINDOW)
+    result.name = f"{numerator}_over_{denominator}_rs_z_{lookback}d"
+    return result
+
+
+def multi_timeframe_relative_strength_blend(
+    closes: pd.DataFrame,
+    numerator: str,
+    denominator: str,
+    lookbacks: tuple[int, ...],
+) -> pd.Series:
+    """Return the mean of fixed-lookback relative-strength z-scores."""
+    components = [
+        relative_strength_z(closes, numerator, denominator, lookback)
+        for lookback in lookbacks
+    ]
+    result = pd.concat(components, axis=1).mean(axis=1)
+    result.name = f"{numerator}_over_{denominator}_rs_blend_z"
+    return cast(pd.Series, result)
+
+
+def outperformance_frequency_z(
+    closes: pd.DataFrame, numerator: str, denominator: str, window: int
+) -> pd.Series:
+    """Return z-score of rolling share of days numerator outperformed denominator."""
+    returns = closes[[numerator, denominator]].astype(float).pct_change()
+    numerator_ret = cast(pd.Series, returns[numerator])
+    denominator_ret = cast(pd.Series, returns[denominator])
+    outperformed = cast(pd.Series, numerator_ret.gt(denominator_ret).astype(float))
+    frequency = cast(pd.Series, outperformed.rolling(window=window, min_periods=window).mean())
+    result = rolling_zscore(frequency, window=DEFAULT_ZSCORE_WINDOW)
+    result.name = f"{numerator}_over_{denominator}_outperf_freq_z_{window}d"
+    return result
