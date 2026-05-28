@@ -201,3 +201,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: Martin review of Phase M trade-off; no production MROI/dashboard changes made.
+
+## 2026-05-28T13:40:45Z — Phase N euphoria-overlay audit
+- What: Added the Phase N holder-only K1 euphoria-overlay research script, generated `.cache/optim/phase_n.json`, and wrote the report; all N1/N2/N3 overlays lost to K1 and N4 contrarian-low lost, so recommendation is keep K1 unchanged.
+- Files touched: src/onchain_index/research/optimization/phase_n_euphoria_overlay.py, reports/phase-n-euphoria-overlay-2026-05-28.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: Martin review of Phase N; no production MROI/dashboard changes made.
