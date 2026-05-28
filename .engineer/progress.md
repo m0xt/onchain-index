@@ -180,3 +180,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: docs/theory honesty update should state MROI is empirical-first additive evidence after Phase G/H/I/J spine/override searches failed OOS.
+
+## 2026-05-28T12:52:05Z — Phase K pure-mode rerun
+- What: Added the Phase K pure-mode rerun script, generated `.cache/optim/phase_k.json`, and wrote the report; K1 holder-only pure cleared the +19.1% switch hurdle at +21.0% OOS, while BTC/equity variants still lagged additive.
+- Files touched: src/onchain_index/research/optimization/phase_k_pure_rerun.py, reports/phase-k-pure-rerun-2026-05-28.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: Production/docs follow-up should handle the decision-tree branch 1 switch implication: evaluate/implement `STAY LONG if z(holder_behavior) > 0 else CASH` without valuation or BTC/equity spines.
