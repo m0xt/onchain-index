@@ -275,7 +275,7 @@ def _load_status(output_root: Path) -> dict[str, str]:
 
 
 def _last_commit(output_root: Path) -> str:
-    return _run_git(["log", "-1", "--format=%h %s"], output_root) or "—"
+    return _run_git(["rev-parse", "--short", "HEAD"], output_root) or "—"
 
 
 def render_status_strip(output_root: Path) -> str:
@@ -386,11 +386,11 @@ def render_decision_card() -> str:
     ]
     return f"""
       <article class="card" style="--accent: #38bdf8">
-        <div class="card-top"><div><h2>Decision rule <span>🚦</span></h2><p>P4 asymmetric LONG/CASH state machine from production constants.</p></div><div class="shortcut">R</div></div>
+        <div class="card-top"><div><h2>Decision rule <span>🚦</span></h2><p>Plain LONG/CASH posture thresholds imported from production constants.</p></div><div class="shortcut">R</div></div>
         {source_link(SOURCE_BUILD, "build.py")}
         <div class="card-body">
           {render_table(["Tier", "Allocation", "Meaning"], rows)}
-          <p class="hint">Rule: <code>MROI &gt; {MROI_LONG_THRESHOLD:.1f}</code> → LONG; <code>MROI &lt; {MROI_CASH_THRESHOLD:.1f}</code> → CASH; otherwise hold prior state. Theory doc version <code>{THEORY_VERSION}</code>.</p>
+          <p class="hint">Rule: <code>MROI &gt; {MROI_LONG_THRESHOLD:.1f}</code> → LONG; <code>MROI &lt; {MROI_CASH_THRESHOLD:.1f}</code> → CASH; otherwise HOLD current state. Theory doc version <code>{THEORY_VERSION}</code>.</p>
           <details><summary>Indicator inclusion decisions</summary>{render_table(["Indicator", "Group", "Status", "Reason"], decisions)}</details>
         </div>
       </article>"""
