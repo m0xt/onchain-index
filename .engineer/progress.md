@@ -194,3 +194,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: Production migration to `STAY LONG if z(holder_behavior) > 0 else CASH`, plus theory/dashboard wording update with Phase K/L evidence.
+
+## 2026-05-28T13:20:06Z — Phase M investor-grade stickiness audit
+- What: Added the Phase M holder-only K1 stickiness research script, generated `.cache/optim/phase_m.json`, and wrote the report; no variant cleared both >=+20.0% OOS and <15 switches/cycle, so recommendation is surface the alpha-vs-switches Pareto trade-off.
+- Files touched: src/onchain_index/research/optimization/phase_m_stickiness.py, reports/phase-m-stickiness-2026-05-28.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: Martin review of Phase M trade-off; no production MROI/dashboard changes made.
