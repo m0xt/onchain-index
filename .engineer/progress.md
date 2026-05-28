@@ -215,3 +215,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: Martin review of Phase O; if lower cadence is still desired, O1 N=3 is the least-bad alpha-for-cadence trade-off but not a validated improvement over K1.
+
+## 2026-05-28T14:17:39Z — Phase P tier-confirmation audit
+- What: Added the final Phase P holder-only tier+confirmation/asymmetric threshold research script, generated `.cache/optim/phase_p.json`, and wrote the dual-track report; P4 asymmetric sticky LONG is the sole qualifier while all CAUTION-tier variants fail the dual-track/switch hurdle.
+- Files touched: src/onchain_index/research/optimization/phase_p_tier_confirmation.py, reports/phase-p-tier-confirmation-2026-05-28.md, .cache/optim/phase_p.json, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: Production migration decision: adopt P4 asymmetric binary if Martin accepts loss of CAUTION vocabulary; otherwise choose K1 vs O1 N=3 as product alpha-vs-cadence call.
