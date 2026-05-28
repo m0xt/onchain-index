@@ -39,7 +39,8 @@ from onchain_index.composite import (
     ETF_FLOW_SUM_DAYS,
     ETF_START,
     HODL_DELTA_DAYS,
-    MROI_THRESHOLD,
+    MROI_CASH_THRESHOLD,
+    MROI_LONG_THRESHOLD,
     MSTR_START,
     TIER_ORDER,
     TIER_PCT,
@@ -297,7 +298,7 @@ def render_flow_card() -> str:
     nodes = [
         ("Fetch", "BMP, Farside, StrategyTracker, Coinbase, and Binance raw daily inputs."),
         ("Cache", f"Merge on the BMP daily spine and cache {RAW_CACHE_NAME} for 12 hours."),
-        ("Compute", "Valuation + Holder Behavior z-score dimensions → MROI."),
+        ("Compute", "Holder Behavior z-score → MROI; valuation remains diagnostic."),
         ("Backtest", "Cycle walk-forward checks use the same lagged production signal path."),
         ("Publish", "Write outputs/dashboard.html, docs/index.html, status JSON, then cron commit."),
     ]
@@ -321,8 +322,9 @@ def render_flow_card() -> str:
 def render_composite_card() -> str:
     metrics = [
         render_metric("z-score window", f"{DEFAULT_ZSCORE_WINDOW}d", "Lagged trailing window."),
-        render_metric("MROI threshold", f"{MROI_THRESHOLD:.1f}", "Strictly above this is invested."),
-        render_metric("valuation inputs", str(len(VALUATION_CONSTITUENTS)), "Equal-weighted."),
+        render_metric("LONG threshold", f"{MROI_LONG_THRESHOLD:.1f}", "Strictly above this enters LONG."),
+        render_metric("CASH threshold", f"{MROI_CASH_THRESHOLD:.1f}", "Strictly below this exits to CASH."),
+        render_metric("valuation diagnostics", str(len(VALUATION_CONSTITUENTS)), "Equal-weighted; not in MROI."),
         render_metric("holder cohorts", str(len(COHORT_LABELS)), "Equal-weighted when live."),
     ]
     valuation_rows = [
@@ -343,9 +345,10 @@ def render_composite_card() -> str:
         <div class="card-top"><div><h2>MROI construction <span>🧮</span></h2><p>Production composite math imported from <code>{SOURCE_COMPOSITE}</code> and <code>{SOURCE_BACKTEST}</code>.</p></div><div class="shortcut">M</div></div>
         {source_link(SOURCE_COMPOSITE, "composite.py")}
         <div class="card-body">
-          <div class="formula"><code>MROI = valuation_composite + holder_behavior_composite</code></div>
+          <div class="formula"><code>MROI = holder_behavior_composite
+Posture = LONG if MROI &gt; {MROI_LONG_THRESHOLD:.1f}; CASH if MROI &lt; {MROI_CASH_THRESHOLD:.1f}; otherwise hold prior state</code></div>
           <div class="metrics">{''.join(metrics)}</div>
-          <details open><summary>Valuation constituents</summary>{render_table(["Key", "Label", "Weight"], valuation_rows)}</details>
+          <details open><summary>Valuation diagnostics (not used in decision)</summary>{render_table(["Key", "Label", "Weight"], valuation_rows)}</details>
           <details open><summary>Holder-behavior cohorts</summary>{render_table(["Key", "Label", "Coverage", "Transform"], cohort_rows)}</details>
           <p class="hint">All z-scores are lagged by <code>rolling_zscore</code>, so a score dated T uses values available through T-1.</p>
         </div>
@@ -383,11 +386,11 @@ def render_decision_card() -> str:
     ]
     return f"""
       <article class="card" style="--accent: #38bdf8">
-        <div class="card-top"><div><h2>Decision rule <span>🚦</span></h2><p>Binary MRMI-shaped interpretation layer from production constants.</p></div><div class="shortcut">R</div></div>
+        <div class="card-top"><div><h2>Decision rule <span>🚦</span></h2><p>P4 asymmetric LONG/CASH state machine from production constants.</p></div><div class="shortcut">R</div></div>
         {source_link(SOURCE_BUILD, "build.py")}
         <div class="card-body">
           {render_table(["Tier", "Allocation", "Meaning"], rows)}
-          <p class="hint">Rule: <code>MROI &gt; {MROI_THRESHOLD:.1f}</code> → STAY LONG; otherwise CASH. Theory doc version <code>{THEORY_VERSION}</code>.</p>
+          <p class="hint">Rule: <code>MROI &gt; {MROI_LONG_THRESHOLD:.1f}</code> → LONG; <code>MROI &lt; {MROI_CASH_THRESHOLD:.1f}</code> → CASH; otherwise hold prior state. Theory doc version <code>{THEORY_VERSION}</code>.</p>
           <details><summary>Indicator inclusion decisions</summary>{render_table(["Indicator", "Group", "Status", "Reason"], decisions)}</details>
         </div>
       </article>"""

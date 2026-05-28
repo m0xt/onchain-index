@@ -115,10 +115,10 @@
     <div class="eyebrow">onchain-index / iteration surface</div>
     <h1>Inputs Martin can challenge.</h1>
     <p class="intro">A static, regenerated view of Milk Road on-chain index's iterable inputs: MROI construction, source contracts, backtest assumptions, architecture flow, and status. Values below are imported from production code at build time.</p>
-    <div class="meta"><span class="pill">feedback: composite</span><span class="pill">feedback: sources</span><span class="pill">feedback: backtests</span><span class="pill">feedback: architecture</span><span class="pill">built 2026-05-27 20:30 UTC</span></div>
+    <div class="meta"><span class="pill">feedback: composite</span><span class="pill">feedback: sources</span><span class="pill">feedback: backtests</span><span class="pill">feedback: architecture</span><span class="pill">built 2026-05-28 14:34 UTC</span></div>
   </header>
 
-  <section class="status-strip"><div class="status-cell"><div class="status-label">Last run</div><div class="status-value" title="2026-05-27T20:30:00.973915Z">2026-05-27T20:30:00.973915Z</div></div><div class="status-cell"><div class="status-label">Status</div><div class="status-value" title="ok · CASH · MROI -1.34">ok · CASH · MROI -1.34</div></div><div class="status-cell"><div class="status-label">Last commit</div><div class="status-value" title="297b5e9 task-62c: add Claude cost placeholder">297b5e9 task-62c: add Claude cost placeholder</div></div><div class="status-cell"><div class="status-label">Last error</div><div class="status-value" title="none">none</div></div></section>
+  <section class="status-strip"><div class="status-cell"><div class="status-label">Last run</div><div class="status-value" title="2026-05-28T14:33:48.532305Z">2026-05-28T14:33:48.532305Z</div></div><div class="status-cell"><div class="status-label">Status</div><div class="status-value" title="ok · CASH · MROI -0.61">ok · CASH · MROI -0.61</div></div><div class="status-cell"><div class="status-label">Last commit</div><div class="status-value" title="36a6807 engineer/task-75: add phase p tier confirmation audit">36a6807 engineer/task-75: add phase p tier confirmation audit</div></div><div class="status-cell"><div class="status-label">Last error</div><div class="status-value" title="none">none</div></div></section>
 
       <section class="flow-card">
         <div>
@@ -127,7 +127,7 @@
           <p class="intro small">A compact map of the pipeline. The narrative source stays in <code>docs/architecture.md</code>; this page links it rather than replacing it.</p>
         </div>
         <a class="suggest" href="https://github.com/m0xt/onchain-index/edit/main/docs/architecture.md" target="_blank" rel="noreferrer">Suggest edit → architecture.md</a>
-        <div class="arch-row"><div class="node"><div class="role">Fetch</div><div class="desc">BMP, Farside, StrategyTracker, Coinbase, and Binance raw daily inputs.</div></div><div class="node"><div class="role">Cache</div><div class="desc">Merge on the BMP daily spine and cache raw_data.pkl for 12 hours.</div></div><div class="node"><div class="role">Compute</div><div class="desc">Valuation + Holder Behavior z-score dimensions → MROI.</div></div><div class="node"><div class="role">Backtest</div><div class="desc">Cycle walk-forward checks use the same lagged production signal path.</div></div><div class="node"><div class="role">Publish</div><div class="desc">Write outputs/dashboard.html, docs/index.html, status JSON, then cron commit.</div></div></div>
+        <div class="arch-row"><div class="node"><div class="role">Fetch</div><div class="desc">BMP, Farside, StrategyTracker, Coinbase, and Binance raw daily inputs.</div></div><div class="node"><div class="role">Cache</div><div class="desc">Merge on the BMP daily spine and cache raw_data.pkl for 12 hours.</div></div><div class="node"><div class="role">Compute</div><div class="desc">Holder Behavior z-score → MROI; valuation remains diagnostic.</div></div><div class="node"><div class="role">Backtest</div><div class="desc">Cycle walk-forward checks use the same lagged production signal path.</div></div><div class="node"><div class="role">Publish</div><div class="desc">Write outputs/dashboard.html, docs/index.html, status JSON, then cron commit.</div></div></div>
       </section>
 
   <section class="cards">
@@ -136,7 +136,8 @@
         <div class="card-top"><div><h2>MROI construction <span>🧮</span></h2><p>Production composite math imported from <code>src/onchain_index/composite.py</code> and <code>src/onchain_index/backtest.py</code>.</p></div><div class="shortcut">M</div></div>
         <a class="suggest" href="https://github.com/m0xt/onchain-index/edit/main/src/onchain_index/composite.py" target="_blank" rel="noreferrer">Suggest edit → composite.py</a>
         <div class="card-body">
-          <div class="formula"><code>MROI = valuation_composite + holder_behavior_composite</code></div>
+          <div class="formula"><code>MROI = holder_behavior_composite
+Posture = LONG if MROI &gt; 0.0; CASH if MROI &lt; -0.3; otherwise hold prior state</code></div>
           <div class="metrics">
       <div class="metric">
         <div class="metric-label">z-score window</div>
@@ -144,32 +145,37 @@
         <div class="metric-note">Lagged trailing window.</div>
       </div>
       <div class="metric">
-        <div class="metric-label">MROI threshold</div>
+        <div class="metric-label">LONG threshold</div>
         <div class="metric-value">0.0</div>
-        <div class="metric-note">Strictly above this is invested.</div>
+        <div class="metric-note">Strictly above this enters LONG.</div>
       </div>
       <div class="metric">
-        <div class="metric-label">valuation inputs</div>
+        <div class="metric-label">CASH threshold</div>
+        <div class="metric-value">-0.3</div>
+        <div class="metric-note">Strictly below this exits to CASH.</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">valuation diagnostics</div>
         <div class="metric-value">4</div>
-        <div class="metric-note">Equal-weighted.</div>
+        <div class="metric-note">Equal-weighted; not in MROI.</div>
       </div>
       <div class="metric">
         <div class="metric-label">holder cohorts</div>
         <div class="metric-value">3</div>
         <div class="metric-note">Equal-weighted when live.</div>
       </div></div>
-          <details open><summary>Valuation constituents</summary><table><thead><tr><th>Key</th><th>Label</th><th>Weight</th></tr></thead><tbody><tr><td><code>sth_mvrv</code></td><td>STH MVRV</td><td>equal weight</td></tr><tr><td><code>rhodl_ratio</code></td><td>RHODL Ratio</td><td>equal weight</td></tr><tr><td><code>puell_multiple</code></td><td>Puell Multiple</td><td>equal weight</td></tr><tr><td><code>mvrv_zscore</code></td><td>MVRV-Z</td><td>equal weight</td></tr></tbody></table></details>
+          <details open><summary>Valuation diagnostics (not used in decision)</summary><table><thead><tr><th>Key</th><th>Label</th><th>Weight</th></tr></thead><tbody><tr><td><code>sth_mvrv</code></td><td>STH MVRV</td><td>equal weight</td></tr><tr><td><code>rhodl_ratio</code></td><td>RHODL Ratio</td><td>equal weight</td></tr><tr><td><code>puell_multiple</code></td><td>Puell Multiple</td><td>equal weight</td></tr><tr><td><code>mvrv_zscore</code></td><td>MVRV-Z</td><td>equal weight</td></tr></tbody></table></details>
           <details open><summary>Holder-behavior cohorts</summary><table><thead><tr><th>Key</th><th>Label</th><th>Coverage</th><th>Transform</th></tr></thead><tbody><tr><td><code>on_chain</code></td><td>On-chain holders</td><td>2012-01-01 onward</td><td>-30d HODL 1Y+ change z-score</td></tr><tr><td><code>corporate_dat</code></td><td>Corporate DAT</td><td>2020-08-10 onward</td><td>30d Strategy BTC-holdings change z-score</td></tr><tr><td><code>institutional_etf</code></td><td>Institutional ETF</td><td>2024-01-11 onward</td><td>30d spot ETF net-flow sum z-score</td></tr></tbody></table></details>
           <p class="hint">All z-scores are lagged by <code>rolling_zscore</code>, so a score dated T uses values available through T-1.</p>
         </div>
       </article>
 
       <article class="card" style="--accent: #38bdf8">
-        <div class="card-top"><div><h2>Decision rule <span>🚦</span></h2><p>Binary MRMI-shaped interpretation layer from production constants.</p></div><div class="shortcut">R</div></div>
+        <div class="card-top"><div><h2>Decision rule <span>🚦</span></h2><p>P4 asymmetric LONG/CASH state machine from production constants.</p></div><div class="shortcut">R</div></div>
         <a class="suggest" href="https://github.com/m0xt/onchain-index/edit/main/src/onchain_index/build.py" target="_blank" rel="noreferrer">Suggest edit → build.py</a>
         <div class="card-body">
-          <table><thead><tr><th>Tier</th><th>Allocation</th><th>Meaning</th></tr></thead><tbody><tr><td>CASH</td><td>0%</td><td>0% long · MROI is at or below zero.</td></tr><tr><td>STAY LONG</td><td>100%</td><td>100% long · MROI is above zero.</td></tr></tbody></table>
-          <p class="hint">Rule: <code>MROI &gt; 0.0</code> → STAY LONG; otherwise CASH. Theory doc version <code>v0.6</code>.</p>
+          <table><thead><tr><th>Tier</th><th>Allocation</th><th>Meaning</th></tr></thead><tbody><tr><td>CASH</td><td>0%</td><td>0% long · P4 state machine is CASH.</td></tr><tr><td>LONG</td><td>100%</td><td>100% long · P4 state machine is LONG.</td></tr></tbody></table>
+          <p class="hint">Rule: <code>MROI &gt; 0.0</code> → LONG; <code>MROI &lt; -0.3</code> → CASH; otherwise hold prior state. Theory doc version <code>v0.7</code>.</p>
           <details><summary>Indicator inclusion decisions</summary><table><thead><tr><th>Indicator</th><th>Group</th><th>Status</th><th>Reason</th></tr></thead><tbody><tr><td>STH MVRV</td><td>Valuation</td><td>In</td><td>Best cycle-robust valuation survivor; 4/4 cycles positive.</td></tr><tr><td>RHODL Ratio</td><td>Valuation</td><td>In</td><td>Age-band realized-value valuation oscillator; 4/4 cycles positive.</td></tr><tr><td>Puell Multiple</td><td>Valuation</td><td>In</td><td>Miner-revenue valuation lens; modest standalone, diversifying.</td></tr><tr><td>MVRV-Z</td><td>Valuation</td><td>In</td><td>Canonical realized-cap deviation metric; chosen over NUPL.</td></tr><tr><td>NUPL</td><td>Valuation</td><td>Out / alternate</td><td>Excluded because MVRV-Z/NUPL were highly colinear.</td></tr><tr><td>LTH MVRV</td><td>Holder Behavior / on-chain</td><td>Out</td><td>Both tested signs were negative full-sample.</td></tr><tr><td>HODL 1Y+</td><td>Holder Behavior / on-chain</td><td>Out level rule</td><td>Level rule failed; 30d-change inverted z is the included transform.</td></tr><tr><td>Address Growth</td><td>Adoption / holder-ish</td><td>Out</td><td>Closer to adoption and negative under both tested signs.</td></tr><tr><td>Reserve Risk</td><td>Holder / valuation hybrid</td><td>Out</td><td>Standalone rule failed; sign convention remains contested.</td></tr><tr><td>Hash Ribbon</td><td>Out</td><td>Out</td><td>Miner-derived and not cleanly in the locked two-dimension theory.</td></tr><tr><td>ETF Net Flow</td><td>Holder Behavior / institutional ETF</td><td>In</td><td>Cleanest post-2024 marginal-holder flow input.</td></tr><tr><td>MSTR Holdings Δ</td><td>Holder Behavior / corporate DAT</td><td>In as cohort</td><td>Weak standalone but structurally part of holder behavior.</td></tr><tr><td>Coinbase Premium</td><td>Uncertain</td><td>Out</td><td>Not a valid exchange-flow substitute; behaved like microstructure sentiment.</td></tr></tbody></table></details>
         </div>
       </article>
@@ -237,7 +243,7 @@
         <div class="card-body">
           <div class="meta compact">
             <span class="pill">repo: https://github.com/m0xt/onchain-index</span>
-            <span class="pill">theory: v0.6</span>
+            <span class="pill">theory: v0.7</span>
             <span class="pill">docs port: 8012</span>
           </div>
           <table><thead><tr><th>Artifact</th><th>Why it matters</th><th>Edit</th></tr></thead><tbody><tr><td>docs/theory.md</td><td>Framework rationale and resolved decisions.</td><td><a href="https://github.com/m0xt/onchain-index/edit/main/docs/theory.md">edit</a></td></tr><tr><td>docs/architecture.md</td><td>Pipeline narrative and source-failure posture.</td><td><a href="https://github.com/m0xt/onchain-index/edit/main/docs/architecture.md">edit</a></td></tr><tr><td>scripts/refresh.sh</td><td>Nightly regeneration and commit wiring.</td><td><a href="https://github.com/m0xt/onchain-index/edit/main/scripts/refresh.sh">edit</a></td></tr></tbody></table>

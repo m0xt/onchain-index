@@ -22,15 +22,16 @@ VALUATION_CONSTITUENTS: tuple[str, ...] = (
     "mvrv_zscore",
 )
 
-MROI_THRESHOLD = 0.0
+MROI_LONG_THRESHOLD: float = 0.0
+MROI_CASH_THRESHOLD: float = -0.3
 HODL_DELTA_DAYS = 30
 DAT_DELTA_DAYS = 30
 ETF_FLOW_SUM_DAYS = 30
 
-TIER_ORDER: tuple[str, ...] = ("CASH", "STAY LONG")
+TIER_ORDER: tuple[str, ...] = ("CASH", "LONG")
 TIER_PCT: dict[str, float] = {
     "CASH": 0.0,
-    "STAY LONG": 100.0,
+    "LONG": 100.0,
 }
 TIER_DTYPE = CategoricalDtype(categories=list(TIER_ORDER), ordered=True)
 
@@ -127,25 +128,43 @@ def holder_behavior_composite(
 
 
 def mroi(data: pd.DataFrame, window: int = DEFAULT_ZSCORE_WINDOW) -> pd.Series:
-    """Return the production MROI: valuation dimension + holder dimension."""
-    score = valuation_composite(data, window=window) + holder_behavior_composite(
-        data, window=window
-    )
+    """Return the production MROI: the holder-behavior spine only.
+
+    Valuation remains available through ``valuation_composite`` as a diagnostic,
+    but Phase P's P4 rule removed it from the allocation decision.
+    """
+    score = holder_behavior_composite(data, window=window)
     score.name = "mroi"
     return score
 
 
-def sizing_tier(mroi: pd.Series) -> pd.Series:
-    """Map MROI values into the binary MRMI-shaped production rule.
+def posture_state_machine(mroi: pd.Series) -> pd.Series:
+    """Map MROI into the P4 asymmetric LONG/CASH posture state machine.
 
-    MROI > 0 maps to ``STAY LONG`` / 100%; MROI <= 0 maps to
-    ``CASH`` / 0%. Exact zero is deliberately cash, matching MRMI's
-    "invested when score > 0" convention.
+    Initial state at the first valid date is LONG when MROI is non-negative,
+    otherwise CASH. After that, MROI must rise strictly above 0.0 to enter
+    LONG and fall strictly below -0.3 to enter CASH; values in between hold
+    the current state.
     """
     values = pd.Series(pd.NA, index=mroi.index, dtype="object")
-    values = values.mask(mroi <= MROI_THRESHOLD, "CASH")
-    values = values.mask(mroi > MROI_THRESHOLD, "STAY LONG")
+    current_state: str | None = None
+    for index, value in mroi.items():
+        if pd.isna(value):
+            continue
+        score = float(value)
+        if current_state is None:
+            current_state = "LONG" if score >= MROI_LONG_THRESHOLD else "CASH"
+        elif score > MROI_LONG_THRESHOLD:
+            current_state = "LONG"
+        elif score < MROI_CASH_THRESHOLD:
+            current_state = "CASH"
+        values.loc[index] = current_state
     return values.astype(TIER_DTYPE)
+
+
+def sizing_tier(mroi: pd.Series) -> pd.Series:
+    """Return the production LONG/CASH sizing tier for a MROI series."""
+    return posture_state_machine(mroi)
 
 
 def epoch_for_date(value: str | date | datetime | pd.Timestamp) -> str:

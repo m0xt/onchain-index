@@ -80,7 +80,7 @@ def test_build_entrypoint_writes_dashboard_and_status(tmp_path) -> None:
     assert set(status) == {"last_run_utc", "last_mroi", "last_tier", "last_error"}
     assert isinstance(status["last_run_utc"], str)
     assert isinstance(status["last_mroi"], float)
-    assert status["last_tier"] in {"CASH", "STAY LONG"}
+    assert status["last_tier"] in {"CASH", "LONG"}
     assert status["last_error"] is None
 
 
@@ -88,7 +88,12 @@ def test_index_page_imports_live_iteration_constants(tmp_path) -> None:
     from onchain_index.backtest import BTC_CYCLES, DEFAULT_ZSCORE_WINDOW
     from onchain_index.build import THEORY_VERSION
     from onchain_index.build_index_page import build_index_page
-    from onchain_index.composite import MROI_THRESHOLD, TIER_PCT, VALUATION_CONSTITUENTS
+    from onchain_index.composite import (
+        MROI_CASH_THRESHOLD,
+        MROI_LONG_THRESHOLD,
+        TIER_PCT,
+        VALUATION_CONSTITUENTS,
+    )
     from onchain_index.cost import COST_ESTIMATES, MODEL_PRICES_USD_PER_MTOK
     from onchain_index.data import BMP_BASE, START_DATE
 
@@ -100,7 +105,7 @@ def test_index_page_imports_live_iteration_constants(tmp_path) -> None:
             {
                 "last_run_utc": "2026-05-27T11:36:47Z",
                 "last_mroi": 1.23,
-                "last_tier": "STAY LONG",
+                "last_tier": "LONG",
                 "last_error": None,
             }
         )
@@ -111,8 +116,9 @@ def test_index_page_imports_live_iteration_constants(tmp_path) -> None:
 
     assert "onchain-index / iteration surface" in html
     assert f"{DEFAULT_ZSCORE_WINDOW}d" in html
-    assert f"MROI &gt; {MROI_THRESHOLD:.1f}" in html
-    assert f"{TIER_PCT['STAY LONG']:.0f}%" in html
+    assert f"MROI &gt; {MROI_LONG_THRESHOLD:.1f}" in html
+    assert f"MROI &lt; {MROI_CASH_THRESHOLD:.1f}" in html
+    assert f"{TIER_PCT['LONG']:.0f}%" in html
     assert next(iter(VALUATION_CONSTITUENTS)) in html
     assert next(iter(BTC_CYCLES)) in html
     assert BMP_BASE in html

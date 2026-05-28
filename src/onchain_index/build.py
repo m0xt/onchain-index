@@ -27,6 +27,8 @@ from onchain_index.backtest import (
     walk_forward_tiered_by_cycle,
 )
 from onchain_index.composite import (
+    MROI_CASH_THRESHOLD,
+    MROI_LONG_THRESHOLD,
     TIER_PCT,
     epoch_for_date,
     holder_behavior_cohorts,
@@ -40,7 +42,7 @@ from onchain_index.data import DEFAULT_CACHE_DIR, PROJECT_ROOT, fetch_all
 
 GITHUB_EDIT_BASE = "https://github.com/m0xt/onchain-index/edit/main"
 PROJECT_REPO_URL = "https://github.com/m0xt/onchain-index"
-THEORY_VERSION = "v0.6"
+THEORY_VERSION = "v0.7"
 
 INDICATOR_DECISIONS: dict[str, tuple[str, str, str]] = {
     "STH MVRV": ("Valuation", "In", "Best cycle-robust valuation survivor; 4/4 cycles positive."),
@@ -74,18 +76,18 @@ VALUATION_LABELS: dict[str, str] = {
 }
 
 TIER_COLORS: dict[str, str] = {
-    "STAY LONG": "#4CAF50",
+    "LONG": "#4CAF50",
     "CASH": "#E84B5A",
 }
 
 TIER_LABELS: dict[str, str] = {
-    "STAY LONG": "STAY LONG",
+    "LONG": "LONG",
     "CASH": "CASH",
 }
 
 TIER_SUBTITLES: dict[str, str] = {
-    "STAY LONG": "100% long · MROI is above zero.",
-    "CASH": "0% long · MROI is at or below zero.",
+    "LONG": "100% long · P4 state machine is LONG.",
+    "CASH": "0% long · P4 state machine is CASH.",
 }
 
 
@@ -165,6 +167,33 @@ def _score_color(value: float | None) -> str:
     if value > -1.0:
         return "#92400e"
     return "#991b1b"
+
+
+def _mroi_signal_zone(value: float | None) -> str:
+    if value is None or not math.isfinite(value):
+        return "WARMING"
+    if value > MROI_LONG_THRESHOLD:
+        return "LONG signal"
+    if value < MROI_CASH_THRESHOLD:
+        return "CASH signal"
+    return "HOLD band"
+
+
+def _mroi_signal_color(value: float | None) -> str:
+    if value is None or not math.isfinite(value):
+        return "#6b7280"
+    if value > MROI_LONG_THRESHOLD:
+        return "#4CAF50"
+    if value < MROI_CASH_THRESHOLD:
+        return "#E84B5A"
+    return "#D89B2B"
+
+
+def _mroi_signal_subtitle(value: float | None, tier: str) -> str:
+    zone = _mroi_signal_zone(value)
+    if zone == "HOLD band":
+        return f"MROI is in the HOLD band; posture remains {tier}."
+    return f"Raw holder MROI is a {zone}; posture is {tier}."
 
 
 def _git_text(args: list[str], fallback: str) -> str:
@@ -338,27 +367,33 @@ def _state_color(value: float | None) -> str:
 
 
 def _make_pi_scale_bar(pi_value: float, tier_color: str) -> str:
-    """Horizontal CASH/STAY LONG bar for the binary MROI rule."""
+    """Horizontal CASH/HOLD/LONG bar for the P4 asymmetric MROI rule."""
     scale_min, scale_max = -2.0, 2.0
     clamped = max(scale_min, min(scale_max, pi_value))
     pct = (clamped - scale_min) / (scale_max - scale_min) * 100
-    zero_pct = (0 - scale_min) / (scale_max - scale_min) * 100
+    cash_pct = (MROI_CASH_THRESHOLD - scale_min) / (scale_max - scale_min) * 100
+    long_pct = (MROI_LONG_THRESHOLD - scale_min) / (scale_max - scale_min) * 100
+    hold_width = long_pct - cash_pct
     return f'''
-      <div class="scale-bar" aria-label="MROI tier position">
+      <div class="scale-bar" aria-label="P4 MROI tier position">
         <div class="scale-track">
-          <div class="scale-zone scale-zone-cash" style="width:{zero_pct:.2f}%;"></div>
-          <div class="scale-zone scale-zone-long" style="width:{100 - zero_pct:.2f}%;"></div>
-          <div class="scale-zero" style="left: {zero_pct:.2f}%;"></div>
+          <div class="scale-zone scale-zone-cash" style="width:{cash_pct:.2f}%;"></div>
+          <div class="scale-zone scale-zone-hold" style="width:{hold_width:.2f}%;"></div>
+          <div class="scale-zone scale-zone-long" style="width:{100 - long_pct:.2f}%;"></div>
+          <div class="scale-threshold" style="left: {cash_pct:.2f}%;"></div>
+          <div class="scale-zero" style="left: {long_pct:.2f}%;"></div>
           <div class="scale-marker" style="left: {pct:.2f}%; background: {tier_color}; box-shadow: 0 0 0 4px {tier_color}33;"></div>
         </div>
         <div class="scale-axis">
           <span style="left:0%;">−2</span>
-          <span style="left:{zero_pct:.2f}%; color:#888;">0</span>
+          <span style="left:{cash_pct:.2f}%; color:#888;">−0.3</span>
+          <span style="left:{long_pct:.2f}%; color:#888;">0</span>
           <span style="left:100%;">+2</span>
         </div>
         <div class="scale-legend">
-          <span class="scale-cash-label">CASH</span>
-          <span class="scale-long-label">STAY LONG</span>
+          <span class="scale-cash-label">CASH signal</span>
+          <span class="scale-hold-label">HOLD band</span>
+          <span class="scale-long-label">LONG signal</span>
         </div>
       </div>'''
 
@@ -475,6 +510,9 @@ def _render_html(
     tier_color = TIER_COLORS[latest.tier]
     tier_label = TIER_LABELS[latest.tier]
     tier_subtitle = TIER_SUBTITLES[latest.tier]
+    signal_zone = _mroi_signal_zone(latest.pi)
+    signal_color = _mroi_signal_color(latest.pi)
+    signal_subtitle = _mroi_signal_subtitle(latest.pi, tier_label)
     chart_json = json.dumps(historical, separators=(",", ":"))
     scale_html = _make_pi_scale_bar(latest.pi, tier_color)
     info_svg = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="4" r="0.9" fill="currentColor"/><line x1="7" y1="6.5" x2="7" y2="10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>'
@@ -543,17 +581,19 @@ def _render_html(
   .scale-track {{ position: relative; height: 8px; border-radius: 4px; background: #1a1a1a; display: flex; overflow: visible; }}
   .scale-zone {{ height: 100%; }}
   .scale-zone:first-child {{ border-radius: 4px 0 0 4px; }}
-  .scale-zone:nth-child(2) {{ border-radius: 0 4px 4px 0; }}
-  .scale-zone-cash {{ background: linear-gradient(to right, #E84B5A22, #E84B5A11); }}
-  .scale-zone-long {{ background: linear-gradient(to right, #4CAF5011, #4CAF5022); }}
-  .scale-zero {{ position: absolute; top: -3px; bottom: -3px; width: 1px; background: #555; }}
+  .scale-zone:nth-child(3) {{ border-radius: 0 4px 4px 0; }}
+  .scale-zone-cash {{ background: linear-gradient(to right, #E84B5A28, #E84B5A16); }}
+  .scale-zone-hold {{ background: linear-gradient(to right, #D89B2B22, #D89B2B14); }}
+  .scale-zone-long {{ background: linear-gradient(to right, #4CAF5016, #4CAF5028); }}
+  .scale-threshold, .scale-zero {{ position: absolute; top: -3px; bottom: -3px; width: 1px; background: #555; }}
   .scale-marker {{ position: absolute; top: -4px; width: 16px; height: 16px; border-radius: 50%; transform: translateX(-50%); transition: left 0.3s; }}
   .scale-axis {{ position: relative; height: 14px; margin-top: 8px; font-size: 10px; color: #555; font-family: 'SF Mono', Menlo, monospace; }}
   .scale-axis span {{ position: absolute; transform: translateX(-50%); }}
   .scale-axis span:first-child {{ transform: translateX(0); }}
   .scale-axis span:last-child {{ transform: translateX(-100%); }}
-  .scale-legend {{ display: flex; justify-content: space-between; margin-top: 4px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; }}
+  .scale-legend {{ display: flex; justify-content: space-between; gap: 12px; margin-top: 4px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; }}
   .scale-cash-label {{ color: #E84B5A88; }}
+  .scale-hold-label {{ color: #D89B2B88; text-align:center; }}
   .scale-long-label {{ color: #4CAF5088; text-align:right; }}
 
   .section-title {{
@@ -669,8 +709,9 @@ def _render_html(
       <div class="hero-row">
         <div class="hero-value mono" style="color:{tier_color};">{_format_score(latest.pi)}</div>
         <div class="hero-action">
-          <div class="hero-action-label" style="color:{tier_color};">{tier_label} · {latest.allocation_pct:.0f}% long</div>
+          <div class="hero-action-label" style="color:{tier_color};">Posture: {tier_label} · {latest.allocation_pct:.0f}% long</div>
           <div class="hero-action-sub">{tier_subtitle}</div>
+          <div class="hero-action-sub" style="color:{signal_color};">Signal zone: {signal_zone} · {signal_subtitle}</div>
         </div>
       </div>
       {scale_html}
@@ -696,17 +737,17 @@ def _render_html(
         <span class="hero-pillar-name">BTC spot</span>
         <span class="hero-pillar-right"><span class="hero-pillar-value mono">${latest.btc_price:,.0f}</span></span>
       </div>
-      <div class="hero-pillar-note">MROI = Valuation + Holder Behavior. Two complementary BTC lenses, partially correlated (0.631), not independent axes.</div>
+      <div class="hero-pillar-note">MROI = Holder Behavior only. Valuation is shown as a diagnostic, not an allocation input.</div>
     </aside>
   </div>
-  <p class="hero-story">Milk Road Macro Index reads the outside risk-asset regime. Milk Road on-chain index uses the same product skeleton for BTC’s inside view: realized-cost valuation plus what meaningful holder cohorts are doing across on-chain, DAT and ETF channels. The technical math handle remains <code>MROI</code>.</p>
+  <p class="hero-story">Milk Road Macro Index reads the outside risk-asset regime. Milk Road on-chain index now uses the validated P4 inside view: holder behavior as the spine, asymmetric thresholds for posture, and valuation retained only as cycle-context diagnostics. The technical math handle remains <code>MROI</code>.</p>
 </header>
 
-<div class="section-title"><span class="step-num">1</span>How the index has evolved</div>
+<div class="section-title"><span class="step-num">1</span>Holder-behavior MROI with P4 zones</div>
 <div class="mrmi-chart">
   <div class="mrmi-chart-header">
     <h3>Milk Road on-chain index
-      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>How MROI works:</strong> MROI adds the Valuation dimension to the Holder Behavior dimension. The line is the production composite; background shading mirrors the Macro Index chart treatment.</span></span>
+      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>How MROI works:</strong> MROI is the holder-behavior z-score. Green/amber/red backgrounds show the raw signal zones; the hero posture shows the state-machine output.</span></span>
     </h3>
     <div class="range-tabs" aria-label="Global chart range">
       <button data-range="1y" class="active">1Y</button>
@@ -715,7 +756,7 @@ def _render_html(
       <button data-range="all">ALL</button>
     </div>
   </div>
-  <p class="mrmi-chart-subtitle">Production MROI over time; BTC can be toggled as a normalized overlay.</p>
+  <p class="mrmi-chart-subtitle">Production holder-behavior MROI over time; BTC can be toggled as a normalized overlay. Green is raw LONG signal, amber holds the prior posture, red is raw CASH signal.</p>
   <div class="legend">
     <span class="legend-item" data-series="pi"><span class="legend-dot" style="background:#fff"></span>MROI</span>
     <span class="legend-item" data-series="btc"><span class="legend-dot" style="background:#A78BFA"></span>BTC</span>
@@ -725,23 +766,23 @@ def _render_html(
     <details class="drivers backtest-toggle">
       <summary><span>How well does this work historically?</span></summary>
       <div class="drivers-body">
-        <p class="details-copy">Walk-forward binary sizing by BTC cycle, using the same production 0% / 100% values and no leverage.</p>
+        <p class="details-copy">Walk-forward P4 state-machine sizing by BTC cycle, using the same production 0% / 100% values and no leverage.</p>
         {_walk_forward_table(walk_forward_rows)}
       </div>
     </details>
   </div>
 </div>
 
-<div class="section-title"><span class="step-num">2</span>How BTC is valued<span class="pillar-chip valuation">Valuation lens</span></div>
-<p class="section-intro"><strong>Valuation.</strong> Answers where BTC trades relative to realized cost-basis and miner-revenue anchors — the strongest multi-month mean-reversion lens in the framework.</p>
+<div class="section-title"><span class="step-num">2</span>Valuation diagnostic<span class="pillar-chip valuation">Not in decision</span></div>
+<p class="section-intro"><strong>Valuation.</strong> Answers where BTC trades relative to realized cost-basis and miner-revenue anchors. It remains useful for cycle awareness, but Phase G–P testing removed it from the allocation decision.</p>
 <div class="mrmi-chart">
   <div class="mrmi-chart-header">
     <h3>Valuation
-      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>What you're seeing:</strong> the Valuation dimension z-score over time. It is the equal-weighted mean of the same lagged 504d z-scored valuation constituents used by production <code>MROI</code>. The zero line is neutral; no MROI tier shading appears because this is a component, not the sizing rule.</span></span>
+      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>What you're seeing:</strong> the Valuation diagnostic z-score over time. It is the equal-weighted mean of the lagged 504d z-scored valuation constituents. The zero line is neutral; valuation is no longer part of production <code>MROI</code>.</span></span>
     </h3>
 
   </div>
-  <p class="mrmi-chart-subtitle">Latest: <span class="mono" style="color:{_state_color(latest.valuation)};">{_format_score(latest.valuation)}</span> · {_state_label(latest.valuation)}</p>
+  <p class="mrmi-chart-subtitle">Latest: <span class="mono" style="color:{_state_color(latest.valuation)};">{_format_score(latest.valuation)}</span> · {_state_label(latest.valuation)} · diagnostic only</p>
   <div class="chart-container dimension"><canvas id="valuationChart"></canvas></div>
 </div>
 <details class="drivers" id="valuation-drivers">
@@ -758,11 +799,11 @@ def _render_html(
 </details>
 
 <div class="section-title"><span class="step-num">3</span>How holders are positioning<span class="pillar-chip holder">Holder Behavior lens</span></div>
-<p class="section-intro"><strong>Holder Behavior.</strong> Answers whether meaningful holders are adding or shedding conviction across on-chain, corporate DAT and ETF cohorts. It is a complementary lens to Valuation, partially correlated (0.631) rather than statistically independent.</p>
+<p class="section-intro"><strong>Holder Behavior.</strong> Answers whether meaningful holders are adding or shedding conviction across on-chain, corporate DAT and ETF cohorts. This is now the sole production MROI spine.</p>
 <div class="mrmi-chart">
   <div class="mrmi-chart-header">
     <h3>Holder Behavior
-      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>What you're seeing:</strong> the Holder Behavior dimension z-score over time. It is the equal-weighted mean of available holder cohorts for each epoch: on-chain holders, corporate DAT, and institutional ETF flows. The zero line is neutral; no MROI tier shading appears because this is a component.</span></span>
+      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>What you're seeing:</strong> the Holder Behavior z-score over time. It is the equal-weighted mean of available holder cohorts for each epoch: on-chain holders, corporate DAT, and institutional ETF flows. This series is production <code>MROI</code>.</span></span>
     </h3>
 
   </div>
@@ -786,7 +827,7 @@ def _render_html(
   <details class="drivers" open>
     <summary><span>Composite formulas {_edit_link('src/onchain_index/composite.py')}</span></summary>
     <div class="drivers-body">
-      <div class="formula">Valuation = mean_available(z(STH MVRV), z(RHODL), z(Puell Multiple), z(MVRV-Z))\nHolder Behavior = mean_available(on-chain, corporate DAT, institutional ETF)\nMROI = Valuation + Holder Behavior</div>
+      <div class="formula">Valuation diagnostic = mean_available(z(STH MVRV), z(RHODL), z(Puell Multiple), z(MVRV-Z))\nHolder Behavior = mean_available(on-chain, corporate DAT, institutional ETF)\nMROI = Holder Behavior\nPosture = LONG if MROI &gt; 0.0; CASH if MROI &lt; -0.3; otherwise hold prior state</div>
       <p class="details-copy">The renderer imports production composite functions directly; there is no dashboard-only signal path.</p>
     </div>
   </details>
@@ -799,9 +840,10 @@ def _render_html(
   <details class="drivers">
     <summary><span>Tier thresholds {_edit_link('src/onchain_index/composite.py')}</span></summary>
     <div class="drivers-body">
-      <table><thead><tr><th>MROI bucket</th><th>Tier</th><th>Allocation</th></tr></thead><tbody>
-        <tr><td class="mono">&lt;= 0.0</td><td>CASH</td><td class="mono">0%</td></tr>
-        <tr><td class="mono">&gt; 0.0</td><td>STAY LONG</td><td class="mono">100%</td></tr>
+      <table><thead><tr><th>Raw MROI zone</th><th>State-machine action</th><th>Allocation</th></tr></thead><tbody>
+        <tr><td class="mono">&lt; -0.3</td><td>CASH</td><td class="mono">0%</td></tr>
+        <tr><td class="mono">-0.3 to 0.0</td><td>Hold prior LONG/CASH state</td><td class="mono">unchanged</td></tr>
+        <tr><td class="mono">&gt; 0.0</td><td>LONG</td><td class="mono">100%</td></tr>
       </tbody></table>
     </div>
   </details>
@@ -815,9 +857,9 @@ def _render_html(
     <summary><span>Resolved framework choices {_edit_link('docs/theory.md')}</span></summary>
     <div class="drivers-body">
       <table><thead><tr><th>Question</th><th>Current v1 posture</th></tr></thead><tbody>
-        <tr><td>Sizing floor</td><td>Resolved at 0% for CASH and 100% for STAY LONG.</td></tr>
-        <tr><td>Tier naming</td><td>Resolved to MRMI wording: CASH / STAY LONG.</td></tr>
-        <tr><td>Threshold method</td><td>Resolved to the MRMI-shape zero threshold: invested only when MROI &gt; 0.</td></tr>
+        <tr><td>Sizing floor</td><td>Resolved at 0% for CASH and 100% for LONG.</td></tr>
+        <tr><td>Tier naming</td><td>Resolved to P4 binary wording: CASH / LONG.</td></tr>
+        <tr><td>Threshold method</td><td>Resolved to asymmetric P4: LONG above 0.0, CASH below -0.3, hold prior state between.</td></tr>
         <tr><td>Diagnostic surface</td><td>Keep holder sub-cohorts prominent so composition drift is visible.</td></tr>
       </tbody></table>
     </div>
@@ -875,7 +917,13 @@ function zeroLineAnnotation() {{
   return {{ zero: {{ type: 'line', yMin: 0, yMax: 0, borderColor: '#333', borderWidth: 1, scaleID: 'y' }} }};
 }}
 function tierBandAnnotations() {{
-  return zeroLineAnnotation();
+  return {{
+    longZone: {{ type: 'box', yMin: {MROI_LONG_THRESHOLD}, yMax: 100, backgroundColor: 'rgba(76,175,80,0.10)', borderWidth: 0, drawTime: 'beforeDatasetsDraw' }},
+    holdZone: {{ type: 'box', yMin: {MROI_CASH_THRESHOLD}, yMax: {MROI_LONG_THRESHOLD}, backgroundColor: 'rgba(216,155,43,0.14)', borderWidth: 0, drawTime: 'beforeDatasetsDraw' }},
+    cashZone: {{ type: 'box', yMin: -100, yMax: {MROI_CASH_THRESHOLD}, backgroundColor: 'rgba(232,75,90,0.10)', borderWidth: 0, drawTime: 'beforeDatasetsDraw' }},
+    longThreshold: {{ type: 'line', yMin: {MROI_LONG_THRESHOLD}, yMax: {MROI_LONG_THRESHOLD}, borderColor: '#4CAF5088', borderWidth: 1, scaleID: 'y' }},
+    cashThreshold: {{ type: 'line', yMin: {MROI_CASH_THRESHOLD}, yMax: {MROI_CASH_THRESHOLD}, borderColor: '#E84B5A88', borderWidth: 1, scaleID: 'y' }},
+  }};
 }}
 function sharedChartOptions({{ small = false, annotations = zeroLineAnnotation(), yAxis = {{}}, extraScales = {{}}, tooltipCallbacks = {{}} }} = {{}}) {{
   const tickSize = small ? 9 : 10;
@@ -903,7 +951,7 @@ function lineDataset(label, data, color, extra = {{}}) {{
 function buildPiDatasets(points) {{
   const datasets = [];
   if (visibleSeries.btc) datasets.push(lineDataset('BTC', normalizePrices(points.map(p => p.price)), '#A78BFA', {{ yAxisID: 'yPrice', order: 2 }}));
-  if (visibleSeries.pi) datasets.push(lineDataset('MROI', points.map(p => p.pi), '#ffffff', {{ yAxisID: 'y', order: 0, fill: {{ target: 'origin', above: 'rgba(76,175,80,0.22)', below: 'rgba(232,75,90,0.22)' }} }}));
+  if (visibleSeries.pi) datasets.push(lineDataset('MROI', points.map(p => p.pi), '#ffffff', {{ yAxisID: 'y', order: 0 }}));
   return datasets;
 }}
 function renderPi() {{

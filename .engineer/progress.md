@@ -222,3 +222,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: Production migration decision: adopt P4 asymmetric binary if Martin accepts loss of CAUTION vocabulary; otherwise choose K1 vs O1 N=3 as product alpha-vs-cadence call.
+
+## 2026-05-28T14:34:38Z — Task 76 P4 production migration
+- What: Migrated production MROI to holder-only P4 asymmetric state machine, rebuilt dashboard/docs around LONG/HOLD/CASH zones, and confirmed Supabase sync has no repo schema writer to update.
+- Files touched: src/onchain_index/composite.py, src/onchain_index/build.py, src/onchain_index/build_index_page.py, tests/test_composite.py, tests/test_build.py, docs/theory.md, docs/index.html, outputs/dashboard.html, DECISIONS.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: FE/Supabase consumers may need to know `last_tier` now emits `LONG` instead of `STAY LONG`; no Supabase sync module exists in this repo.

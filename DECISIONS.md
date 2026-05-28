@@ -31,3 +31,7 @@ Reason: Simplified to 2-tier binary (STAY LONG / CASH) per task-26 walk-forward 
 ## 2026-05-21 — Adopted MROI technical handle
 
 Reason: Adopted "MROI" as the technical-handle shorthand for the Milk Road on-chain index score. Reverses the earlier "no acronym" call from this morning's task-24; Martin's revised view after seeing 'PI_score' on the live dashboard was that the abstract variable name was confusing. Internal Python function renamed pi_score() → mroi() for consistency.
+
+## 2026-05-28 — Switched MROI to P4 asymmetric holder-only architecture
+
+Reason: Phase G–P research exhausted valuation overrides, BTC/equity spines, symmetric thresholds, confirmation rules, and CAUTION-tier variants. The validated winner was Phase P's P4 asymmetric binary state machine: `MROI = z(holder_behavior)` only; enter LONG when MROI > 0.0, exit CASH when MROI < -0.3, and hold the prior state in between. P4 improved OOS median cycle alpha to +24.2% versus the prior additive reference at +18.1% and reduced cadence to 13.8 switches/cycle versus 33.2. See reports/phase-g-asymmetric-override-2026-05-28.md through reports/phase-p-tier-confirmation-2026-05-28.md.
