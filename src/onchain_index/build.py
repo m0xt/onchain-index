@@ -48,16 +48,16 @@ PROJECT_REPO_URL = "https://github.com/m0xt/onchain-index"
 THEORY_VERSION = "v0.7"
 
 INDICATOR_DECISIONS: dict[str, tuple[str, str, str]] = {
-    "STH MVRV": ("Valuation", "In", "Best cycle-robust valuation survivor; 4/4 cycles positive."),
-    "RHODL Ratio": ("Valuation", "In", "Age-band realized-value valuation oscillator; 4/4 cycles positive."),
-    "Puell Multiple": ("Valuation", "In", "Miner-revenue valuation lens; modest standalone, diversifying."),
-    "MVRV-Z": ("Valuation", "In", "Canonical realized-cap deviation metric; chosen over NUPL."),
+    "STH MVRV": ("Valuation", "Diagnostic only", "Useful cycle-context lens; not used in the P4 posture."),
+    "RHODL Ratio": ("Valuation", "Diagnostic only", "Age-band realized-value oscillator retained for Reference Library context."),
+    "Puell Multiple": ("Valuation", "Diagnostic only", "Miner-revenue valuation lens retained for Reference Library context."),
+    "MVRV-Z": ("Valuation", "Diagnostic only", "Canonical realized-cap deviation metric; chosen over NUPL for context."),
     "NUPL": ("Valuation", "Out / alternate", "Excluded because MVRV-Z/NUPL were highly colinear."),
     "LTH MVRV": ("Holder Behavior / on-chain", "Out", "Both tested signs were negative full-sample."),
-    "HODL 1Y+": ("Holder Behavior / on-chain", "Out level rule", "Level rule failed; 30d-change inverted z is the included transform."),
-    "Address Growth": ("Adoption / holder-ish", "Out", "Closer to adoption and negative under both tested signs."),
+    "HODL 1Y+": ("Holder Behavior / on-chain", "In transform", "Level rule failed; 30d-change inverted z is the included transform."),
+    "Address Growth": ("Adoption / network", "Out", "Closer to adoption and negative under both tested signs."),
     "Reserve Risk": ("Holder / valuation hybrid", "Out", "Standalone rule failed; sign convention remains contested."),
-    "Hash Ribbon": ("Out", "Out", "Miner-derived and not cleanly in the locked two-dimension theory."),
+    "Hash Ribbon": ("Out", "Out", "Miner-derived and outside the locked holder-behavior production spine."),
     "ETF Net Flow": ("Holder Behavior / institutional ETF", "In", "Cleanest post-2024 marginal-holder flow input."),
     "MSTR Holdings Δ": ("Holder Behavior / corporate DAT", "In as cohort", "Weak standalone but structurally part of holder behavior."),
     "Coinbase Premium": ("Uncertain", "Out", "Not a valid exchange-flow substitute; behaved like microstructure sentiment."),

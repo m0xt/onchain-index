@@ -229,3 +229,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: FE/Supabase consumers may need to know `last_tier` now emits `LONG` instead of `STAY LONG`; no Supabase sync module exists in this repo.
+
+## 2026-05-28T15:41:43Z — Task 79 P4 docs coherence pass
+- What: Rewrote README and architecture docs around P4 holder-only MROI, cleaned residual stale theory/iteration-surface language, refreshed agent docs/repo maps, and rebuilt `docs/index.html` from live constants.
+- Files touched: README.md, docs/architecture.md, docs/theory.md, src/onchain_index/build.py, docs/index.html, AGENTS.md, agent_docs/cron_failure_recovery.md, agent_docs/repo_map.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: none

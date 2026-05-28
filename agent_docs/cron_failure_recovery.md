@@ -19,7 +19,7 @@ uv run ruff check .
 Symptoms:
 - `python -m onchain_index.build --no-cache` fails before `outputs/dashboard.html` is updated.
 - Stack traces from Bitcoin Magazine Pro, Farside ETF flow reads, Strategy holdings, Yahoo/Coin Metrics, DNS, TLS, rate limits, or empty data frames.
-- `.cache/status.json` reports `last_pi_score: null` and a non-null `last_error`.
+- `.cache/status.json` reports `last_mroi: null` and a non-null `last_error`.
 
 Recovery:
 1. Check whether `.cache/raw_data.pkl` exists and whether the failure only happens with `--no-cache`.
@@ -32,7 +32,7 @@ Recovery:
 
 Symptoms:
 - `docs/index.html` was updated but `outputs/dashboard.html` differs.
-- `.cache/status.json` has a stale `last_run_utc`, null `last_pi_score`, or non-null `last_error` after a seemingly successful run.
+- `.cache/status.json` has a stale `last_run_utc`, null `last_mroi`, or non-null `last_error` after a seemingly successful run.
 - The LAN page on `http://Felixs-Mac-mini.local:8002/dashboard.html` shows an older build than the repo files.
 
 Recovery:
@@ -81,7 +81,7 @@ Recovery:
 ## Escalation rules
 
 Escalate instead of guessing if:
-- PI_score math, cohort membership, or sizing tiers appear wrong but the dispatch did not ask for parameter changes.
+- MROI math, holder cohort membership, P4 thresholds, or sizing tiers appear wrong but the dispatch did not ask for parameter changes.
 - A data source output changed in a way that affects historical comparability.
 - A dashboard build succeeds but values look implausible and no test explains the shift.
 - Exchange-flow integration comes up again without a new Martin-approved thesis/rule change.

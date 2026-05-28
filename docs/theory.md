@@ -1,8 +1,8 @@
 # Milk Road on-chain index — theory of the framework
 
-**Status:** draft v0.7 — production `MROI` switched on 2026-05-28 from additive `z(valuation) + z(holder_behavior)` to the validated Phase P / P4 architecture: holder-behavior spine only, asymmetric LONG/CASH thresholds, and a state machine that holds the prior posture in the noise band.
+**Status:** draft v0.7 — production `MROI` switched on 2026-05-28 to the validated Phase P / P4 architecture: holder-behavior spine only, asymmetric LONG/CASH thresholds, and a state machine that holds the prior posture in the noise band.
 
-> This document encodes *why* the framework is shaped the way it is. The MRMI structure works for macro-framework because it encodes a specific causal model (growth + financial conditions drive regime; real-econ tail risk modifies it). Milk Road on-chain index keeps its own causal model: BTC-specific holder behavior drives the production posture; valuation remains a diagnostic lens for cycle awareness.
+> This document encodes *why* the framework is shaped the way it is. Macro-framework encodes its own causal model for broad risk assets; Milk Road on-chain index keeps a BTC-specific causal model: holder behavior drives the production posture, while valuation remains a diagnostic lens for cycle awareness.
 
 ---
 
@@ -10,7 +10,7 @@
 
 Five causal factors, ranked roughly by signal strength on multi-month horizons:
 
-1. **Valuation mean reversion around realized cost basis.** BTC has no cash flows, no earnings, no DCF anchor. The closest fundamental anchor is realized cap — the aggregate cost basis of all coins. Deep deviations still matter for cycle awareness: expensive markets are fragile, cheap markets can be asymmetric opportunities. But Phase G/H/I/J/N showed valuation does **not** add allocation signal once combined with holder behavior; in several tested structures it actively hurt walk-forward performance. In production it is therefore a diagnostic, not a decision input. See [[reports/phase-g-asymmetric-override-2026-05-28.md]], [[reports/phase-h-spine-candidates-2026-05-28.md]], [[reports/phase-i-blended-spines-2026-05-28.md]], [[reports/phase-j-duration-magnitude-2026-05-28.md]], and [[reports/phase-n-euphoria-overlay-2026-05-28.md]].
+1. **Valuation mean reversion around realized cost basis.** BTC has no cash flows, no earnings, no DCF anchor. The closest fundamental anchor is realized cap — the aggregate cost basis of all coins. Deep deviations still matter for cycle awareness: expensive markets are fragile, cheap markets can be asymmetric opportunities. But Phase G/H/I/J/N showed valuation does **not** add allocation signal once tested alongside holder behavior; in several structures it actively hurt walk-forward performance. In production it is therefore a diagnostic, not a decision input. See [[reports/phase-g-asymmetric-override-2026-05-28.md]], [[reports/phase-h-spine-candidates-2026-05-28.md]], [[reports/phase-i-blended-spines-2026-05-28.md]], [[reports/phase-j-duration-magnitude-2026-05-28.md]], and [[reports/phase-n-euphoria-overlay-2026-05-28.md]].
 
 2. **Holder behavior — what *all classes of meaningful holders* are doing.** This is broader than the legacy on-chain definition. A holder is anyone with conviction to take or release supply: sovereign individuals (STH/LTH on-chain), institutional funds (spot BTC ETFs, post-2024), and corporate treasuries (DATs — currently MSTR/Strategy, with Metaplanet, Marathon, Riot, etc. desirable as future coverage). LTHs distributing or STHs capitulating, ETF custody net-out, and DATs slowing accumulation all answer the same causal question: *are meaningful holders adding or shedding conviction right now?* This is the production spine.
 
@@ -27,9 +27,9 @@ Five causal factors, ranked roughly by signal strength on multi-month horizons:
 **One production dimension: Holder Behavior.**
 
 Rationale:
-- **Holder behavior is the action signal.** Phase K showed the pure holder spine (`z(holder_behavior) > 0`) could beat the additive baseline OOS. Phase L found BTC/equity combinations failed to improve it. Phase P then found P4 — an asymmetric holder-only state machine — as the only candidate to clear both validation tracks. See [[reports/phase-k-pure-rerun-2026-05-28.md]], [[reports/phase-l-holder-btceq-combinations-2026-05-28.md]], and [[reports/phase-p-tier-confirmation-2026-05-28.md]].
+- **Holder behavior is the action signal.** Phase K showed the pure holder spine (`z(holder_behavior) > 0`) could beat the prior production baseline OOS. Phase L found BTC/equity combinations failed to improve it. Phase P then found P4 — an asymmetric holder-only state machine — as the only candidate to clear both validation tracks. See [[reports/phase-k-pure-rerun-2026-05-28.md]], [[reports/phase-l-holder-btceq-combinations-2026-05-28.md]], and [[reports/phase-p-tier-confirmation-2026-05-28.md]].
 - **Valuation is tested-and-rejected for allocation.** It remains useful for explaining where BTC sits in the cycle, but not for deciding the LONG/CASH posture. The dashboard therefore keeps `valuation_composite()` as a clearly labeled diagnostic chart.
-- **The output stays chartable.** `MROI` remains a single z-score, but it now means exactly `holder_behavior_composite`, not an additive blend.
+- **The output stays chartable.** `MROI` remains a single z-score, but it now means exactly `holder_behavior_composite`, not a blend.
 
 ### Holder behavior composition (sub-cohorts)
 
@@ -91,9 +91,9 @@ MROI  < -0.3  →  CASH  (0%)
 ```
 
 Evidence:
-- **Standard walk-forward OOS median alpha:** `+24.2%` for P4 versus the prior additive baseline's `+18.1%` (`+6.1pp`).
+- **Standard walk-forward OOS median alpha:** `+24.2%` for P4 versus the prior production baseline's `+18.1%` (`+6.1pp`).
 - **Strict cycle-4 OOS alpha:** `+28.9%`, validating in the modern/post-ETF held-out cycle.
-- **Cadence:** `13.8` switches/cycle versus the additive baseline's `33.2`, roughly an investor-grade `3–4` switches/year instead of clustered churn.
+- **Cadence:** `13.8` switches/cycle versus the prior production baseline's `33.2`, roughly an investor-grade `3–4` switches/year instead of clustered churn.
 
 The output remains binary allocation: `LONG` = 100%, `CASH` = 0%. The dashboard separately shows the raw signal zone (green LONG signal, amber HOLD band, red CASH signal) so the user can see when posture and raw signal differ.
 
@@ -129,7 +129,7 @@ Open monitoring question:
 
 ### Resolved 2026-05-28
 
-- ~~Additive valuation + holder MROI~~ → **holder-only MROI**.
+- ~~Valuation + holder MROI~~ → **holder-only MROI**.
 - ~~Binary zero threshold~~ → **P4 asymmetric state machine**: LONG above `0.0`, CASH below `-0.3`, hold prior posture in between.
 - ~~CAUTION/tier vocabulary~~ → rejected by Phase P; no tested tiered variant qualified.
 
