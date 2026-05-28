@@ -10,6 +10,7 @@ dependencies = [
     "pandas>=2.2.0",
     "python-dotenv>=1.1.0",
     "requests>=2.32.0",
+    "yfinance>=0.2.66",
 ]
 
 [project.optional-dependencies]

@@ -159,3 +159,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: Martin review of the Phase G report; no production MROI/dashboard changes made.
+
+## 2026-05-28T12:08:56Z — Phase H spine-candidate audit
+- What: Added research-only Yahoo BTC/equity close helper, evaluated holder-only and BTC/equity relative-strength spines with T=2 valuation override, and wrote the Phase H report; best spine was H1 at +8.0% OOS, below additive +18.1%.
+- Files touched: pyproject.toml, uv.lock, src/onchain_index/research/equity_data.py, src/onchain_index/research/optimization/phase_h_spine_candidates.py, reports/phase-h-spine-candidates-2026-05-28.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: Martin review of the Phase H keep-additive recommendation; no production MROI/dashboard changes made.
