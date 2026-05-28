@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast
 
+import numpy as np
 import pandas as pd
 import yfinance as yf
 
@@ -60,7 +61,8 @@ def _read_cached(path: Path, start: pd.Timestamp, end: pd.Timestamp) -> pd.DataF
     cached = _normalize_index(cached)
     cached_start = cast(pd.Timestamp, cached.index.min())
     cached_end = cast(pd.Timestamp, cached.index.max())
-    if cached_start <= start and cached_end >= end:
+    starts_close_enough = cached_start <= start or cached_start <= start + pd.Timedelta(days=7)
+    if starts_close_enough and cached_end >= end:
         return cached
     return None
 
@@ -70,6 +72,7 @@ def yahoo_daily_closes(
     *,
     cache_dir: Path = DEFAULT_CACHE_DIR,
     use_cache: bool = True,
+    cache_only: bool = False,
 ) -> pd.DataFrame:
     """Fetch Yahoo BTC/equity closes and align them to the Phase A daily index."""
     daily_index = _daily_index(index)
@@ -78,6 +81,8 @@ def yahoo_daily_closes(
     path = _cache_path(cache_dir)
 
     closes = _read_cached(path, start, end) if use_cache else None
+    if closes is None and cache_only:
+        raise RuntimeError(f"Yahoo close cache is missing or stale: {path}")
     if closes is None:
         downloaded = cast(
             pd.DataFrame,
@@ -139,3 +144,91 @@ def outperformance_frequency_z(
     result = rolling_zscore(frequency, window=DEFAULT_ZSCORE_WINDOW)
     result.name = f"{numerator}_over_{denominator}_outperf_freq_z_{window}d"
     return result
+
+
+def full_sample_zscore(series: pd.Series) -> pd.Series:
+    """Return a full-sample z-score for a research-only series."""
+    values = cast(pd.Series, series.astype(float))
+    finite = values.dropna().to_numpy(dtype=float)
+    std = float(np.std(finite, ddof=1)) if len(finite) > 1 else np.nan
+    mean = float(np.mean(finite)) if len(finite) else np.nan
+    result = (values - mean) / std if std and not np.isnan(std) else values * np.nan
+    result.name = series.name
+    return cast(pd.Series, result)
+
+
+def relative_trend_slope_z(
+    closes: pd.DataFrame, numerator: str, denominator: str, window: int
+) -> pd.Series:
+    """Return full-sample z-score of rolling log relative-price trend slope."""
+    log_ratio = cast(
+        pd.Series,
+        np.log(closes[numerator].astype(float)) - np.log(closes[denominator].astype(float)),
+    )
+    x = np.arange(window, dtype=float)
+    x = x - x.mean()
+    denominator_sum = float(np.dot(x, x))
+
+    def slope(values: np.ndarray) -> float:
+        if np.isnan(values).any():
+            return np.nan
+        y = values - values.mean()
+        return float(np.dot(x, y) / denominator_sum)
+
+    raw = cast(
+        pd.Series, log_ratio.rolling(window=window, min_periods=window).apply(slope, raw=True)
+    )
+    raw.name = f"{numerator}_over_{denominator}_trend_slope_z_{window}d"
+    return full_sample_zscore(raw)
+
+
+def cumulative_log_relative_return_z(
+    closes: pd.DataFrame, numerator: str, denominator: str, lookback: int
+) -> pd.Series:
+    """Return full-sample z-score of trailing cumulative log relative return."""
+    log_ratio = cast(
+        pd.Series,
+        np.log(closes[numerator].astype(float)) - np.log(closes[denominator].astype(float)),
+    )
+    raw = cast(pd.Series, log_ratio.diff(lookback))
+    raw.name = f"{numerator}_over_{denominator}_cum_log_relret_z_{lookback}d"
+    return full_sample_zscore(raw)
+
+
+def streak_magnitude_z(
+    closes: pd.DataFrame, numerator: str, denominator: str, window: int
+) -> pd.Series:
+    """Return full-sample z-score of rolling longest outperformance streak magnitude."""
+    log_prices = cast(pd.DataFrame, np.log(closes[[numerator, denominator]].astype(float)))
+    log_returns = log_prices.diff()
+    outperformance = cast(pd.Series, log_returns[numerator] - log_returns[denominator])
+
+    def longest_positive_run_sum(values: np.ndarray) -> float:
+        best_length = 0
+        best_sum = 0.0
+        current_length = 0
+        current_sum = 0.0
+        for value in values:
+            if np.isnan(value):
+                return np.nan
+            if value > 0.0:
+                current_length += 1
+                current_sum += float(value)
+                if current_length > best_length or (
+                    current_length == best_length and current_sum > best_sum
+                ):
+                    best_length = current_length
+                    best_sum = current_sum
+            else:
+                current_length = 0
+                current_sum = 0.0
+        return best_sum if best_length else 0.0
+
+    raw = cast(
+        pd.Series,
+        outperformance.rolling(window=window, min_periods=window).apply(
+            longest_positive_run_sum, raw=True
+        ),
+    )
+    raw.name = f"{numerator}_over_{denominator}_streak_magnitude_z_{window}d"
+    return full_sample_zscore(raw)

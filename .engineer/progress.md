@@ -173,3 +173,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: docs/theory honesty update should frame MROI as empirical-first additive evidence rather than an MRMI-shaped spine+modifier system.
+
+## 2026-05-28T12:38:38Z — Phase J duration-magnitude audit
+- What: Added research-only Phase J BTC/NASDAQ duration×magnitude spines, generated `.cache/optim/phase_j.json`, and wrote the final report; all six variants lost to additive by 5+pp, so recommendation is architecture-search exhausted and docs/theory honesty update next.
+- Files touched: src/onchain_index/research/equity_data.py, src/onchain_index/research/optimization/phase_j_duration_magnitude.py, reports/phase-j-duration-magnitude-2026-05-28.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: docs/theory honesty update should state MROI is empirical-first additive evidence after Phase G/H/I/J spine/override searches failed OOS.
