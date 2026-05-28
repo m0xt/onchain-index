@@ -187,3 +187,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: Production/docs follow-up should handle the decision-tree branch 1 switch implication: evaluate/implement `STAY LONG if z(holder_behavior) > 0 else CASH` without valuation or BTC/equity spines.
+
+## 2026-05-28T13:01:44Z — Phase L holder/BTC-equity combination audit
+- What: Added the Phase L pure-mode holder × BTC/equity combination script, generated `.cache/optim/phase_l.json`, and wrote the report; all eight candidates lost to K1 by at least 1pp, so recommendation is branch 3: productionize K1 holder-only pure.
+- Files touched: src/onchain_index/research/optimization/phase_l_holder_btceq_combinations.py, reports/phase-l-holder-btceq-combinations-2026-05-28.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: Production migration to `STAY LONG if z(holder_behavior) > 0 else CASH`, plus theory/dashboard wording update with Phase K/L evidence.
