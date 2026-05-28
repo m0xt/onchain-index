@@ -74,7 +74,12 @@ def test_build_entrypoint_writes_dashboard_and_status(tmp_path) -> None:
     assert outputs_dashboard.stat().st_size > 0
 
     latest_pi = mroi(frame).dropna().iloc[-1]
-    assert f"{latest_pi:+.2f}" in outputs_dashboard.read_text()
+    html = outputs_dashboard.read_text()
+    assert f"{latest_pi:+.2f}" in html
+    assert "HOLDER CONVICTION COHORTS" in html
+    assert "Input / Group / Current z / 7d zΔ / 30d zΔ" in html
+    assert "Reference Library" in html
+    assert "Supplementary context indicators — not part of the decision rule" in html
 
     status = json.loads(status_json.read_text())
     assert set(status) == {"last_run_utc", "last_mroi", "last_tier", "last_error"}

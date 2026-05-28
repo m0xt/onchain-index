@@ -27,6 +27,9 @@ from onchain_index.backtest import (
     walk_forward_tiered_by_cycle,
 )
 from onchain_index.composite import (
+    DAT_DELTA_DAYS,
+    ETF_FLOW_SUM_DAYS,
+    HODL_DELTA_DAYS,
     MROI_CASH_THRESHOLD,
     MROI_LONG_THRESHOLD,
     TIER_PCT,
@@ -266,9 +269,25 @@ def _latest_scores(data: pd.DataFrame) -> tuple[LatestScores, pd.DataFrame, pd.S
 
 
 def _historical_points(data: pd.DataFrame, components: pd.DataFrame) -> list[dict[str, float | str | None]]:
+    hodl_30d = cast(pd.Series, data["hodl_1yr_pct"].astype(float).diff(HODL_DELTA_DAYS))
+    mstr_30d = cast(pd.Series, data["mstr_btc"].astype(float).diff(DAT_DELTA_DAYS))
+    etf_30d = cast(
+        pd.Series,
+        data["etf_net_flow_m"].astype(float).rolling(window=ETF_FLOW_SUM_DAYS, min_periods=ETF_FLOW_SUM_DAYS).sum(),
+    )
     joined = pd.DataFrame(
         {
             "btc_price": data["btc_price"],
+            "raw_hodl_1yr_pct": data["hodl_1yr_pct"],
+            "raw_hodl_1yr_delta_30d": hodl_30d,
+            "raw_mstr_btc": data["mstr_btc"],
+            "raw_mstr_btc_delta_30d": mstr_30d,
+            "raw_etf_net_flow_m": data["etf_net_flow_m"],
+            "raw_etf_net_flow_30d_sum": etf_30d,
+            "raw_mvrv_zscore": data["mvrv_zscore"],
+            "raw_sth_mvrv": data["sth_mvrv"],
+            "raw_rhodl_ratio": data["rhodl_ratio"],
+            "raw_puell_multiple": data["puell_multiple"],
             **{column: components[column] for column in components.columns},
         },
         index=data.index,
@@ -281,6 +300,16 @@ def _historical_points(data: pd.DataFrame, components: pd.DataFrame) -> list[dic
             "price": _json_float(row["btc_price"]),
             "valuation": _json_float(row["valuation"]),
             "holder": _json_float(row["holder_behavior"]),
+            "raw_hodl_1yr_pct": _json_float(row["raw_hodl_1yr_pct"]),
+            "raw_hodl_1yr_delta_30d": _json_float(row["raw_hodl_1yr_delta_30d"]),
+            "raw_mstr_btc": _json_float(row["raw_mstr_btc"]),
+            "raw_mstr_btc_delta_30d": _json_float(row["raw_mstr_btc_delta_30d"]),
+            "raw_etf_net_flow_m": _json_float(row["raw_etf_net_flow_m"]),
+            "raw_etf_net_flow_30d_sum": _json_float(row["raw_etf_net_flow_30d_sum"]),
+            "raw_mvrv_zscore": _json_float(row["raw_mvrv_zscore"]),
+            "raw_sth_mvrv": _json_float(row["raw_sth_mvrv"]),
+            "raw_rhodl_ratio": _json_float(row["raw_rhodl_ratio"]),
+            "raw_puell_multiple": _json_float(row["raw_puell_multiple"]),
         }
         for name in VALUATION_LABELS:
             point[f"valuation_{name}"] = _json_float(row[f"valuation_{name}"])
@@ -514,6 +543,90 @@ def _render_html(
     signal_color = _mroi_signal_color(latest.pi)
     signal_subtitle = _mroi_signal_subtitle(latest.pi, tier_label)
     chart_json = json.dumps(historical, separators=(",", ":"))
+    holder_driver_json = json.dumps(
+        {
+            "on_chain": {
+                "label": "On-chain HODL",
+                "field": "holder_on_chain",
+                "group": "On-chain holders",
+                "input": "HODL 1Y+ share / 30d delta",
+                "raw_field": "raw_hodl_1yr_pct",
+                "raw_label": "HODL 1Y+ share",
+                "raw_unit": "%",
+                "transform_field": "raw_hodl_1yr_delta_30d",
+                "transform_label": "30d delta",
+                "transform_unit": "pp",
+                "desc": "Tracks whether long-term on-chain holders are adding or distributing supply; the final cohort score uses the inverted z-score of the 30-day HODL-share change.",
+                "source": "Bitcoin Magazine Pro",
+            },
+            "corporate_dat": {
+                "label": "MSTR DAT",
+                "field": "holder_corporate_dat",
+                "group": "Corporate treasury",
+                "input": "Strategy BTC holdings / 30d delta",
+                "raw_field": "raw_mstr_btc",
+                "raw_label": "Strategy BTC holdings",
+                "raw_unit": " BTC",
+                "transform_field": "raw_mstr_btc_delta_30d",
+                "transform_label": "30d delta",
+                "transform_unit": " BTC",
+                "desc": "Tracks Strategy/MSTR balance-sheet BTC accumulation as the current corporate DAT holder-behavior input.",
+                "source": "Strategy filings / treasury history",
+            },
+            "institutional_etf": {
+                "label": "ETF flows",
+                "field": "holder_institutional_etf",
+                "group": "Institutional ETF",
+                "input": "Spot ETF net flow / 30d rolling sum",
+                "raw_field": "raw_etf_net_flow_m",
+                "raw_label": "Daily net flow",
+                "raw_unit": "m",
+                "transform_field": "raw_etf_net_flow_30d_sum",
+                "transform_label": "30d rolling sum",
+                "transform_unit": "m",
+                "desc": "Tracks spot BTC ETF creations and redemptions as the cleanest post-2024 marginal-holder flow input.",
+                "source": "Farside Investors",
+            },
+        },
+        separators=(",", ":"),
+    )
+    reference_library_json = json.dumps(
+        {
+            "mvrv_zscore": {
+                "label": "MVRV-Z",
+                "category": "Valuation",
+                "field": "raw_mvrv_zscore",
+                "unit": "",
+                "note": "Market value to realized value, z-scored variant.",
+                "source": "Bitcoin Magazine Pro",
+            },
+            "sth_mvrv": {
+                "label": "STH MVRV",
+                "category": "Valuation",
+                "field": "raw_sth_mvrv",
+                "unit": "x",
+                "note": "Short-term holder cost-basis pressure.",
+                "source": "Bitcoin Magazine Pro",
+            },
+            "rhodl_ratio": {
+                "label": "RHODL Ratio",
+                "category": "Valuation",
+                "field": "raw_rhodl_ratio",
+                "unit": "",
+                "note": "Realized-value age-band valuation oscillator.",
+                "source": "Bitcoin Magazine Pro",
+            },
+            "puell_multiple": {
+                "label": "Puell Multiple",
+                "category": "Valuation",
+                "field": "raw_puell_multiple",
+                "unit": "x",
+                "note": "Daily mining issuance revenue versus its 365-day average.",
+                "source": "Bitcoin Magazine Pro",
+            },
+        },
+        separators=(",", ":"),
+    )
     scale_html = _make_pi_scale_bar(latest.pi, tier_color)
     info_svg = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="4" r="0.9" fill="currentColor"/><line x1="7" y1="6.5" x2="7" y2="10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>'
 
@@ -667,6 +780,52 @@ def _render_html(
   details.drivers[open] > summary::after {{ transform: rotate(180deg); }}
   details.drivers > summary:hover {{ color:#fff; }}
   .drivers-body {{ padding:0 24px 18px; }}
+  .drivers-desc {{ font-size:12px; color:#666; line-height:1.55; padding-bottom:12px; border-bottom:1px solid #1a1a1a; margin-bottom:4px; }}
+  .drivers-desc strong {{ color:#999; }}
+  #scorecard-holder table {{ width:100%; border-collapse:collapse; }}
+  #scorecard-holder th {{ text-align:left; padding:10px 8px; border-bottom:1px solid #222; color:#555; font-size:10px; text-transform:uppercase; letter-spacing:1px; font-weight:600; }}
+  #scorecard-holder th:first-child {{ padding-left:0; }}
+  #scorecard-holder td {{ padding:12px 8px; border-bottom:1px solid #1a1a1a; font-size:13px; vertical-align:top; }}
+  #scorecard-holder td:first-child {{ padding-left:0; }}
+  .sc-row {{ cursor:pointer; transition:background .1s; }}
+  .sc-row:hover {{ background:#161616; }}
+  .sc-label {{ color:#ccc; font-weight:500; font-size:14px; }}
+  .expanded-row {{ display:none; }}
+  .expanded-row.active {{ display:table-row; }}
+  .expanded-row td {{ padding:8px 0 16px; background:#0d0d0d; border-bottom:1px solid #222; }}
+  .growth-drilldown-body {{ padding:4px 14px 0; }}
+  .growth-inputs-table {{ width:100%; border-collapse:collapse; }}
+  .growth-inputs-table th {{ text-align:left; padding:8px 6px; border-bottom:1px solid #222; color:#555; font-size:10px; text-transform:uppercase; letter-spacing:1px; font-weight:600; }}
+  .growth-inputs-table td {{ padding:9px 6px; border-bottom:1px solid #1a1a1a; font-size:12px; vertical-align:top; }}
+  .growth-inputs-table th:first-child, .growth-inputs-table td:first-child {{ padding-left:0; }}
+  .growth-input-name {{ display:inline-flex; align-items:center; gap:6px; position:relative; }}
+  .growth-info-icon {{ display:inline-flex; align-items:center; justify-content:center; width:14px; height:14px; border:1px solid #333; border-radius:50%; color:#8a8a8a; font-size:9px; font-weight:800; line-height:1; cursor:help; text-transform:lowercase; vertical-align:1px; position:relative; flex:0 0 auto; }}
+  .growth-info-icon::after {{ content:attr(data-tooltip); position:absolute; left:50%; bottom:calc(100% + 8px); transform:translateX(-50%); width:max-content; max-width:min(280px, 70vw); padding:8px 10px; background:#111; color:#ddd; border:1px solid #333; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.42); font-size:11px; font-weight:500; line-height:1.45; text-transform:none; white-space:normal; opacity:0; visibility:hidden; pointer-events:none; z-index:30; }}
+  .growth-info-icon:hover::after, .growth-info-icon:focus::after {{ opacity:1; visibility:visible; }}
+  .growth-input-chart-panel {{ margin-top:18px; padding:12px 14px; background:#0d0d0d; border:1px solid #1c1c1c; border-radius:6px; }}
+  .growth-input-chart-header {{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }}
+  .growth-input-chart-title {{ color:#aaa; font-size:11px; text-transform:uppercase; letter-spacing:1.2px; font-weight:600; }}
+  .chart-wrap {{ position:relative; height:200px; width:100%; padding:0 8px; }}
+  .growth-input-chart-wrap {{ height:190px; padding:0; }}
+  .chart-desc {{ font-size:12px; color:#666; line-height:1.55; padding:10px 12px 0; }}
+  .val.neutral {{ color:#888; }}
+  .dir {{ font-family:'SF Mono', Menlo, monospace; font-size:12px; }}
+  .dir.up {{ color:#4CAF50; }}
+  .dir.down {{ color:#E84B5A; }}
+  .dir.flat {{ color:#555; }}
+  .dot {{ display:inline-block; width:8px; height:8px; border-radius:50%; }}
+  .dot.green {{ background:#4CAF50; }}
+  .dot.red {{ background:#E84B5A; }}
+  .library {{ background:#111; border:1px solid #222; border-radius:10px; padding:22px 26px; margin-bottom:24px; }}
+  .library table {{ width:100%; border-collapse:collapse; margin-top:8px; }}
+  .library th {{ text-align:left; padding:10px 14px; border-bottom:2px solid #222; color:#666; font-size:11px; text-transform:uppercase; letter-spacing:1px; font-weight:600; }}
+  .library td {{ padding:10px 14px; border-bottom:1px solid #1a1a1a; font-size:14px; vertical-align:middle; }}
+  .library tr:last-child td {{ border-bottom:none; }}
+  .library .ind-name {{ color:#ddd; font-weight:500; }}
+  .library .value {{ color:#fff; font-weight:600; }}
+  .library-footer {{ margin-top:14px; font-size:12px; color:#666; }}
+  .lib-row {{ cursor:pointer; transition:background .1s; }}
+  .lib-row:hover {{ background:#161616; }}
   .details-copy {{ font-size:13px; color:#aaa; line-height:1.6; margin:12px 0; }}
   .formula {{ font-family:'SF Mono', Menlo, monospace; font-size:12px; color:#ccc; background:#0e0e0e; border:1px solid #1f1f1f; border-radius:6px; padding:12px 14px; white-space:pre-wrap; }}
   .suggest {{ margin-left:10px; font-size:11px; text-transform:none; letter-spacing:0; font-weight:500; }}
@@ -749,7 +908,7 @@ def _render_html(
   <p class="hero-story">The Milk Road On-chain Index tracks the conviction of meaningful BTC holders — long-term on-chain holders, ETF flows, and corporate treasuries — then translates that composite into a simple posture signal. Stay long while MROI is above zero; move to cash when it drops below −0.3; hold your current position in between.</p>
 </header>
 
-<div class="section-title"><span class="step-num">1</span>Milk Road On-chain Index history</div>
+<div class="section-title"><span class="step-num">1</span>How the index has evolved</div>
 <div class="mrmi-chart">
   <div class="mrmi-chart-header">
     <h3>Milk Road On-chain Index
@@ -780,90 +939,36 @@ def _render_html(
 </div>
 
 <div class="section-title"><span class="step-num">2</span>What drives the index<span class="pillar-chip holder">Decision inputs</span></div>
-<p class="section-intro"><strong>Holder conviction.</strong> MROI is driven by three cohorts: on-chain HODL behavior, Strategy treasury accumulation, and spot ETF flows. The charts below show which cohort is pushing the index today.</p>
-<div class="mrmi-chart">
-  <div class="mrmi-chart-header">
-    <h3>Holder conviction cohorts
-      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>What you're seeing:</strong> the three holder-conviction cohorts behind MROI: on-chain HODL delta, Strategy treasury delta, and institutional ETF flows.</span></span>
-    </h3>
-
-  </div>
-  <p class="mrmi-chart-subtitle">Latest MROI: <span class="mono" style="color:{_state_color(latest.holder_behavior)};">{_format_score(latest.holder_behavior)}</span> · {_state_label(latest.holder_behavior)}. These are the actual decision inputs.</p>
-  <p class="inline-disclosure"><strong>Strategy treasury cohort:</strong> Strategy is currently the corporate treasury input.</p>
-  <div class="drivers-chart-grid">
-    <article class="driver-chart-card"><h4>On-chain HODL delta<span class="driver-value mono">{_format_score(latest.holder_cohorts['on_chain'])}</span></h4><p>Inverted z-score of the 30-day change in HODL 1Y+ supply.</p><div class="driver-chart-wrap"><canvas id="driverHolderOnChain"></canvas></div></article>
-    <article class="driver-chart-card"><h4>Strategy treasury delta<span class="driver-value mono">{_format_score(latest.holder_cohorts['corporate_dat'])}</span></h4><p>Z-score of Strategy BTC holdings change over 30 days.</p><div class="driver-chart-wrap"><canvas id="driverHolderDat"></canvas></div></article>
-    <article class="driver-chart-card"><h4>ETF flows<span class="driver-value mono">{_format_score(latest.holder_cohorts['institutional_etf'])}</span></h4><p>Z-score of rolling 30-day spot BTC ETF net flows.</p><div class="driver-chart-wrap"><canvas id="driverHolderEtf"></canvas></div></article>
-  </div>
-</div>
-
-<div class="section-title"><span class="step-num">3</span>Valuation diagnostic<span class="pillar-chip valuation">Not in decision</span></div>
-<p class="section-intro"><strong>Valuation.</strong> Answers where BTC trades relative to realized cost-basis and miner-revenue anchors. It remains useful for cycle awareness, but it is not part of the MROI posture decision.</p>
-<div class="mrmi-chart">
-  <div class="mrmi-chart-header">
-    <h3>Valuation
-      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>What you're seeing:</strong> the Valuation diagnostic z-score over time. It is the equal-weighted mean of the lagged 504d z-scored valuation constituents. The zero line is neutral; valuation is not part of production <code>MROI</code>.</span></span>
-    </h3>
-
-  </div>
-  <p class="mrmi-chart-subtitle">Latest: <span class="mono" style="color:{_state_color(latest.valuation)};">{_format_score(latest.valuation)}</span> · {_state_label(latest.valuation)} · diagnostic only</p>
-  <div class="chart-container dimension"><canvas id="valuationChart"></canvas></div>
-</div>
-<details class="drivers" id="valuation-drivers">
-  <summary><span>Valuation drivers</span></summary>
+<p class="section-intro"><strong>Holder conviction.</strong> MROI is driven by three cohorts: on-chain HODL behavior, Strategy treasury accumulation, and spot ETF flows. Click any row to open the input table and raw history behind the current z-score.</p>
+<details class="drivers" open>
+  <summary>
+    <span><span class="status-dot green"></span>HOLDER CONVICTION COHORTS <span class="muted small">· On-chain HODL · MSTR DAT · ETF flows — click any row to expand</span></span>
+  </summary>
   <div class="drivers-body">
-    <p class="details-copy">Each driver is the production lagged 504d rolling z-score imported from <code>onchain_index.composite.valuation_constituents</code>.</p>
-    <div class="drivers-chart-grid">
-      <article class="driver-chart-card"><h4>z(STH MVRV)<span class="driver-value mono">{_format_score(latest.valuation_constituents['sth_mvrv'])}</span></h4><p>Short-term holder cost-basis valuation.</p><div class="driver-chart-wrap"><canvas id="driverValSth"></canvas></div></article>
-      <article class="driver-chart-card"><h4>z(RHODL Ratio)<span class="driver-value mono">{_format_score(latest.valuation_constituents['rhodl_ratio'])}</span></h4><p>Realized-value age-band valuation oscillator.</p><div class="driver-chart-wrap"><canvas id="driverValRhodl"></canvas></div></article>
-      <article class="driver-chart-card"><h4>z(Puell Multiple)<span class="driver-value mono">{_format_score(latest.valuation_constituents['puell_multiple'])}</span></h4><p>Miner-revenue valuation lens.</p><div class="driver-chart-wrap"><canvas id="driverValPuell"></canvas></div></article>
-      <article class="driver-chart-card"><h4>z(MVRV-Z)<span class="driver-value mono">{_format_score(latest.valuation_constituents['mvrv_zscore'])}</span></h4><p>Canonical realized-cap deviation metric.</p><div class="driver-chart-wrap"><canvas id="driverValMvrvZ"></canvas></div></article>
-    </div>
+    <p class="details-copy">Latest MROI: <span class="mono" style="color:{_state_color(latest.holder_behavior)};">{_format_score(latest.holder_behavior)}</span> · {_state_label(latest.holder_behavior)}. These are the actual decision inputs.</p>
+    <p class="inline-disclosure"><strong>Strategy treasury cohort:</strong> Strategy is currently the corporate treasury input.</p>
+    <div id="scorecard-holder"></div>
   </div>
 </details>
 
-<section class="iteration-surface">
-  <details class="drivers" open>
-    <summary><span>Composite formulas {_edit_link('src/onchain_index/composite.py')}</span></summary>
-    <div class="drivers-body">
-      <div class="formula">Valuation diagnostic = mean_available(z(STH MVRV), z(RHODL), z(Puell Multiple), z(MVRV-Z))\nHolder conviction = mean_available(on-chain HODL delta, Strategy treasury delta, ETF flows)\nMROI = Holder conviction\nPosture = LONG if MROI &gt; 0.0; CASH if MROI &lt; -0.3; otherwise HOLD current state</div>
-      <p class="details-copy">The renderer imports production composite functions directly; there is no dashboard-only signal path.</p>
-    </div>
-  </details>
-
-  <details class="drivers" id="indicator-slate">
-    <summary><span>Indicator slate {_edit_link('docs/theory.md', 'Suggest edit')}</span></summary>
-    <div class="drivers-body">{_indicator_table(indicator_rows)}</div>
-  </details>
-
-  <details class="drivers">
-    <summary><span>Posture thresholds {_edit_link('src/onchain_index/composite.py')}</span></summary>
-    <div class="drivers-body">
-      <table><thead><tr><th>MROI zone</th><th>Dashboard action</th><th>Allocation</th></tr></thead><tbody>
-        <tr><td class="mono">&lt; -0.3</td><td>CASH</td><td class="mono">0%</td></tr>
-        <tr><td class="mono">-0.3 to 0.0</td><td>HOLD current LONG/CASH state</td><td class="mono">unchanged</td></tr>
-        <tr><td class="mono">&gt; 0.0</td><td>LONG</td><td class="mono">100%</td></tr>
-      </tbody></table>
-    </div>
-  </details>
-
-  <details class="drivers">
-    <summary><span>Walk-forward methodology {_edit_link('src/onchain_index/backtest.py')}</span></summary>
-    <div class="drivers-body"><p class="details-copy">Backtests use BTC daily returns from BMP <code>btc_price</code>, apply the tier allocation to each day's return, and evaluate fixed cycle windows: 2014-2017, 2018-2021, 2022-2024, and 2025-now. Composite inputs are lagged through the rolling z-score helper, so a score dated T uses source data through T-1.</p></div>
-  </details>
-
-  <details class="drivers">
-    <summary><span>Dashboard guide {_edit_link('docs/theory.md')}</span></summary>
-    <div class="drivers-body">
-      <table><thead><tr><th>Question</th><th>Current posture</th></tr></thead><tbody>
-        <tr><td>When is the dashboard long?</td><td>LONG above 0.0 MROI.</td></tr>
-        <tr><td>When does it move to cash?</td><td>CASH below −0.3 MROI.</td></tr>
-        <tr><td>What happens between −0.3 and 0.0?</td><td>HOLD keeps the prior LONG or CASH state.</td></tr>
-        <tr><td>What should users monitor?</td><td>The three holder-conviction cohorts, plus valuation as a diagnostic.</td></tr>
-      </tbody></table>
-    </div>
-  </details>
-</section>
+<div class="section-title"><span class="step-num">3</span>Reference Library<span class="pillar-chip reference">Supplementary context</span></div>
+<p class="section-intro"><strong>Supplementary context indicators — not part of the decision rule.</strong> These valuation lenses help with BTC cycle awareness, but they do not drive the MROI posture.</p>
+<div class="library">
+  <table>
+    <thead><tr><th>Indicator</th><th>Category</th><th>Latest</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr class="lib-row" onclick="toggleReference('mvrv_zscore')"><td><span class="ind-name">MVRV-Z</span></td><td class="muted small">Valuation</td><td class="value mono" data-lib-latest="mvrv_zscore">—</td><td class="muted small">Market value to realized value, z-scored variant. Source: Bitcoin Magazine Pro.</td></tr>
+      <tr class="expanded-row" id="exp-lib-mvrv_zscore"><td colspan="4"><div class="chart-wrap"><canvas id="canvas-lib-mvrv_zscore"></canvas></div><div class="chart-desc">Market value to realized value, z-scored variant. Source: Bitcoin Magazine Pro.</div></td></tr>
+      <tr class="lib-row" onclick="toggleReference('sth_mvrv')"><td><span class="ind-name">STH MVRV</span></td><td class="muted small">Valuation</td><td class="value mono" data-lib-latest="sth_mvrv">—</td><td class="muted small">Short-term holder cost-basis pressure. Source: Bitcoin Magazine Pro.</td></tr>
+      <tr class="expanded-row" id="exp-lib-sth_mvrv"><td colspan="4"><div class="chart-wrap"><canvas id="canvas-lib-sth_mvrv"></canvas></div><div class="chart-desc">Short-term holder cost-basis pressure. Source: Bitcoin Magazine Pro.</div></td></tr>
+      <tr class="lib-row" onclick="toggleReference('rhodl_ratio')"><td><span class="ind-name">RHODL Ratio</span></td><td class="muted small">Valuation</td><td class="value mono" data-lib-latest="rhodl_ratio">—</td><td class="muted small">Realized-value age-band valuation oscillator. Source: Bitcoin Magazine Pro.</td></tr>
+      <tr class="expanded-row" id="exp-lib-rhodl_ratio"><td colspan="4"><div class="chart-wrap"><canvas id="canvas-lib-rhodl_ratio"></canvas></div><div class="chart-desc">Realized-value age-band valuation oscillator. Source: Bitcoin Magazine Pro.</div></td></tr>
+      <tr class="lib-row" onclick="toggleReference('puell_multiple')"><td><span class="ind-name">Puell Multiple</span></td><td class="muted small">Valuation</td><td class="value mono" data-lib-latest="puell_multiple">—</td><td class="muted small">Daily mining issuance revenue versus its 365-day average. Source: Bitcoin Magazine Pro.</td></tr>
+      <tr class="expanded-row" id="exp-lib-puell_multiple"><td colspan="4"><div class="chart-wrap"><canvas id="canvas-lib-puell_multiple"></canvas></div><div class="chart-desc">Daily mining issuance revenue versus its 365-day average. Source: Bitcoin Magazine Pro.</div></td></tr>
+    </tbody>
+  </table>
+  <div class="library-footer">Library entries do not drive the headline posture — they are context indicators that explain cycle narratives around the decision rule.</div>
+</div>
 
 <footer>
   Milk Road On-chain Index · Technical handle: <code>MROI</code> · Repo: <a href="{PROJECT_REPO_URL}">{PROJECT_REPO_URL}</a> · Last commit: <span class="mono">{escape(sha)}</span> · Last refresh UTC: <span class="mono">{generated_at.strftime('%Y-%m-%d %H:%M:%S')}</span> · Theory doc: {THEORY_VERSION}
@@ -871,6 +976,8 @@ def _render_html(
 
 <script>
 const ALL_POINTS = {chart_json};
+const HOLDER_DRIVER_META = {holder_driver_json};
+const REFERENCE_LIBRARY_META = {reference_library_json};
 const RANGE_DAYS = {{ '1y': 365, '3y': 1095, '5y': 1825, 'all': 0 }};
 const visibleSeries = {{ pi: true, btc: true }};
 const charts = {{}};
@@ -965,6 +1072,145 @@ function sharedChartOptions({{ small = false, annotations = zeroLineAnnotation()
 function lineDataset(label, data, color, extra = {{}}) {{
   return {{ label, data, borderColor: color, ...SHARED_LINE_STYLE, ...extra }};
 }}
+function lastValidForField(field) {{
+  for (let i = ALL_POINTS.length - 1; i >= 0; i--) {{
+    const v = ALL_POINTS[i][field];
+    if (v !== null && v !== undefined && Number.isFinite(v)) return {{ value: v, point: ALL_POINTS[i] }};
+  }}
+  return {{ value: null, point: null }};
+}}
+function previousValidForField(field, days) {{
+  const latest = lastValidForField(field).point;
+  if (!latest) return null;
+  const cutoff = new Date(latest.date + 'T00:00:00Z');
+  cutoff.setUTCDate(cutoff.getUTCDate() - days);
+  for (let i = ALL_POINTS.length - 1; i >= 0; i--) {{
+    const pointDate = new Date(ALL_POINTS[i].date + 'T00:00:00Z');
+    if (pointDate > cutoff) continue;
+    const v = ALL_POINTS[i][field];
+    if (v !== null && v !== undefined && Number.isFinite(v)) return v;
+  }}
+  return null;
+}}
+function fmtZ(v) {{
+  if (v === null || v === undefined || !Number.isFinite(v)) return '—';
+  return (v >= 0 ? '+' : '') + v.toFixed(2);
+}}
+function fmtLatestValue(v, unit) {{
+  if (v === null || v === undefined || !Number.isFinite(v)) return '—';
+  if (Math.abs(v) >= 1000) return v.toLocaleString(undefined, {{ maximumFractionDigits: 0 }}) + (unit || '');
+  return v.toFixed(Math.abs(v) >= 10 ? 1 : 2) + (unit || '');
+}}
+function valueClass(v) {{
+  if (v === null || v === undefined || !Number.isFinite(v)) return 'neutral';
+  if (v > 0) return 'pos';
+  if (v < 0) return 'neg';
+  return 'neutral';
+}}
+function fmtZDelta(current, previous) {{
+  if (current === null || previous === null || current === undefined || previous === undefined) return '<span class="dir flat">—</span>';
+  const diff = current - previous;
+  if (Math.abs(diff) < 0.01) return `<span class="dir flat">${{diff >= 0 ? '+' : ''}}${{diff.toFixed(2)}}</span>`;
+  const cls = diff > 0 ? 'up' : 'down';
+  const sign = diff > 0 ? '▲ +' : '▼ ';
+  return `<span class="dir ${{cls}}">${{sign}}${{diff.toFixed(2)}}</span>`;
+}}
+function holderRowValues(meta) {{
+  const current = lastValidForField(meta.field).value;
+  return {{
+    current,
+    prev7: previousValidForField(meta.field, 7),
+    prev30: previousValidForField(meta.field, 30),
+  }};
+}}
+function buildHolderScorecard() {{
+  const container = document.getElementById('scorecard-holder');
+  if (!container) return;
+  const keys = ['on_chain', 'corporate_dat', 'institutional_etf'];
+  let html = '<table><thead><tr>';
+  html += '<th>Indicator</th><th>Value</th><th>7d</th><th>30d</th><th>Signal</th>';
+  html += '</tr></thead><tbody>';
+  keys.forEach(key => {{
+    const meta = HOLDER_DRIVER_META[key];
+    const values = holderRowValues(meta);
+    const current = values.current;
+    const z7 = fmtZDelta(current, values.prev7);
+    const z30 = fmtZDelta(current, values.prev30);
+    const isGreen = current !== null && current >= 0;
+    const signalHtml = current === null ? '<span style="font-size:10px;color:#444;">—</span>' : `<span class="dot ${{isGreen ? 'green' : 'red'}}"></span>`;
+    html += `<tr class="sc-row" onclick="toggleHolderDriver('${{key}}')">`;
+    html += `<td><span class="sc-label">${{meta.label}}</span><span class="info-icon"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="4" r="0.9" fill="currentColor"/><line x1="7" y1="6.5" x2="7" y2="10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg><span class="tip-pop">${{meta.desc}}</span></span><div class="muted small">${{meta.input}}</div></td>`;
+    html += `<td><span class="val ${{valueClass(current)}}">${{fmtZ(current)}}</span></td>`;
+    html += `<td>${{z7}}</td>`;
+    html += `<td>${{z30}}</td>`;
+    html += `<td>${{signalHtml}}</td>`;
+    html += '</tr>';
+    html += `<tr class="expanded-row" id="exp-holder-${{key}}"><td colspan="5"><div class="growth-drilldown-body"><p class="drivers-desc">${{meta.desc}}<br><span class="muted small">Source: ${{meta.source}}. Table columns match the macro dashboard driver drilldown: Input / Group / Current z / 7d zΔ / 30d zΔ.</span></p><table class="growth-inputs-table"><thead><tr><th>Input</th><th>Group</th><th title="Current z-score used in the cohort composite">Current z</th><th title="Input z-score change over the latest 7 calendar days">7d zΔ</th><th title="Input z-score change over the latest 30 calendar days">30d zΔ</th></tr></thead><tbody><tr class="driver-input-row"><td><div class="growth-input-name"><span class="sc-label">${{meta.input}}</span><span class="growth-info-icon" tabindex="0" aria-label="${{meta.desc}}" data-tooltip="${{meta.desc}}">i</span></div><div class="muted small">${{meta.source}}</div></td><td><span class="muted small">${{meta.group}}</span></td><td><span class="val ${{valueClass(current)}}">${{fmtZ(current)}}</span></td><td>${{z7}}</td><td>${{z30}}</td></tr></tbody></table><div class="growth-input-chart-panel"><div class="growth-input-chart-header"><span class="growth-input-chart-title">Raw input history</span><span class="muted small">${{meta.raw_label}} + ${{meta.transform_label}}</span></div><div class="chart-wrap growth-input-chart-wrap"><canvas id="canvas-holder-${{key}}"></canvas></div><div class="chart-desc">Raw ${{meta.raw_label}} is shown with ${{meta.transform_label}}; the cohort's final z-score is the value in the scorecard row above.</div></div></div></td></tr>`;
+  }});
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}}
+let holderCharts = {{}};
+function toggleHolderDriver(key, forceOpen) {{
+  const row = document.getElementById('exp-holder-' + key);
+  if (!row) return;
+  const isOpen = row.classList.contains('active');
+  if (isOpen && !forceOpen) {{
+    row.classList.remove('active');
+    if (holderCharts[key]) {{ holderCharts[key].destroy(); delete holderCharts[key]; }}
+  }} else if (!isOpen) {{
+    row.classList.add('active');
+    createHolderRawChart(key);
+  }}
+}}
+function createHolderRawChart(key) {{
+  const meta = HOLDER_DRIVER_META[key];
+  const canvas = document.getElementById('canvas-holder-' + key);
+  if (!meta || !canvas) return;
+  const points = slicePoints().filter(p => p[meta.raw_field] !== null || p[meta.transform_field] !== null);
+  const raw = points.map(p => p[meta.raw_field]);
+  const transformed = points.map(p => p[meta.transform_field]);
+  if (holderCharts[key]) holderCharts[key].destroy();
+  holderCharts[key] = new Chart(canvas, {{
+    type: 'line',
+    data: {{ labels: points.map(p => p.date), datasets: [
+      lineDataset(meta.raw_label, raw, '#ffffff', {{ yAxisID: 'y', borderWidth: 1.5 }}),
+      lineDataset(meta.transform_label, transformed, '#cdaa6a', {{ yAxisID: 'yTransform', borderWidth: 1.3 }}),
+    ] }},
+    options: sharedChartOptions({{ small: true, annotations: {{}}, extraScales: {{ yTransform: {{ position: 'right', ticks: {{ color: '#6c5a36', font: {{ size: 9, family: SHARED_CHART_CONFIG.tickFont }}, maxTicksLimit: 5 }}, grid: {{ display: false }} }} }}, tooltipCallbacks: {{ label: ctx => ctx.dataset.label + ': ' + fmtLatestValue(ctx.parsed.y, ctx.datasetIndex === 0 ? meta.raw_unit : meta.transform_unit) }} }}),
+  }});
+}}
+let referenceCharts = {{}};
+function fillReferenceLatest() {{
+  Object.entries(REFERENCE_LIBRARY_META).forEach(([key, meta]) => {{
+    const node = document.querySelector(`[data-lib-latest="${{key}}"]`);
+    if (!node) return;
+    node.textContent = fmtLatestValue(lastValidForField(meta.field).value, meta.unit || '');
+  }});
+}}
+function toggleReference(key) {{
+  const row = document.getElementById('exp-lib-' + key);
+  if (!row) return;
+  if (row.classList.contains('active')) {{
+    row.classList.remove('active');
+    if (referenceCharts[key]) {{ referenceCharts[key].destroy(); delete referenceCharts[key]; }}
+  }} else {{
+    row.classList.add('active');
+    createReferenceChart(key);
+  }}
+}}
+function createReferenceChart(key) {{
+  const meta = REFERENCE_LIBRARY_META[key];
+  const canvas = document.getElementById('canvas-lib-' + key);
+  if (!meta || !canvas) return;
+  const points = slicePoints().filter(p => p[meta.field] !== null);
+  if (referenceCharts[key]) referenceCharts[key].destroy();
+  referenceCharts[key] = new Chart(canvas, {{
+    type: 'line',
+    data: {{ labels: points.map(p => p.date), datasets: [lineDataset(meta.label, points.map(p => p[meta.field]), '#ffffff', {{ borderWidth: 1.6 }})] }},
+    options: sharedChartOptions({{ small: true, annotations: {{}}, tooltipCallbacks: {{ label: ctx => ctx.dataset.label + ': ' + fmtLatestValue(ctx.parsed.y, meta.unit || '') }} }}),
+  }});
+}}
 function buildPiDatasets(points) {{
   const datasets = [];
   if (visibleSeries.btc) datasets.push(lineDataset('BTC', normalizePrices(points.map(p => p.price)), '#A78BFA', {{ yAxisID: 'yPrice', order: 2 }}));
@@ -995,14 +1241,8 @@ function renderZChart(key, canvasId, field, label, color, small = false) {{
 }}
 function renderAllCharts() {{
   renderPi();
-  renderZChart('valuation', 'valuationChart', 'valuation', 'Valuation dimension', '#ffffff');
-  renderZChart('driverValSth', 'driverValSth', 'valuation_sth_mvrv', 'z(STH MVRV)', '#ffffff', true);
-  renderZChart('driverValRhodl', 'driverValRhodl', 'valuation_rhodl_ratio', 'z(RHODL Ratio)', '#ffffff', true);
-  renderZChart('driverValPuell', 'driverValPuell', 'valuation_puell_multiple', 'z(Puell Multiple)', '#ffffff', true);
-  renderZChart('driverValMvrvZ', 'driverValMvrvZ', 'valuation_mvrv_zscore', 'z(MVRV-Z)', '#ffffff', true);
-  renderZChart('driverHolderOnChain', 'driverHolderOnChain', 'holder_on_chain', 'On-chain HODL delta', '#ffffff', true);
-  renderZChart('driverHolderDat', 'driverHolderDat', 'holder_corporate_dat', 'Strategy treasury delta', '#ffffff', true);
-  renderZChart('driverHolderEtf', 'driverHolderEtf', 'holder_institutional_etf', 'ETF flows', '#ffffff', true);
+  Object.keys(holderCharts).forEach(key => createHolderRawChart(key));
+  Object.keys(referenceCharts).forEach(key => createReferenceChart(key));
 }}
 
 document.querySelectorAll('.range-tabs button').forEach(button => {{
@@ -1025,6 +1265,8 @@ document.querySelectorAll('details.drivers').forEach(details => {{
     if (details.open) requestAnimationFrame(() => Object.values(charts).forEach(chart => chart.resize()));
   }});
 }});
+buildHolderScorecard();
+fillReferenceLatest();
 renderAllCharts();
 </script>
 </body>
