@@ -208,3 +208,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: Martin review of Phase N; no production MROI/dashboard changes made.
+
+## 2026-05-28T13:58:19Z — Phase O confirmation-rule audit
+- What: Added the Phase O K1 N-day confirmation-rule research script, generated `.cache/optim/phase_o.json`, and wrote the dual-track report; no candidate maintained >=+20.0% in both standard-WF and strict holdout, so recommendation is do not productionize and flag strict-holdout overfitting risk.
+- Files touched: src/onchain_index/research/optimization/phase_o_confirmation_rules.py, reports/phase-o-confirmation-rules-2026-05-28.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: Martin review of Phase O; if lower cadence is still desired, O1 N=3 is the least-bad alpha-for-cadence trade-off but not a validated improvement over K1.
