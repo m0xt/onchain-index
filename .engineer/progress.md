@@ -152,3 +152,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: none
+
+## 2026-05-28T11:51:28Z — Phase G asymmetric override audit
+- What: Added the Phase G valuation-override research script, generated `.cache/optim/phase_g.json`, and wrote the asymmetric-override report; additive baseline won OOS and recommendation is keep-additive.
+- Files touched: src/onchain_index/research/optimization/phase_g_asymmetric_override.py, reports/phase-g-asymmetric-override-2026-05-28.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: Martin review of the Phase G report; no production MROI/dashboard changes made.
