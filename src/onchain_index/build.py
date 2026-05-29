@@ -1,4 +1,4 @@
-"""Build the onchain-index decision dashboard and iteration surface."""
+"""Build the onchain-index decision dashboard and Atlas."""
 
 # ruff: noqa: E501
 
@@ -100,6 +100,7 @@ class DashboardPaths:
 
     root: Path
     docs_index: Path
+    docs_dashboard: Path
     outputs_dashboard: Path
     status_json: Path
 
@@ -124,6 +125,7 @@ def _paths(output_root: Path = PROJECT_ROOT) -> DashboardPaths:
     return DashboardPaths(
         root=output_root,
         docs_index=output_root / "docs" / "index.html",
+        docs_dashboard=output_root / "docs" / "dashboard.html",
         outputs_dashboard=output_root / "outputs" / "dashboard.html",
         status_json=output_root / ".cache" / "status.json",
     )
@@ -1284,7 +1286,7 @@ def build_dashboard(
     cache_dir: Path = DEFAULT_CACHE_DIR,
     output_root: Path = PROJECT_ROOT,
 ) -> DashboardPaths:
-    """Build ``outputs/dashboard.html`` and dashboard status."""
+    """Build ``outputs/dashboard.html``, Pages copy, and dashboard status."""
     paths = _paths(output_root)
     generated_at = datetime.now(tz=UTC)
     try:
@@ -1298,8 +1300,11 @@ def build_dashboard(
             indicator_rows=_indicator_rows(data),
             generated_at=generated_at,
         )
+        html = "\n".join(line.rstrip() for line in html.splitlines()) + "\n"
         paths.outputs_dashboard.parent.mkdir(parents=True, exist_ok=True)
         paths.outputs_dashboard.write_text(html, encoding="utf-8")
+        paths.docs_dashboard.parent.mkdir(parents=True, exist_ok=True)
+        paths.docs_dashboard.write_bytes(paths.outputs_dashboard.read_bytes())
         _write_status(
             paths,
             {
@@ -1347,6 +1352,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         output_root=cast(Path, args.output_root),
     )
     print(f"wrote {paths.outputs_dashboard}")
+    print(f"pages {paths.docs_dashboard}")
     print(f"status {paths.status_json}")
     if args.open:
         webbrowser.open(paths.outputs_dashboard.resolve().as_uri())

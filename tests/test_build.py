@@ -69,9 +69,11 @@ def test_build_entrypoint_writes_dashboard_and_status(tmp_path) -> None:
 
     assert result.returncode == 0, result.stderr
     outputs_dashboard = output_root / "outputs" / "dashboard.html"
+    docs_dashboard = output_root / "docs" / "dashboard.html"
     status_json = output_root / ".cache" / "status.json"
     assert outputs_dashboard.exists()
     assert outputs_dashboard.stat().st_size > 0
+    assert docs_dashboard.read_bytes() == outputs_dashboard.read_bytes()
 
     latest_pi = mroi(frame).dropna().iloc[-1]
     html = outputs_dashboard.read_text()
@@ -119,7 +121,9 @@ def test_index_page_imports_live_iteration_constants(tmp_path) -> None:
     output = build_index_page(output_root=output_root)
     html = output.read_text()
 
-    assert "onchain-index / iteration surface" in html
+    assert "onchain-index / atlas" in html
+    assert 'href="dashboard.html"' in html
+    assert "Open shareable full dashboard" in html
     assert f"{DEFAULT_ZSCORE_WINDOW}d" in html
     assert f"MROI &gt; {MROI_LONG_THRESHOLD:.1f}" in html
     assert f"MROI &lt; {MROI_CASH_THRESHOLD:.1f}" in html

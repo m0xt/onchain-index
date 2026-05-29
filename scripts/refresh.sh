@@ -18,7 +18,7 @@ REFRESH_LOG="$PWD/.cache/refresh.log"
 STATUS_FILE="$PWD/.cache/cron-status.json"
 COMMIT_AUTHOR_NAME="Mac mini refresh"
 COMMIT_AUTHOR_EMAIL="refresh@onchain-index.local"
-SUCCESS_SUMMARY="refresh ok (dashboard + docs rebuild)"
+SUCCESS_SUMMARY="refresh ok (dashboard + Pages dashboard + docs rebuild)"
 if [[ -f .venv/bin/activate ]]; then
     source .venv/bin/activate
 fi
@@ -35,6 +35,7 @@ cron_wrapper_pull
 
 cron_wrapper_commit_outputs \
     .cache/status.json \
+    docs/dashboard.html \
     docs/index.html \
     outputs/dashboard.html \
     -- "refresh $(date -u +%FT%TZ)"

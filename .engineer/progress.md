@@ -236,3 +236,17 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: none
+
+## 2026-05-29T12:10:26Z — GitHub Pages dashboard copy
+- What: Added `docs/dashboard.html` as the GitHub Pages copy of the generated full dashboard, linked it prominently from the Atlas, and wired refresh/build/tests so future dashboard rebuilds keep the Pages copy current.
+- Files touched: src/onchain_index/build.py, src/onchain_index/build_index_page.py, scripts/refresh.sh, tests/test_build.py, docs/dashboard.html, docs/index.html, outputs/dashboard.html, AGENTS.md, agent_docs/repo_map.md, docs/architecture.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: Bob should enable GitHub Pages from `main` `/docs`, then share `https://m0xt.github.io/onchain-index/dashboard.html`.
+
+## 2026-05-29T12:11:13Z — Pages dashboard follow-up verification
+- What: Inspected the timed-out Pages-dashboard changes, regenerated the full dashboard/Atlas, confirmed `docs/dashboard.html` matches `outputs/dashboard.html`, and ran pytest/ruff/pyright before committing.
+- Files touched: src/onchain_index/build.py, src/onchain_index/build_index_page.py, scripts/refresh.sh, tests/test_build.py, docs/dashboard.html, docs/index.html, outputs/dashboard.html, AGENTS.md, agent_docs/repo_map.md, docs/architecture.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: Bob should enable/report GitHub Pages from `main` `/docs` at `https://m0xt.github.io/onchain-index/dashboard.html`.

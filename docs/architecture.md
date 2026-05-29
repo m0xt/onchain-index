@@ -14,8 +14,8 @@ Milk Road on-chain index is a BTC regime dashboard. The production signal is P4:
 8. `holder_behavior_composite()` equal-weights the available holder cohorts by date.
 9. `mroi()` returns that holder composite as the production MROI.
 10. `posture_state_machine()` maps MROI to the sticky P4 posture.
-11. `build_dashboard()` writes `outputs/dashboard.html` and `.cache/status.json`.
-12. `build_index_page()` writes `docs/index.html`, the separate iteration surface for challenging constants, source contracts, backtest assumptions, and docs links.
+11. `build_dashboard()` writes `outputs/dashboard.html`, copies it to `docs/dashboard.html` for GitHub Pages, and writes `.cache/status.json`.
+12. `build_index_page()` writes `docs/index.html`, the separate Atlas for challenging constants, source contracts, backtest assumptions, and docs links.
 13. `scripts/refresh.sh` runs both builders on the LaunchAgent cadence and lets `~/ops/lib/cron-wrapper.sh` commit tracked outputs.
 
 HTTP errors intentionally fail loud. Missing source columns should be fixed at the parser/source-contract layer, not hidden behind placeholder values.
@@ -95,7 +95,7 @@ The strict inequalities are intentional: after initialization, exactly `0.0` and
 4. **Section 3: Reference Library** — supplementary valuation charts. These indicators explain cycle context but do not affect posture.
 5. **Footer** — repo, commit, refresh timestamp, and theory version.
 
-`docs/index.html` is the iteration surface, not the dashboard mirror. It uses the same dark card layout as macro-framework's iteration surface and imports live constants from production modules.
+`docs/index.html` is the Atlas, not the dashboard mirror. It links to `docs/dashboard.html`, the GitHub Pages copy of the full generated dashboard from `outputs/dashboard.html`. The Atlas uses the same dark card layout as macro-framework's Atlas and imports live constants from production modules.
 
 ## Reference Library diagnostics
 
@@ -126,7 +126,8 @@ See the Phase G-P reports in `reports/` and `docs/theory.md` for the evidence tr
 - Required secret: `BMP_API_KEY`.
 - Main data cache: `.cache/raw_data.pkl`.
 - Dashboard output: `outputs/dashboard.html`, served on LAN port `8002` by `com.milkroad.onchain-index-serve`.
-- Iteration surface: `docs/index.html`, served on LAN port `8012` by `com.milkroad.onchain-index-docs-serve`.
+- GitHub Pages dashboard copy: `docs/dashboard.html`.
+- Atlas: `docs/index.html`, served on LAN port `8012` by `com.milkroad.onchain-index-docs-serve`.
 - Daily refresh: `scripts/refresh.sh`, weekday 22:30 Prague.
 
 If a source fails, prefer a loud failure and a clear incident over partial or placeholder data.

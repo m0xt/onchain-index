@@ -12,19 +12,20 @@ Production architecture is P4: `mroi()` returns `holder_behavior_composite(data)
 |---|---|
 | `src/onchain_index/data.py` | Production data fetch layer: BMP, Farside ETF flows, Strategy holdings, Coinbase/Binance premium, cache + CLI summary. |
 | `src/onchain_index/composite.py` | Canonical MROI construction, holder cohorts, valuation diagnostics, P4 thresholds, and `posture_state_machine()`. |
-| `src/onchain_index/build.py` | Product dashboard renderer for `outputs/dashboard.html` plus `.cache/status.json`. |
-| `src/onchain_index/build_index_page.py` | Generated iteration surface at `docs/index.html`. |
+| `src/onchain_index/build.py` | Product dashboard renderer for `outputs/dashboard.html`, Pages copy at `docs/dashboard.html`, plus `.cache/status.json`. |
+| `src/onchain_index/build_index_page.py` | Generated Atlas at `docs/index.html`. |
 | `src/onchain_index/backtest.py` | Lagged signal and walk-forward backtest helpers used by research/tests/dashboard summaries. |
-| `src/onchain_index/cost.py` | Static Claude/API cost-estimate placeholder for the iteration surface. |
+| `src/onchain_index/cost.py` | Static Claude/API cost-estimate placeholder for the Atlas. |
 | `src/onchain_index/research/optimization/` | Research-only Phase G-P scripts and earlier optimizers; not production signal code. |
 | `tests/` | Regression, build, optimization, and smoke tests. |
 | `scripts/refresh.sh` | LaunchAgent refresh entry point via `~/ops/lib/cron-wrapper.sh`. |
 | `scripts/com.milkroad.onchain-index-refresh-daily.plist` | Weekday 22:30 Prague dashboard/docs refresh job. |
 | `scripts/com.milkroad.onchain-index-serve.plist` | LAN dashboard server for `outputs/dashboard.html` on port 8002. |
-| `scripts/com.milkroad.onchain-index-docs-serve.plist` | LAN docs/iteration-surface server for `docs/index.html` on port 8012. |
+| `scripts/com.milkroad.onchain-index-docs-serve.plist` | LAN docs/Atlas server for `docs/index.html` on port 8012. |
 | `docs/architecture.md` | Human narrative for the current P4 pipeline, decision rule, dashboard structure, and rejected approaches. |
 | `docs/theory.md` | Framework rationale and Phase G-P decision trail. |
-| `docs/index.html` | Generated iteration surface; rebuild with `uv run python -m onchain_index.build_index_page`. |
+| `docs/index.html` | Generated Atlas; rebuild with `uv run python -m onchain_index.build_index_page`. |
+| `docs/dashboard.html` | GitHub Pages copy of the generated full dashboard; rebuilt by `uv run python -m onchain_index.build`. |
 | `outputs/dashboard.html` | Generated product dashboard; rebuild with `uv run python -m onchain_index.build`. |
 | `agent_docs/repo_map.md` | One-line-per-dir structural map for agents. |
 | `agent_docs/cron_failure_recovery.md` | LaunchAgent/dashboard refresh recovery runbook. |
@@ -43,7 +44,7 @@ Production architecture is P4: `mroi()` returns `holder_behavior_composite(data)
 - Dry-run entry point: `uv run python -m onchain_index.data --dry-run`
 - Build dashboard from cache: `uv run python -m onchain_index.build`
 - Force dashboard refresh: `uv run python -m onchain_index.build --no-cache`
-- Build iteration surface: `uv run python -m onchain_index.build_index_page`
+- Build Atlas: `uv run python -m onchain_index.build_index_page`
 - Cron path: `scripts/refresh.sh` (LaunchAgent `com.milkroad.onchain-index-refresh-daily`, Mon–Fri 22:30 Prague, logs to `.cache/launchd-refresh-daily.log` and `.cache/refresh.log`.)
 - LAN dashboard serve: `com.milkroad.onchain-index-serve` exposes `outputs/dashboard.html` at `http://Felixs-Mac-mini.local:8002/dashboard.html`.
 - LAN docs serve: `com.milkroad.onchain-index-docs-serve` exposes `docs/index.html` at `http://Felixs-Mac-mini.local:8012/index.html`.
