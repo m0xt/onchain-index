@@ -70,6 +70,7 @@ SOURCE_COMPOSITE = "src/onchain_index/composite.py"
 SOURCE_BUILD = "src/onchain_index/build.py"
 SOURCE_DATA = "src/onchain_index/data.py"
 SOURCE_COST = "src/onchain_index/cost.py"
+SOURCE_BRIEF = "src/onchain_index/brief.py"
 SOURCE_BACKTEST = "src/onchain_index/backtest.py"
 SOURCE_REFRESH = "scripts/refresh.sh"
 SOURCE_ARCHITECTURE = "docs/architecture.md"
@@ -447,6 +448,24 @@ def render_data_card() -> str:
       </article>"""
 
 
+def render_brief_card() -> str:
+    rows = [
+        ["Prompt source", f"<code>{SOURCE_BRIEF}</code>", "One concise on-chain read generated from current dashboard values."],
+        ["Cadence", "Weekly lazy refresh", "Regenerates once the latest cached brief is older than Tuesday; normal builds reuse cache."],
+        ["Archive", "<code>briefs/YYYY-MM-DD/onchain.md</code>", "Durable markdown brief loaded into outputs/dashboard.html and docs/dashboard.html."],
+        ["Failure mode", "Graceful fallback", "If Claude CLI is unavailable or fails, use the latest cached brief; otherwise omit the block."],
+    ]
+    return f"""
+      <article class="card" style="--accent: #cdaa6a">
+        <div class="card-top"><div><h2>Generated brief <span>✍️</span></h2><p>The dashboard has one Claude CLI-generated read, not separate market/economy/top briefs.</p></div><div class="shortcut">1</div></div>
+        {source_link(SOURCE_BRIEF, "brief.py")}
+        <div class="card-body">
+          {render_table(["Input", "Setting", "Source / behavior"], rows)}
+          <p class="hint">Prompt scope: headline posture, MROI/trend, Valuation diagnostics, Holder Behavior, main reason for the call, and what changes the view next.</p>
+        </div>
+      </article>"""
+
+
 def render_cost_card() -> str:
     rows = []
     total = 0.0
@@ -572,6 +591,7 @@ def render_html(*, output_root: Path = PROJECT_ROOT) -> str:
     {render_decision_card()}
     {render_data_card()}
     {render_backtest_card()}
+    {render_brief_card()}
     {render_cost_card()}
     {render_docs_card()}
   </section>

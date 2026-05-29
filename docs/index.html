@@ -136,11 +136,11 @@
     <div class="eyebrow">onchain-index / atlas</div>
     <h1>Inputs to challenge.</h1>
     <p class="intro">A static, regenerated view of Milk Road on-chain index's iterable inputs: MROI construction, source contracts, backtest assumptions, architecture flow, and status. Values below are imported from production code at build time.</p>
-    <div class="meta"><span class="pill schedule">schedule: Mon–Fri 22:30 Prague</span><span class="pill">feedback: composite</span><span class="pill">feedback: sources</span><span class="pill">feedback: backtests</span><span class="pill">feedback: architecture</span><span class="pill">built 2026-05-29 12:11 UTC</span></div>
+    <div class="meta"><span class="pill schedule">schedule: Mon–Fri 22:30 Prague</span><span class="pill">feedback: composite</span><span class="pill">feedback: sources</span><span class="pill">feedback: backtests</span><span class="pill">feedback: architecture</span><span class="pill">built 2026-05-29 12:28 UTC</span></div>
     <a class="dashboard-cta" href="dashboard.html">Open shareable full dashboard →</a>
   </header>
 
-  <section class="status-strip"><div class="status-cell"><div class="status-label">Last run</div><div class="status-value" title="2026-05-29T12:11:36.445400Z">2026-05-29T12:11:36.445400Z</div></div><div class="status-cell"><div class="status-label">Status</div><div class="status-value" title="ok · CASH · MROI -0.69">ok · CASH · MROI -0.69</div></div><div class="status-cell"><div class="status-label">Last commit</div><div class="status-value" title="c1ee7e6">c1ee7e6</div></div><div class="status-cell"><div class="status-label">Last error</div><div class="status-value" title="none">none</div></div></section>
+  <section class="status-strip"><div class="status-cell"><div class="status-label">Last run</div><div class="status-value" title="2026-05-29T12:28:23.151249Z">2026-05-29T12:28:23.151249Z</div></div><div class="status-cell"><div class="status-label">Status</div><div class="status-value" title="ok · CASH · MROI -0.69">ok · CASH · MROI -0.69</div></div><div class="status-cell"><div class="status-label">Last commit</div><div class="status-value" title="25ab8d4">25ab8d4</div></div><div class="status-cell"><div class="status-label">Last error</div><div class="status-value" title="none">none</div></div></section>
 
       <section class="flow-card">
         <div>
@@ -235,26 +235,35 @@ Posture = LONG if MROI &gt; 0.0; CASH if MROI &lt; -0.3; otherwise hold prior st
         </div>
       </article>
 
+      <article class="card" style="--accent: #cdaa6a">
+        <div class="card-top"><div><h2>Generated brief <span>✍️</span></h2><p>The dashboard has one Claude CLI-generated read, not separate market/economy/top briefs.</p></div><div class="shortcut">1</div></div>
+        <a class="suggest" href="https://github.com/m0xt/onchain-index/edit/main/src/onchain_index/brief.py" target="_blank" rel="noreferrer">Suggest edit → brief.py</a>
+        <div class="card-body">
+          <table><thead><tr><th>Input</th><th>Setting</th><th>Source / behavior</th></tr></thead><tbody><tr><td>Prompt source</td><td><code>src/onchain_index/brief.py</code></td><td>One concise on-chain read generated from current dashboard values.</td></tr><tr><td>Cadence</td><td>Weekly lazy refresh</td><td>Regenerates once the latest cached brief is older than Tuesday; normal builds reuse cache.</td></tr><tr><td>Archive</td><td><code>briefs/YYYY-MM-DD/onchain.md</code></td><td>Durable markdown brief loaded into outputs/dashboard.html and docs/dashboard.html.</td></tr><tr><td>Failure mode</td><td>Graceful fallback</td><td>If Claude CLI is unavailable or fails, use the latest cached brief; otherwise omit the block.</td></tr></tbody></table>
+          <p class="hint">Prompt scope: headline posture, MROI/trend, Valuation diagnostics, Holder Behavior, main reason for the call, and what changes the view next.</p>
+        </div>
+      </article>
+
       <article class="card wide" style="--accent: #06b6d4">
-        <div class="card-top"><div><h2>Estimated weekly Claude spend <span>💸</span></h2><p>Static token estimate for Anthropic API usage imported from <code>src/onchain_index/cost.py</code>.</p></div><div class="shortcut">$0.00 / week</div></div>
+        <div class="card-top"><div><h2>Estimated weekly Claude spend <span>💸</span></h2><p>Static token estimate for Anthropic API usage imported from <code>src/onchain_index/cost.py</code>.</p></div><div class="shortcut">$0.01 / week</div></div>
         <a class="suggest" href="https://github.com/m0xt/onchain-index/edit/main/src/onchain_index/cost.py" target="_blank" rel="noreferrer">Suggest edit → cost.py</a>
         <div class="card-body">
           <div class="metrics">
 
       <div class="metric">
         <div class="metric-label">weekly estimate</div>
-        <div class="metric-value">$0.00 / week</div>
+        <div class="metric-value">$0.01 / week</div>
         <div class="metric-note">Anthropic API costs only.</div>
       </div>
 
       <div class="metric">
         <div class="metric-label">Claude call sites</div>
-        <div class="metric-value">0</div>
+        <div class="metric-value">1</div>
         <div class="metric-note">Enumerated in cost.py.</div>
       </div>
           </div>
+          <table><thead><tr><th>Site</th><th>Model</th><th>Calls / week</th><th>Est in</th><th>Est out</th><th>Est $ / week</th></tr></thead><tbody><tr><td><code>onchain_index.brief.generate_brief</code></td><td>Sonnet</td><td>1</td><td>2,000</td><td>600</td><td>$0.01</td></tr></tbody></table>
 
-          <p class="hint">Phase A has no Claude call sites, so the estimate is zero. Phase C composite-design will populate <code>cost.py</code> when Claude calls land.</p>
           <p class="hint">Prices from Anthropic public pricing as of 2026-05-27. Token counts are hand-tuned estimates, not metered usage.</p>
         </div>
       </article>

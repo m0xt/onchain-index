@@ -48,6 +48,26 @@
   .hero-action-sub { font-size: 13px; color: #777; margin-top: 4px; }
   .hero-story { margin: 22px 0 0; color: #999; font-size: 14px; line-height: 1.55; max-width: 820px; }
 
+  .pillar-brief {
+    margin: 20px 0 24px;
+    padding: 16px 18px;
+    background: #0d0d0d; border: 1px solid #1c1c1c; border-radius: 6px;
+    border-left: 2px solid #333;
+    color: #c8c8c8; font-size: 13.5px; line-height: 1.6;
+  }
+  .pillar-brief-eyebrow {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1.8px;
+    color: #666; font-weight: 500; margin-bottom: 10px;
+  }
+  .pillar-brief p { margin: 0 0 10px; }
+  .pillar-brief p:last-child { margin-bottom: 0; }
+  .pillar-brief a { color: #cdaa6a; text-decoration: none; border-bottom: 1px dotted #6c5a36; }
+  .pillar-brief a:hover { color: #e6c98a; border-bottom-color: #cdaa6a; }
+  .pillar-brief.pillar-brief-headline {
+    color: #d4d4d4; font-size: 14px; line-height: 1.65;
+    border-left-color: #cdaa6a; padding: 18px 20px;
+  }
+
   .hero-pillars { border-left: 1px solid #1f1f1f; padding: 4px 0 4px 32px; min-width: 285px; }
   .hero-pillars-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1.8px; color: #555; font-weight: 500; margin-bottom: 14px; }
   .hero-secondary-note { margin-top: 14px; padding-top: 12px; border-top: 1px solid #161616; font-size: 11px; color: #555; line-height: 1.5; }
@@ -226,7 +246,7 @@
   <span class="brand">MILK ROAD · ON-CHAIN INDEX</span>
   <span class="meta-right">
     <span>data 2026-05-28</span>
-    <span>built 2026-05-29 12:11 UTC</span>
+    <span>built 2026-05-29 12:28 UTC</span>
     <span>epoch 2024-onward</span>
     <span><i class="status-dot green"></i>OK</span>
   </span>
@@ -297,6 +317,13 @@
   <p class="hero-story">The Milk Road On-chain Index tracks the conviction of meaningful BTC holders — long-term on-chain holders, ETF flows, and corporate treasuries — then translates that composite into a simple posture signal. Stay long while MROI is above zero; move to cash when it drops below −0.3; hold your current position in between.</p>
 </header>
 
+
+<div class="pillar-brief pillar-brief-headline">
+  <div class="pillar-brief-eyebrow">This week’s read · on-chain index · 2026-05-28</div>
+  <p>MROI sits at −0.69 as of May 28, comfortably below the −0.30 exit threshold, so the production posture is CASH — 0% long BTC exposure. The holder behavior composite, which is the sole allocation input, is the direct cause: long-term on-chain holders score −1.11 and spot ETF flows score −1.13, reflecting broad cohort distribution rather than accumulation, while Strategy corporate treasury is the only bright spot at +0.17 and is not enough to offset the others. The valuation lens reads −1.01 — RHODL, Puell, and MVRV-Z are all deeply negative — but that is diagnostic context rather than a posture driver. The seven-day drift of −0.29 on MROI and −0.29 on holder behavior indicates the signal is still moving in the wrong direction, not stabilizing. To flip back to LONG, MROI would need to recover above 0.00 — a gap of roughly 0.69 points — which would require a meaningful reversal in both on-chain holder accumulation signals and ETF inflow momentum simultaneously.</p>
+</div>
+
+
 <div class="section-title"><span class="step-num">1</span>How the index has evolved</div>
 <div class="mrmi-chart">
   <div class="mrmi-chart-header">
@@ -365,7 +392,7 @@
 </div>
 
 <footer>
-  Milk Road On-chain Index · Technical handle: <code>MROI</code> · Repo: <a href="https://github.com/m0xt/onchain-index">https://github.com/m0xt/onchain-index</a> · Last commit: <span class="mono">c1ee7e6</span> · Last refresh UTC: <span class="mono">2026-05-29 12:11:36</span> · Theory doc: v0.7
+  Milk Road On-chain Index · Technical handle: <code>MROI</code> · Repo: <a href="https://github.com/m0xt/onchain-index">https://github.com/m0xt/onchain-index</a> · Last commit: <span class="mono">25ab8d4</span> · Last refresh UTC: <span class="mono">2026-05-29 12:28:23</span> · Theory doc: v0.7
 </footer>
 
 <script>

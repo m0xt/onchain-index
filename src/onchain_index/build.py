@@ -11,7 +11,7 @@ import subprocess
 import webbrowser
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from html import escape
 from pathlib import Path
 from typing import Any, cast
@@ -26,6 +26,7 @@ from onchain_index.backtest import (
     build_phase_b_indicator_signals,
     walk_forward_tiered_by_cycle,
 )
+from onchain_index.brief import Brief, BriefContext, refresh_or_load_brief
 from onchain_index.composite import (
     DAT_DELTA_DAYS,
     ETF_FLOW_SUM_DAYS,
@@ -360,6 +361,45 @@ def _availability(series: pd.Series) -> str:
     return f"{str(valid.index[0])[:10]} → {str(valid.index[-1])[:10]}"
 
 
+def _component_delta(components: pd.DataFrame, column: str, latest_date: pd.Timestamp, days: int) -> float | None:
+    if column not in components:
+        return None
+    latest = _json_float(components.loc[latest_date, column])
+    if latest is None:
+        return None
+    cutoff = latest_date - timedelta(days=days)
+    prior = components.loc[components.index <= cutoff, column].dropna()
+    if prior.empty:
+        return None
+    previous = _json_float(prior.iloc[-1])
+    if previous is None:
+        return None
+    return latest - previous
+
+
+def _brief_context(latest: LatestScores, components: pd.DataFrame) -> BriefContext:
+    return BriefContext(
+        date=latest.date.strftime("%Y-%m-%d"),
+        posture=TIER_LABELS[latest.tier],
+        allocation_pct=latest.allocation_pct,
+        mroi=latest.pi,
+        mroi_7d_change=_component_delta(components, "mroi", latest.date, 7),
+        valuation=latest.valuation,
+        valuation_7d_change=_component_delta(components, "valuation", latest.date, 7),
+        holder_behavior=latest.holder_behavior,
+        holder_behavior_7d_change=_component_delta(components, "holder_behavior", latest.date, 7),
+        signal_zone=_mroi_signal_zone(latest.pi),
+        long_threshold=MROI_LONG_THRESHOLD,
+        cash_threshold=MROI_CASH_THRESHOLD,
+        valuation_constituents={
+            VALUATION_LABELS.get(name, name): value for name, value in latest.valuation_constituents.items()
+        },
+        holder_cohorts={
+            COHORT_LABELS.get(name, name): value for name, value in latest.holder_cohorts.items()
+        },
+    )
+
+
 def _cohort_constituents(latest: LatestScores) -> dict[str, tuple[tuple[str, float | None], ...]]:
     """Return current constituent-level drivers for each holder cohort."""
     return {
@@ -527,6 +567,19 @@ def _edit_link(path: str, label: str = "Suggest edit") -> str:
     return f'<a class="suggest" href="{GITHUB_EDIT_BASE}/{escape(path)}" target="_blank" rel="noreferrer">{escape(label)} ↗</a>'
 
 
+def _render_brief(brief: Brief | None) -> str:
+    if brief is None:
+        return ""
+    cached = " (cached)" if brief.stale else ""
+    label = f"This week’s read · on-chain index · {brief.date}{cached}"
+    return f'''
+<div class="pillar-brief pillar-brief-headline">
+  <div class="pillar-brief-eyebrow">{escape(label)}</div>
+  {brief.html}
+</div>
+'''
+
+
 def _render_html(
     *,
     latest: LatestScores,
@@ -534,6 +587,7 @@ def _render_html(
     historical: list[dict[str, float | str | None]],
     walk_forward_rows: list[dict[str, str | float | None]],
     indicator_rows: list[dict[str, str | float | None]],
+    brief: Brief | None,
     generated_at: datetime,
 ) -> str:
     sha, _message = _latest_git_summary()
@@ -544,6 +598,7 @@ def _render_html(
     signal_zone = _mroi_signal_zone(latest.pi)
     signal_color = _mroi_signal_color(latest.pi)
     signal_subtitle = _mroi_signal_subtitle(latest.pi, tier_label)
+    brief_html = _render_brief(brief)
     chart_json = json.dumps(historical, separators=(",", ":"))
     holder_driver_json = json.dumps(
         {
@@ -681,6 +736,26 @@ def _render_html(
   .hero-action-label {{ font-size: 22px; font-weight: 600; letter-spacing: -0.4px; line-height: 1.1; }}
   .hero-action-sub {{ font-size: 13px; color: #777; margin-top: 4px; }}
   .hero-story {{ margin: 22px 0 0; color: #999; font-size: 14px; line-height: 1.55; max-width: 820px; }}
+
+  .pillar-brief {{
+    margin: 20px 0 24px;
+    padding: 16px 18px;
+    background: #0d0d0d; border: 1px solid #1c1c1c; border-radius: 6px;
+    border-left: 2px solid #333;
+    color: #c8c8c8; font-size: 13.5px; line-height: 1.6;
+  }}
+  .pillar-brief-eyebrow {{
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1.8px;
+    color: #666; font-weight: 500; margin-bottom: 10px;
+  }}
+  .pillar-brief p {{ margin: 0 0 10px; }}
+  .pillar-brief p:last-child {{ margin-bottom: 0; }}
+  .pillar-brief a {{ color: #cdaa6a; text-decoration: none; border-bottom: 1px dotted #6c5a36; }}
+  .pillar-brief a:hover {{ color: #e6c98a; border-bottom-color: #cdaa6a; }}
+  .pillar-brief.pillar-brief-headline {{
+    color: #d4d4d4; font-size: 14px; line-height: 1.65;
+    border-left-color: #cdaa6a; padding: 18px 20px;
+  }}
 
   .hero-pillars {{ border-left: 1px solid #1f1f1f; padding: 4px 0 4px 32px; min-width: 285px; }}
   .hero-pillars-title {{ font-size: 10px; text-transform: uppercase; letter-spacing: 1.8px; color: #555; font-weight: 500; margin-bottom: 14px; }}
@@ -909,6 +984,8 @@ def _render_html(
   </div>
   <p class="hero-story">The Milk Road On-chain Index tracks the conviction of meaningful BTC holders — long-term on-chain holders, ETF flows, and corporate treasuries — then translates that composite into a simple posture signal. Stay long while MROI is above zero; move to cash when it drops below −0.3; hold your current position in between.</p>
 </header>
+
+{brief_html}
 
 <div class="section-title"><span class="step-num">1</span>How the index has evolved</div>
 <div class="mrmi-chart">
@@ -1292,12 +1369,17 @@ def build_dashboard(
     try:
         data = fetch_all(use_cache=use_cache, cache_dir=cache_dir)
         latest, components, score, tiers = _latest_scores(data)
+        brief = refresh_or_load_brief(
+            _brief_context(latest, components),
+            briefs_dir=output_root / "briefs",
+        )
         html = _render_html(
             latest=latest,
             components=components,
             historical=_historical_points(data, components),
             walk_forward_rows=_walk_forward_rows(tiers, data),
             indicator_rows=_indicator_rows(data),
+            brief=brief,
             generated_at=generated_at,
         )
         html = "\n".join(line.rstrip() for line in html.splitlines()) + "\n"

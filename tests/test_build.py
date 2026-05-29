@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 
 import numpy as np
@@ -47,6 +48,11 @@ def test_build_entrypoint_writes_dashboard_and_status(tmp_path) -> None:
     cache_dir.mkdir()
     frame = _build_sample_frame()
     frame.to_pickle(cache_dir / "raw_data.pkl")
+    brief_dir = output_root / "briefs" / "2026-05-29"
+    brief_dir.mkdir(parents=True)
+    (brief_dir / "onchain.md").write_text(
+        "MROI is LONG because holder behavior is positive. Valuation is context only.\n"
+    )
 
     result = subprocess.run(
         [
@@ -65,6 +71,7 @@ def test_build_entrypoint_writes_dashboard_and_status(tmp_path) -> None:
         capture_output=True,
         text=True,
         timeout=120,
+        env={**os.environ, "ONCHAIN_INDEX_SKIP_BRIEF_REFRESH": "1"},
     )
 
     assert result.returncode == 0, result.stderr
@@ -82,6 +89,8 @@ def test_build_entrypoint_writes_dashboard_and_status(tmp_path) -> None:
     assert "Input / Group / Current z / 7d zΔ / 30d zΔ" in html
     assert "Reference Library" in html
     assert "Supplementary context indicators — not part of the decision rule" in html
+    assert "This week’s read · on-chain index" in html
+    assert "MROI is LONG because holder behavior is positive" in html
 
     status = json.loads(status_json.read_text())
     assert set(status) == {"last_run_utc", "last_mroi", "last_tier", "last_error"}
@@ -89,6 +98,30 @@ def test_build_entrypoint_writes_dashboard_and_status(tmp_path) -> None:
     assert isinstance(status["last_mroi"], float)
     assert status["last_tier"] in {"CASH", "LONG"}
     assert status["last_error"] is None
+
+
+def test_latest_brief_missing_is_none(tmp_path) -> None:
+    from onchain_index.brief import load_latest_brief
+
+    assert load_latest_brief(briefs_dir=tmp_path / "briefs") is None
+
+
+def test_latest_brief_loads_cached_markdown(tmp_path) -> None:
+    from onchain_index.brief import load_latest_brief
+
+    brief_dir = tmp_path / "briefs" / "2026-05-29"
+    brief_dir.mkdir(parents=True)
+    (brief_dir / "onchain.md").write_text(
+        "**LONG** while [holder behavior](https://example.com) is firm.\n"
+    )
+
+    brief = load_latest_brief(context_date="2026-05-30", briefs_dir=tmp_path / "briefs")
+
+    assert brief is not None
+    assert brief.date == "2026-05-29"
+    assert brief.stale is True
+    assert "<strong>LONG</strong>" in brief.html
+    assert 'href="https://example.com"' in brief.html
 
 
 def test_index_page_imports_live_iteration_constants(tmp_path) -> None:
@@ -134,8 +167,10 @@ def test_index_page_imports_live_iteration_constants(tmp_path) -> None:
     assert START_DATE in html
     assert THEORY_VERSION in html
     assert "Estimated weekly Claude spend" in html
-    assert "$0.00 / week" in html
-    assert "Phase C composite-design" in html
+    assert "Generated brief" in html
+    assert "briefs/YYYY-MM-DD/onchain.md" in html
+    assert "onchain_index.brief.generate_brief" in html
     assert "cost.py" in html
-    assert COST_ESTIMATES == []
+    assert len(COST_ESTIMATES) == 1
+    assert COST_ESTIMATES[0]["site"] == "onchain_index.brief.generate_brief"
     assert MODEL_PRICES_USD_PER_MTOK["claude-haiku-4-5-20251001"] == (0.80, 4.00)

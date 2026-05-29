@@ -250,3 +250,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: Bob should enable/report GitHub Pages from `main` `/docs` at `https://m0xt.github.io/onchain-index/dashboard.html`.
+
+## 2026-05-29T12:29:03Z — On-chain generated brief
+- What: Added the single weekly/lazy Claude CLI on-chain brief, archived it under briefs/YYYY-MM-DD/onchain.md, rendered it after the dashboard hero, and surfaced its prompt/cadence/fallback in the Atlas.
+- Files touched: src/onchain_index/brief.py, src/onchain_index/build.py, src/onchain_index/build_index_page.py, src/onchain_index/cost.py, tests/test_build.py, scripts/refresh.sh, briefs/2026-05-28/onchain.md, docs/dashboard.html, outputs/dashboard.html, docs/index.html, AGENTS.md, agent_docs/repo_map.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: none

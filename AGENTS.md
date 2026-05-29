@@ -13,9 +13,10 @@ Production architecture is P4: `mroi()` returns `holder_behavior_composite(data)
 | `src/onchain_index/data.py` | Production data fetch layer: BMP, Farside ETF flows, Strategy holdings, Coinbase/Binance premium, cache + CLI summary. |
 | `src/onchain_index/composite.py` | Canonical MROI construction, holder cohorts, valuation diagnostics, P4 thresholds, and `posture_state_machine()`. |
 | `src/onchain_index/build.py` | Product dashboard renderer for `outputs/dashboard.html`, Pages copy at `docs/dashboard.html`, plus `.cache/status.json`. |
+| `src/onchain_index/brief.py` | Single Claude CLI-generated dashboard brief loader/generator, archived under `briefs/YYYY-MM-DD/onchain.md`. |
 | `src/onchain_index/build_index_page.py` | Generated Atlas at `docs/index.html`. |
 | `src/onchain_index/backtest.py` | Lagged signal and walk-forward backtest helpers used by research/tests/dashboard summaries. |
-| `src/onchain_index/cost.py` | Static Claude/API cost-estimate placeholder for the Atlas. |
+| `src/onchain_index/cost.py` | Static Claude/API cost estimates for the Atlas. |
 | `src/onchain_index/research/optimization/` | Research-only Phase G-P scripts and earlier optimizers; not production signal code. |
 | `tests/` | Regression, build, optimization, and smoke tests. |
 | `scripts/refresh.sh` | LaunchAgent refresh entry point via `~/ops/lib/cron-wrapper.sh`. |
@@ -25,6 +26,7 @@ Production architecture is P4: `mroi()` returns `holder_behavior_composite(data)
 | `docs/architecture.md` | Human narrative for the current P4 pipeline, decision rule, dashboard structure, and rejected approaches. |
 | `docs/theory.md` | Framework rationale and Phase G-P decision trail. |
 | `docs/index.html` | Generated Atlas; rebuild with `uv run python -m onchain_index.build_index_page`. |
+| `briefs/` | Durable dated archive for the single generated on-chain brief. |
 | `docs/dashboard.html` | GitHub Pages copy of the generated full dashboard; rebuilt by `uv run python -m onchain_index.build`. |
 | `outputs/dashboard.html` | Generated product dashboard; rebuild with `uv run python -m onchain_index.build`. |
 | `agent_docs/repo_map.md` | One-line-per-dir structural map for agents. |
