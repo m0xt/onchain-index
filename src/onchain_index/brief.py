@@ -30,12 +30,14 @@ Production posture is binary: LONG means 100% long BTC exposure, CASH means
 above the LONG threshold, exit to CASH only when MROI is strictly below the CASH
 threshold, and otherwise hold the prior posture. MROI is currently driven by
 Holder Behavior only: long-term on-chain holders, Strategy treasury
-accumulation, and spot ETF flows. Valuation is diagnostic context only, not an
-allocation input. Do not invent thresholds or extra model rules.
+accumulation, and spot ETF flows. Valuation is not an allocation input. Do not
+discuss or mention the Valuation lens in this brief; the dashboard can display
+valuation diagnostics elsewhere, but this current read must ignore them unless
+Martin later asks. Do not invent thresholds or extra model rules.
 
 Required content: headline posture, current MROI value and trend if available,
-what the Valuation lens says, what Holder Behavior says, the main reason for
-the current call, and what would change the view next.
+what Holder Behavior says, the main reason for the current call, and what would
+change the view next.
 Length: 4–6 sentences.
 """
 
@@ -97,9 +99,6 @@ def _trend(delta: float | None) -> str:
 
 
 def _context_text(context: BriefContext) -> str:
-    valuation_lines = "\n".join(
-        f"  - {name}: {_fmt(value)}" for name, value in context.valuation_constituents.items()
-    )
     holder_lines = "\n".join(
         f"  - {name}: {_fmt(value)}" for name, value in context.holder_cohorts.items()
     )
@@ -112,12 +111,6 @@ def _context_text(context: BriefContext) -> str:
             f"enter LONG only if MROI > {context.long_threshold:.2f}; "
             f"exit to CASH only if MROI < {context.cash_threshold:.2f}; "
             "otherwise hold prior posture.",
-            (
-                f"Valuation lens: {_fmt(context.valuation)} — diagnostic only; "
-                f"{_trend(context.valuation_7d_change)}"
-            ),
-            "Valuation constituents:",
-            valuation_lines or "  - unavailable",
             (
                 f"Holder Behavior: {_fmt(context.holder_behavior)} — production decision input; "
                 f"{_trend(context.holder_behavior_7d_change)}"

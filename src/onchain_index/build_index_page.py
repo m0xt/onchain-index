@@ -461,7 +461,7 @@ def render_brief_card() -> str:
         {source_link(SOURCE_BRIEF, "brief.py")}
         <div class="card-body">
           {render_table(["Input", "Setting", "Source / behavior"], rows)}
-          <p class="hint">Prompt scope: headline posture, MROI/trend, Valuation diagnostics, Holder Behavior, main reason for the call, and what changes the view next.</p>
+          <p class="hint">Prompt scope: headline posture, MROI/trend, Holder Behavior, main reason for the call, and what changes the view next; valuation diagnostics stay out of the generated brief.</p>
         </div>
       </article>"""
 

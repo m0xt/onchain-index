@@ -51,7 +51,7 @@ def test_build_entrypoint_writes_dashboard_and_status(tmp_path) -> None:
     brief_dir = output_root / "briefs" / "2026-05-29"
     brief_dir.mkdir(parents=True)
     (brief_dir / "onchain.md").write_text(
-        "MROI is LONG because holder behavior is positive. Valuation is context only.\n"
+        "MROI is LONG because holder behavior is positive and ETF flows improved.\n"
     )
 
     result = subprocess.run(
@@ -91,6 +91,7 @@ def test_build_entrypoint_writes_dashboard_and_status(tmp_path) -> None:
     assert "Supplementary context indicators — not part of the decision rule" in html
     assert "This week’s read · on-chain index" in html
     assert "MROI is LONG because holder behavior is positive" in html
+    assert "Valuation is context only" not in html
 
     status = json.loads(status_json.read_text())
     assert set(status) == {"last_run_utc", "last_mroi", "last_tier", "last_error"}
@@ -104,6 +105,34 @@ def test_latest_brief_missing_is_none(tmp_path) -> None:
     from onchain_index.brief import load_latest_brief
 
     assert load_latest_brief(briefs_dir=tmp_path / "briefs") is None
+
+
+def test_brief_context_excludes_valuation_lens() -> None:
+    from onchain_index.brief import BriefContext, _context_text
+
+    text = _context_text(
+        BriefContext(
+            date="2026-05-29",
+            posture="CASH",
+            allocation_pct=0.0,
+            mroi=-0.69,
+            mroi_7d_change=-0.29,
+            valuation=-1.01,
+            valuation_7d_change=-0.29,
+            holder_behavior=-0.69,
+            holder_behavior_7d_change=-0.29,
+            signal_zone="CASH zone",
+            long_threshold=0.0,
+            cash_threshold=-0.3,
+            valuation_constituents={"MVRV-Z": -1.4},
+            holder_cohorts={"ETF flows": -1.13},
+        )
+    )
+
+    assert "Holder Behavior" in text
+    assert "ETF flows" in text
+    assert "Valuation" not in text
+    assert "MVRV-Z" not in text
 
 
 def test_latest_brief_loads_cached_markdown(tmp_path) -> None:

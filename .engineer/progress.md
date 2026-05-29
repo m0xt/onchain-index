@@ -257,3 +257,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: none
+
+## 2026-05-29T12:38:56Z — Generated brief valuation removal
+- What: Removed Valuation-lens commentary from the Claude brief prompt/context, regenerated the current archived brief, dashboard, and Pages copy, and updated Atlas prompt-scope docs/tests to keep valuation out of generated reads.
+- Files touched: src/onchain_index/brief.py, src/onchain_index/build_index_page.py, tests/test_build.py, briefs/2026-05-28/onchain.md, outputs/dashboard.html, docs/dashboard.html, docs/index.html, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: none
