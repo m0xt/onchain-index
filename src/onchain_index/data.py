@@ -349,7 +349,7 @@ def summarize_frame(frame: pd.DataFrame) -> str:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Fetch raw on-chain pulse index data.")
+    parser = argparse.ArgumentParser(description="Fetch raw Bitcoin Demand Index dashboard data.")
     parser.add_argument("--no-cache", action="store_true", help="Force fresh source fetches.")
     parser.add_argument(
         "--cache-dir",

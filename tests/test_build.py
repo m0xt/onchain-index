@@ -51,7 +51,7 @@ def test_build_entrypoint_writes_dashboard_and_status(tmp_path) -> None:
     brief_dir = output_root / "briefs" / "2026-05-29"
     brief_dir.mkdir(parents=True)
     (brief_dir / "onchain.md").write_text(
-        "MROI is LONG because holder behavior is positive and ETF flows improved.\n"
+        "Bitcoin Demand Index is LONG because holder behavior is positive and ETF flows improved.\n"
     )
 
     result = subprocess.run(
@@ -89,8 +89,8 @@ def test_build_entrypoint_writes_dashboard_and_status(tmp_path) -> None:
     assert "Input / Group / Current z / 7d zΔ / 30d zΔ" in html
     assert "Reference Library" in html
     assert "Supplementary context indicators — not part of the decision rule" in html
-    assert "This week’s read · on-chain index" in html
-    assert "MROI is LONG because holder behavior is positive" in html
+    assert "This week’s read · Bitcoin Demand Index" in html
+    assert "Bitcoin Demand Index is LONG because holder behavior is positive" in html
     assert "Valuation is context only" not in html
 
     status = json.loads(status_json.read_text())
@@ -187,8 +187,8 @@ def test_index_page_imports_live_iteration_constants(tmp_path) -> None:
     assert 'href="dashboard.html"' in html
     assert "Open shareable full dashboard" in html
     assert f"{DEFAULT_ZSCORE_WINDOW}d" in html
-    assert f"MROI &gt; {MROI_LONG_THRESHOLD:.1f}" in html
-    assert f"MROI &lt; {MROI_CASH_THRESHOLD:.1f}" in html
+    assert f"Bitcoin Demand Index &gt; {MROI_LONG_THRESHOLD:.1f}" in html
+    assert f"Bitcoin Demand Index &lt; {MROI_CASH_THRESHOLD:.1f}" in html
     assert f"{TIER_PCT['LONG']:.0f}%" in html
     assert next(iter(VALUATION_CONSTITUENTS)) in html
     assert next(iter(BTC_CYCLES)) in html

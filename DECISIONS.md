@@ -20,9 +20,9 @@ Reason: Pattern mirrors macro-framework's :8001 setup; consolidated port allocat
 
 Reason: Auto-refresh wired via launchd Mon–Fri 22:30 CEST, mirroring macro-framework's pattern. See `scripts/com.milkroad.onchain-index-refresh-daily.plist`.
 
-## 2026-05-21 — Rebranded display name to "Milk Road on-chain index"
+## 2026-05-21 — Rebranded display name to "Milk Road on-chain index" (superseded)
 
-Reason: Rebranded display name to "Milk Road on-chain index" for product-family consistency with Milk Road Macro Index. MROI remains the technical handle; no acronym (MROCI) adopted.
+Reason: Rebranded display name to "Milk Road on-chain index" for product-family consistency with Milk Road Macro Index. MROI remained the technical handle; no acronym (MROCI) was adopted. Superseded on 2026-05-29 by the Bitcoin Demand Index public signal name and Milk Road On-chain Dashboard container name.
 
 ## 2026-05-21 — Simplified to 2-tier binary (STAY LONG / CASH)
 
@@ -30,8 +30,12 @@ Reason: Simplified to 2-tier binary (STAY LONG / CASH) per task-26 walk-forward 
 
 ## 2026-05-21 — Adopted MROI technical handle
 
-Reason: Adopted "MROI" as the technical-handle shorthand for the Milk Road on-chain index score. Reverses the earlier "no acronym" call from this morning's task-24; Martin's revised view after seeing 'PI_score' on the live dashboard was that the abstract variable name was confusing. Internal Python function renamed pi_score() → mroi() for consistency.
+Reason: Adopted "MROI" as the technical-handle shorthand for the former Milk Road on-chain index score, now publicly named Bitcoin Demand Index. Reverses the earlier "no acronym" call from this morning's task-24; Martin's revised view after seeing 'PI_score' on the live dashboard was that the abstract variable name was confusing. Internal Python function renamed pi_score() → mroi() for consistency.
 
 ## 2026-05-28 — Switched MROI to P4 asymmetric holder-only architecture
 
 Reason: Phase G–P research exhausted valuation overrides, BTC/equity spines, symmetric thresholds, confirmation rules, and CAUTION-tier variants. The validated winner was Phase P's P4 asymmetric binary state machine: `MROI = z(holder_behavior)` only; enter LONG when MROI > 0.0, exit CASH when MROI < -0.3, and hold the prior state in between. P4 improved OOS median cycle alpha to +24.2% versus the prior additive reference at +18.1% and reduced cadence to 13.8 switches/cycle versus 33.2. See reports/phase-g-asymmetric-override-2026-05-28.md through reports/phase-p-tier-confirmation-2026-05-28.md.
+
+## 2026-05-29 — Renamed core signal to Bitcoin Demand Index
+
+Reason: Martin chose “Bitcoin Demand Index” as the public name for the core signal/model. The broader page remains Milk Road On-chain Dashboard because future charts may cover other on-chain stats. `MROI` remains the internal technical handle and repo/package identifiers stay `onchain-index` for now.

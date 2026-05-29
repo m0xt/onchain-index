@@ -1,6 +1,6 @@
 # Architecture
 
-Milk Road on-chain index is a BTC regime dashboard. The production signal is P4: `MROI` is the holder-behavior composite only, and allocation posture is a sticky asymmetric LONG/CASH state machine.
+Milk Road On-chain Dashboard is a BTC regime dashboard. Its core signal/model is the Bitcoin Demand Index. The production signal is P4: `MROI` is the internal technical handle for a holder-behavior composite only, and allocation posture is a sticky asymmetric LONG/CASH state machine.
 
 ## Current pipeline
 
@@ -12,8 +12,8 @@ Milk Road on-chain index is a BTC regime dashboard. The production signal is P4:
 6. `fetch_all()` merges source frames onto the BMP daily date index and caches the result at `.cache/raw_data.pkl` for 12 hours.
 7. `holder_behavior_cohorts()` computes the three production holder cohorts with lagged rolling z-scores.
 8. `holder_behavior_composite()` equal-weights the available holder cohorts by date.
-9. `mroi()` returns that holder composite as the production MROI.
-10. `posture_state_machine()` maps MROI to the sticky P4 posture.
+9. `mroi()` returns that holder composite as the Bitcoin Demand Index (`MROI` technical series).
+10. `posture_state_machine()` maps the Bitcoin Demand Index to the sticky P4 posture.
 11. `build_dashboard()` writes `outputs/dashboard.html`, copies it to `docs/dashboard.html` for GitHub Pages, and writes `.cache/status.json`.
 12. `build_index_page()` writes `docs/index.html`, the separate Atlas for challenging constants, source contracts, backtest assumptions, and docs links.
 13. `scripts/refresh.sh` runs both builders on the LaunchAgent cadence and lets `~/ops/lib/cron-wrapper.sh` commit tracked outputs.
@@ -28,7 +28,7 @@ Production math lives in `src/onchain_index/composite.py`.
 mroi(data) = holder_behavior_composite(data)
 ```
 
-`valuation_composite()` still exists for diagnostics and dashboard Reference Library context, but it is not part of `mroi()` and not part of the allocation decision.
+`valuation_composite()` still exists for diagnostics and dashboard Reference Library context, but it is not part of the Bitcoin Demand Index and not part of the allocation decision.
 
 All production z-scores use `rolling_zscore()`, which lags inputs so a score dated T only uses source data through T-1.
 
@@ -89,8 +89,8 @@ The strict inequalities are intentional: after initialization, exactly `0.0` and
 
 `outputs/dashboard.html` follows the macro-framework visual idiom while keeping the on-chain model simpler:
 
-1. **Hero** — current MROI, current posture, allocation percentage, signal zone, active epoch, and headline holder drivers.
-2. **Section 1: MROI history** — holder-spine history with BTC as an optional normalized overlay and green/amber/red P4 zones.
+1. **Hero** — current Bitcoin Demand Index, current posture, allocation percentage, signal zone, active epoch, and headline holder drivers.
+2. **Section 1: Bitcoin Demand Index history** — holder-spine history with BTC as an optional normalized overlay and green/amber/red P4 zones.
 3. **Section 2: holder cohorts** — expandable decision-input rows for on-chain HODL behavior, Strategy treasury delta, and spot ETF flows. Each row shows the current z-score plus raw-input history.
 4. **Section 3: Reference Library** — supplementary valuation charts. These indicators explain cycle context but do not affect posture.
 5. **Footer** — repo, commit, refresh timestamp, and theory version.

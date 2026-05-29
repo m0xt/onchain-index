@@ -291,7 +291,7 @@ def _load_status(output_root: Path) -> dict[str, str]:
     tier = raw.get("last_tier") or "—"
     mroi = raw.get("last_mroi")
     if isinstance(mroi, int | float):
-        summary = f"ok · {tier} · MROI {mroi:+.2f}"
+        summary = f"ok · {tier} · Bitcoin Demand Index {mroi:+.2f}"
     else:
         summary = "error" if raw.get("last_error") else f"ok · {tier}"
     return {
@@ -325,7 +325,7 @@ def render_flow_card() -> str:
     nodes = [
         ("Fetch", "BMP, Farside, StrategyTracker, Coinbase, and Binance raw daily inputs."),
         ("Cache", f"Merge on the BMP daily spine and cache {RAW_CACHE_NAME} for 12 hours."),
-        ("Compute", "Holder Behavior z-score → MROI; valuation remains diagnostic."),
+        ("Compute", "Holder Behavior z-score → Bitcoin Demand Index; valuation remains diagnostic."),
         ("Backtest", "Cycle walk-forward checks use the same lagged production signal path."),
         ("Publish", "Write outputs/dashboard.html, docs/dashboard.html, docs/index.html, status JSON, then cron commit."),
     ]
@@ -351,7 +351,11 @@ def render_composite_card() -> str:
         render_metric("z-score window", f"{DEFAULT_ZSCORE_WINDOW}d", "Lagged trailing window."),
         render_metric("LONG threshold", f"{MROI_LONG_THRESHOLD:.1f}", "Strictly above this enters LONG."),
         render_metric("CASH threshold", f"{MROI_CASH_THRESHOLD:.1f}", "Strictly below this exits to CASH."),
-        render_metric("valuation diagnostics", str(len(VALUATION_CONSTITUENTS)), "Equal-weighted; not in MROI."),
+        render_metric(
+            "valuation diagnostics",
+            str(len(VALUATION_CONSTITUENTS)),
+            "Equal-weighted; not in the demand index.",
+        ),
         render_metric("holder cohorts", str(len(COHORT_LABELS)), "Equal-weighted when live."),
     ]
     valuation_rows = [
@@ -369,11 +373,11 @@ def render_composite_card() -> str:
     ]
     return f"""
       <article class="card wide" style="--accent: #22c55e">
-        <div class="card-top"><div><h2>MROI construction <span>🧮</span></h2><p>Production composite math imported from <code>{SOURCE_COMPOSITE}</code> and <code>{SOURCE_BACKTEST}</code>.</p></div><div class="shortcut">M</div></div>
+        <div class="card-top"><div><h2>Bitcoin Demand Index construction <span>🧮</span></h2><p>Production composite math imported from <code>{SOURCE_COMPOSITE}</code> and <code>{SOURCE_BACKTEST}</code>; <code>MROI</code> remains the internal technical handle.</p></div><div class="shortcut">BDI</div></div>
         {source_link(SOURCE_COMPOSITE, "composite.py")}
         <div class="card-body">
-          <div class="formula"><code>MROI = holder_behavior_composite
-Posture = LONG if MROI &gt; {MROI_LONG_THRESHOLD:.1f}; CASH if MROI &lt; {MROI_CASH_THRESHOLD:.1f}; otherwise hold prior state</code></div>
+          <div class="formula"><code>Bitcoin Demand Index (MROI) = holder_behavior_composite
+Posture = LONG if Bitcoin Demand Index &gt; {MROI_LONG_THRESHOLD:.1f}; CASH if Bitcoin Demand Index &lt; {MROI_CASH_THRESHOLD:.1f}; otherwise hold prior state</code></div>
           <div class="metrics">{''.join(metrics)}</div>
           <details open><summary>Valuation diagnostics (not used in decision)</summary>{render_table(["Key", "Label", "Weight"], valuation_rows)}</details>
           <details open><summary>Holder-behavior cohorts</summary>{render_table(["Key", "Label", "Coverage", "Transform"], cohort_rows)}</details>
@@ -417,7 +421,7 @@ def render_decision_card() -> str:
         {source_link(SOURCE_BUILD, "build.py")}
         <div class="card-body">
           {render_table(["Tier", "Allocation", "Meaning"], rows)}
-          <p class="hint">Rule: <code>MROI &gt; {MROI_LONG_THRESHOLD:.1f}</code> → LONG; <code>MROI &lt; {MROI_CASH_THRESHOLD:.1f}</code> → CASH; otherwise HOLD current state. Theory doc version <code>{THEORY_VERSION}</code>.</p>
+          <p class="hint">Rule: <code>Bitcoin Demand Index &gt; {MROI_LONG_THRESHOLD:.1f}</code> → LONG; <code>Bitcoin Demand Index &lt; {MROI_CASH_THRESHOLD:.1f}</code> → CASH; otherwise HOLD current state. Theory doc version <code>{THEORY_VERSION}</code>.</p>
           <details><summary>Indicator inclusion decisions</summary>{render_table(["Indicator", "Group", "Status", "Reason"], decisions)}</details>
         </div>
       </article>"""
@@ -461,7 +465,7 @@ def render_brief_card() -> str:
         {source_link(SOURCE_BRIEF, "brief.py")}
         <div class="card-body">
           {render_table(["Input", "Setting", "Source / behavior"], rows)}
-          <p class="hint">Prompt scope: headline posture, MROI/trend, Holder Behavior, main reason for the call, and what changes the view next; valuation diagnostics stay out of the generated brief.</p>
+          <p class="hint">Prompt scope: headline posture, Bitcoin Demand Index/trend, Holder Behavior, main reason for the call, and what changes the view next; valuation diagnostics stay out of the generated brief.</p>
         </div>
       </article>"""
 
@@ -570,7 +574,7 @@ def render_html(*, output_root: Path = PROJECT_ROOT) -> str:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Onchain Index Atlas</title>
+<title>On-chain Dashboard Atlas</title>
 <style>{CSS}</style>
 </head>
 <body>
@@ -578,7 +582,7 @@ def render_html(*, output_root: Path = PROJECT_ROOT) -> str:
   <header>
     <div class="eyebrow">onchain-index / atlas</div>
     <h1>Inputs to challenge.</h1>
-    <p class="intro">A static, regenerated view of Milk Road on-chain index's iterable inputs: MROI construction, source contracts, backtest assumptions, architecture flow, and status. Values below are imported from production code at build time.</p>
+    <p class="intro">A static, regenerated view of Milk Road On-chain Dashboard's iterable inputs: Bitcoin Demand Index construction, source contracts, backtest assumptions, architecture flow, and status. Values below are imported from production code at build time.</p>
     <div class="meta">{meta}</div>
     <a class="dashboard-cta" href="{PAGES_DASHBOARD}">Open shareable full dashboard →</a>
   </header>

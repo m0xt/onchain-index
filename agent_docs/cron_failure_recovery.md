@@ -81,7 +81,7 @@ Recovery:
 ## Escalation rules
 
 Escalate instead of guessing if:
-- MROI math, holder cohort membership, P4 thresholds, or sizing tiers appear wrong but the dispatch did not ask for parameter changes.
+- Bitcoin Demand Index (`MROI` technical series) math, holder cohort membership, P4 thresholds, or sizing tiers appear wrong but the dispatch did not ask for parameter changes.
 - A data source output changed in a way that affects historical comparability.
 - A dashboard build succeeds but values look implausible and no test explains the shift.
 - Exchange-flow integration comes up again without a new Martin-approved thesis/rule change.

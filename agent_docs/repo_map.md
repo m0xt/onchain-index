@@ -7,7 +7,7 @@
 - `pyproject.toml` / `uv.lock` — uv-managed package, tests, lint, type-check config.
 - `src/onchain_index/` — importable production package.
 - `src/onchain_index/data.py` — source fetchers, 12h cache, CLI summary.
-- `src/onchain_index/composite.py` — holder-behavior MROI, valuation diagnostics, P4 thresholds, sizing tiers, and `posture_state_machine()`.
+- `src/onchain_index/composite.py` — Bitcoin Demand Index (`MROI` technical series), valuation diagnostics, P4 thresholds, sizing tiers, and `posture_state_machine()`.
 - `src/onchain_index/build.py` — product dashboard renderer for `outputs/dashboard.html`, Pages copy at `docs/dashboard.html`, plus `.cache/status.json`.
 - `src/onchain_index/brief.py` — single Claude CLI-generated dashboard brief loader/generator, archived under `briefs/YYYY-MM-DD/onchain.md`.
 - `src/onchain_index/build_index_page.py` — generated Atlas at `docs/index.html`.

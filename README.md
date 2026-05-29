@@ -1,15 +1,15 @@
 # onchain-index
 
-Milk Road on-chain index is the product-facing BTC regime dashboard. `MROI` remains the technical math handle inside this repo/package.
+Milk Road On-chain Dashboard is the product-facing BTC regime dashboard. Its core signal/model is the Bitcoin Demand Index. `MROI` remains the technical math handle inside this repo/package.
 
-The current production architecture is P4: a holder-behavior-only MROI and an asymmetric LONG/CASH state machine.
+The current production architecture is P4: a holder-behavior-only Bitcoin Demand Index and an asymmetric LONG/CASH state machine.
 
 ```text
-MROI = z(holder_behavior)
+Bitcoin Demand Index (MROI) = z(holder_behavior)
 
-MROI > 0.0   → LONG
-MROI < -0.3  → CASH
-otherwise    → hold the prior posture
+Bitcoin Demand Index > 0.0   → LONG
+Bitcoin Demand Index < -0.3  → CASH
+otherwise                    → hold the prior posture
 ```
 
 Holder behavior is an equal-weight composite of the available live cohorts for each date:

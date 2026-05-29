@@ -1,4 +1,4 @@
-"""Data-only bootstrap for the BTC on-chain pulse index."""
+"""Data pipeline for the BTC on-chain dashboard and Bitcoin Demand Index."""
 
 __all__ = ["__version__"]
 

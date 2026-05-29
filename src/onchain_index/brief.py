@@ -24,20 +24,22 @@ Audience: smart colleagues and investors who want the dashboard call in plain En
 Style: concise, direct, plain English, no fluff. Write flowing prose only — no bullets.
 Do not open with "In today's" or similar. Do not add a title.
 
-Framework context: MROI is the Milk Road On-chain Index technical handle.
-Production posture is binary: LONG means 100% long BTC exposure, CASH means
-0% long. The production rule is explicit: enter LONG only when MROI is strictly
-above the LONG threshold, exit to CASH only when MROI is strictly below the CASH
-threshold, and otherwise hold the prior posture. MROI is currently driven by
-Holder Behavior only: long-term on-chain holders, Strategy treasury
-accumulation, and spot ETF flows. Valuation is not an allocation input. Do not
-discuss or mention the Valuation lens in this brief; the dashboard can display
-valuation diagnostics elsewhere, but this current read must ignore them unless
-Martin later asks. Do not invent thresholds or extra model rules.
+Framework context: the core signal is the Bitcoin Demand Index. MROI is only
+the internal technical handle for the same z-score series when a code-level
+reference is needed. Production posture is binary: LONG means 100% long BTC
+exposure, CASH means 0% long. The production rule is explicit: enter LONG only
+when the Bitcoin Demand Index is strictly above the LONG threshold, exit to CASH
+only when it is strictly below the CASH threshold, and otherwise hold the prior
+posture. The Bitcoin Demand Index is currently driven by Holder Behavior only:
+long-term on-chain holders, Strategy treasury accumulation, and spot ETF flows.
+Valuation is not an allocation input. Do not discuss or mention the Valuation
+lens in this brief; the dashboard can display valuation diagnostics elsewhere,
+but this current read must ignore them unless Martin later asks. Do not invent
+thresholds or extra model rules.
 
-Required content: headline posture, current MROI value and trend if available,
-what Holder Behavior says, the main reason for the current call, and what would
-change the view next.
+Required content: headline posture, current Bitcoin Demand Index value and trend
+if available, what Holder Behavior says, the main reason for the current call,
+and what would change the view next.
 Length: 4–6 sentences.
 """
 
@@ -106,10 +108,13 @@ def _context_text(context: BriefContext) -> str:
         [
             f"Date: {context.date}",
             f"Headline posture: {context.posture} ({context.allocation_pct:.0f}% long)",
-            f"MROI: {_fmt(context.mroi)} — {context.signal_zone}; {_trend(context.mroi_7d_change)}",
+            (
+                f"Bitcoin Demand Index: {_fmt(context.mroi)} — "
+                f"{context.signal_zone}; {_trend(context.mroi_7d_change)}"
+            ),
             "Posture rule: "
-            f"enter LONG only if MROI > {context.long_threshold:.2f}; "
-            f"exit to CASH only if MROI < {context.cash_threshold:.2f}; "
+            f"enter LONG only if Bitcoin Demand Index > {context.long_threshold:.2f}; "
+            f"exit to CASH only if Bitcoin Demand Index < {context.cash_threshold:.2f}; "
             "otherwise hold prior posture.",
             (
                 f"Holder Behavior: {_fmt(context.holder_behavior)} — production decision input; "
@@ -210,7 +215,7 @@ def generate_brief(
     force: bool = False,
     today: date | None = None,
 ) -> bool:
-    """Lazy-generate the weekly on-chain brief via the local Claude CLI."""
+    """Lazy-generate the weekly dashboard brief via the local Claude CLI."""
     today = today or date.today()
     if not force and not _is_stale(briefs_dir, today):
         print("  On-chain brief: fresh (this week's Tuesday) — skipping.")
@@ -273,12 +278,12 @@ def refresh_or_load_brief(
             generated = generate_brief(context, briefs_dir=briefs_dir, force=force)
         except Exception as exc:  # pragma: no cover - defensive build fallback
             generated = False
-            print(f"  Warning: on-chain brief refresh failed: {exc}")
+            print(f"  Warning: dashboard brief refresh failed: {exc}")
         if not generated:
-            print("  Warning: using cached on-chain brief if available.")
+            print("  Warning: using cached dashboard brief if available.")
     brief = load_latest_brief(context_date=context.date, briefs_dir=briefs_dir)
     if brief is None:
-        print("  Warning: no cached on-chain brief available; dashboard brief block omitted.")
+        print("  Warning: no cached dashboard brief available; dashboard brief block omitted.")
     return brief
 
 

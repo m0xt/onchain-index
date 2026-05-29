@@ -1,8 +1,8 @@
-# Milk Road on-chain index — theory of the framework
+# Bitcoin Demand Index — theory of the framework
 
-**Status:** draft v0.7 — production `MROI` switched on 2026-05-28 to the validated Phase P / P4 architecture: holder-behavior spine only, asymmetric LONG/CASH thresholds, and a state machine that holds the prior posture in the noise band.
+**Status:** draft v0.8 — production Bitcoin Demand Index (`MROI` technical series) uses the validated Phase P / P4 architecture: holder-behavior spine only, asymmetric LONG/CASH thresholds, and a state machine that holds the prior posture in the noise band.
 
-> This document encodes *why* the framework is shaped the way it is. Macro-framework encodes its own causal model for broad risk assets; Milk Road on-chain index keeps a BTC-specific causal model: holder behavior drives the production posture, while valuation remains a diagnostic lens for cycle awareness.
+> This document encodes *why* the framework is shaped the way it is. Macro-framework encodes its own causal model for broad risk assets; the Bitcoin Demand Index keeps a BTC-specific causal model inside the broader Milk Road On-chain Dashboard: holder behavior drives the production posture, while valuation remains a diagnostic lens for cycle awareness.
 
 ---
 
@@ -29,7 +29,7 @@ Five causal factors, ranked roughly by signal strength on multi-month horizons:
 Rationale:
 - **Holder behavior is the action signal.** Phase K showed the pure holder spine (`z(holder_behavior) > 0`) could beat the prior production baseline OOS. Phase L found BTC/equity combinations failed to improve it. Phase P then found P4 — an asymmetric holder-only state machine — as the only candidate to clear both validation tracks. See [[reports/phase-k-pure-rerun-2026-05-28.md]], [[reports/phase-l-holder-btceq-combinations-2026-05-28.md]], and [[reports/phase-p-tier-confirmation-2026-05-28.md]].
 - **Valuation is tested-and-rejected for allocation.** It remains useful for explaining where BTC sits in the cycle, but not for deciding the LONG/CASH posture. The dashboard therefore keeps `valuation_composite()` as a clearly labeled diagnostic chart.
-- **The output stays chartable.** `MROI` remains a single z-score, but it now means exactly `holder_behavior_composite`, not a blend.
+- **The output stays chartable.** The Bitcoin Demand Index remains a single z-score; internally, `MROI` means exactly `holder_behavior_composite`, not a blend.
 
 ### Holder behavior composition (sub-cohorts)
 
@@ -65,14 +65,14 @@ Exchange flow was tested in Task-20 / Phase E via Coin Metrics Community daily B
 **Asymmetric thresholds on the holder spine.**
 
 ```
-MROI = holder_behavior_composite
+Bitcoin Demand Index (MROI) = holder_behavior_composite
 
-if MROI > 0.0:    posture = LONG
-if MROI < -0.3:   posture = CASH
+if Bitcoin Demand Index > 0.0:    posture = LONG
+if Bitcoin Demand Index < -0.3:   posture = CASH
 otherwise:        posture = previous posture
 ```
 
-The state machine matters. The amber band (`-0.3 <= MROI <= 0.0`) is not a third allocation tier; it is a noise band where the model refuses to flip. Initial state at the first valid date is `LONG` if MROI is non-negative, otherwise `CASH`.
+The state machine matters. The amber band (`-0.3 <= Bitcoin Demand Index <= 0.0`) is not a third allocation tier; it is a noise band where the model refuses to flip. Initial state at the first valid date is `LONG` if the Bitcoin Demand Index is non-negative, otherwise `CASH`.
 
 Why asymmetric:
 - **Fast entries.** Positive holder behavior is actionable immediately above zero.
@@ -85,9 +85,9 @@ Why asymmetric:
 **P4 asymmetric binary posture.** Decided 2026-05-28.
 
 ```
-MROI  >  0.0  →  LONG  (100%)
-MROI  < -0.3  →  CASH  (0%)
--0.3 <= MROI <= 0.0  →  HOLD PRIOR STATE
+Bitcoin Demand Index  >  0.0  →  LONG  (100%)
+Bitcoin Demand Index  < -0.3  →  CASH  (0%)
+-0.3 <= Bitcoin Demand Index <= 0.0  →  HOLD PRIOR STATE
 ```
 
 Evidence:
@@ -104,14 +104,14 @@ The output remains binary allocation: `LONG` = 100%, `CASH` = 0%. The dashboard 
 - **Symmetric thresholds.** Tested in Phase M/O. Symmetric zero-crossing rules left too much churn because cluster noise concentrated near zero, especially as false-CASH triggers. P4's asymmetric exit threshold is the validated answer. See [[reports/phase-m-stickiness-2026-05-28.md]] and [[reports/phase-o-confirmation-rules-2026-05-28.md]].
 - **Confirmation rules.** Tested in Phase O. They reduced cadence but did not maintain enough dual-track alpha; P4 replaced them with threshold asymmetry rather than lag.
 - **Daily / weekly timing.** This is a multi-month framework. Anyone wanting to time entries/exits within a posture uses something else.
-- **Macro inputs.** Already in macro-framework. Treat as external override: if macro-framework says RISK-OFF, that can override this framework's call externally, but not inside MROI.
+- **Macro inputs.** Already in macro-framework. Treat as external override: if macro-framework says RISK-OFF, that can override this framework's call externally, but not inside the Bitcoin Demand Index.
 - **Adoption metrics.** Too slow for timing. Belongs to a "is BTC still a real asset?" framework.
 - **Derivative leverage / funding rates.** Short-horizon. Useful for tactical context, not regime classification.
 - **Single-cycle backtests.** BTC cycles are ~4 years. Walk-forward by cycle and strict holdout checks remain mandatory.
 
 ## 6. Open questions for Martin
 
-None blocking for v1. The production framework is now: holder-only `MROI`, P4 asymmetric state machine, binary `LONG` / `CASH`, valuation diagnostic surface, and strict separation from macro-framework.
+None blocking for v1. The production framework is now: holder-only Bitcoin Demand Index (`MROI` technical series), P4 asymmetric state machine, binary `LONG` / `CASH`, valuation diagnostic surface, and strict separation from macro-framework.
 
 Open monitoring question:
 
@@ -125,11 +125,11 @@ Open monitoring question:
 ### Resolved 2026-05-21
 
 - ~~Sizing floor~~ → **0% / 100% binary**. `CASH` is 0%; `LONG` is 100%.
-- ~~MROI technical handle~~ → keep `MROI` as the code/product math handle.
+- ~~MROI technical handle~~ → keep `MROI` as the code/internal math handle.
 
 ### Resolved 2026-05-28
 
-- ~~Valuation + holder MROI~~ → **holder-only MROI**.
+- ~~Valuation + holder MROI~~ → **holder-only Bitcoin Demand Index (`MROI` technical series)**.
 - ~~Binary zero threshold~~ → **P4 asymmetric state machine**: LONG above `0.0`, CASH below `-0.3`, hold prior posture in between.
 - ~~CAUTION/tier vocabulary~~ → rejected by Phase P; no tested tiered variant qualified.
 
@@ -139,11 +139,11 @@ Open monitoring question:
 
 With v0.7 in place, the production framework is concrete:
 
-1. Compute **MROI** = `holder_behavior_composite` using the locked production cohort logic.
-2. Map MROI through the P4 state machine: `MROI > 0.0` → `LONG` / 100%; `MROI < -0.3` → `CASH` / 0%; otherwise keep the prior posture.
+1. Compute **Bitcoin Demand Index (`MROI`)** = `holder_behavior_composite` using the locked production cohort logic.
+2. Map the Bitcoin Demand Index through the P4 state machine: `Bitcoin Demand Index > 0.0` → `LONG` / 100%; `Bitcoin Demand Index < -0.3` → `CASH` / 0%; otherwise keep the prior posture.
 3. Keep the dashboard focused on four surfaces:
-   - Headline: current posture + current MROI + raw signal zone
-   - MROI chart: holder spine with green/amber/red P4 zones
+   - Headline: current posture + current Bitcoin Demand Index + raw signal zone
+   - Bitcoin Demand Index chart: holder spine with green/amber/red P4 zones
    - Valuation diagnostic: current z-score and constituent drivers, explicitly not used in decision
    - Holder Behavior lens: current z-score, epoch, cohort drivers, and concentration disclosures
 4. Future work should monitor cohort drift and data coverage, not silently change the production decision rule.

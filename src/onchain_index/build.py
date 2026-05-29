@@ -46,7 +46,7 @@ from onchain_index.data import DEFAULT_CACHE_DIR, PROJECT_ROOT, fetch_all
 
 GITHUB_EDIT_BASE = "https://github.com/m0xt/onchain-index/edit/main"
 PROJECT_REPO_URL = "https://github.com/m0xt/onchain-index"
-THEORY_VERSION = "v0.7"
+THEORY_VERSION = "v0.8"
 
 INDICATOR_DECISIONS: dict[str, tuple[str, str, str]] = {
     "STH MVRV": ("Valuation", "Diagnostic only", "Useful cycle-context lens; not used in the P4 posture."),
@@ -90,8 +90,8 @@ TIER_LABELS: dict[str, str] = {
 }
 
 TIER_SUBTITLES: dict[str, str] = {
-    "LONG": "100% long while MROI is in its LONG state.",
-    "CASH": "0% long while MROI is in its CASH state.",
+    "LONG": "100% long while the Bitcoin Demand Index is in its LONG state.",
+    "CASH": "0% long while the Bitcoin Demand Index is in its CASH state.",
 }
 
 
@@ -198,8 +198,8 @@ def _mroi_signal_color(value: float | None) -> str:
 def _mroi_signal_subtitle(value: float | None, tier: str) -> str:
     zone = _mroi_signal_zone(value)
     if zone == "HOLD band":
-        return f"MROI is in the HOLD band; posture remains {tier}."
-    return f"MROI is in the {zone}; posture is {tier}."
+        return f"Bitcoin Demand Index is in the HOLD band; posture remains {tier}."
+    return f"Bitcoin Demand Index is in the {zone}; posture is {tier}."
 
 
 def _git_text(args: list[str], fallback: str) -> str:
@@ -438,7 +438,7 @@ def _state_color(value: float | None) -> str:
 
 
 def _make_pi_scale_bar(pi_value: float, tier_color: str) -> str:
-    """Horizontal CASH/HOLD/LONG bar for the MROI posture rule."""
+    """Horizontal CASH/HOLD/LONG bar for the Bitcoin Demand Index posture rule."""
     scale_min, scale_max = -2.0, 2.0
     clamped = max(scale_min, min(scale_max, pi_value))
     pct = (clamped - scale_min) / (scale_max - scale_min) * 100
@@ -446,7 +446,7 @@ def _make_pi_scale_bar(pi_value: float, tier_color: str) -> str:
     long_pct = (MROI_LONG_THRESHOLD - scale_min) / (scale_max - scale_min) * 100
     hold_width = long_pct - cash_pct
     return f'''
-      <div class="scale-bar" aria-label="MROI posture position">
+      <div class="scale-bar" aria-label="Bitcoin Demand Index posture position">
         <div class="scale-track">
           <div class="scale-zone scale-zone-cash" style="width:{cash_pct:.2f}%;"></div>
           <div class="scale-zone scale-zone-hold" style="width:{hold_width:.2f}%;"></div>
@@ -540,7 +540,7 @@ def _walk_forward_table(rows: list[dict[str, str | float | None]]) -> str:
     )
     return f'''
     <table>
-      <thead><tr><th>Window</th><th>BTC B&amp;H</th><th>MROI tier</th><th>Alpha</th><th>BTC DD</th><th>MROI DD</th></tr></thead>
+      <thead><tr><th>Window</th><th>BTC B&amp;H</th><th>Demand Index tier</th><th>Alpha</th><th>BTC DD</th><th>Demand Index DD</th></tr></thead>
       <tbody>{body}</tbody>
     </table>
     '''
@@ -571,7 +571,7 @@ def _render_brief(brief: Brief | None) -> str:
     if brief is None:
         return ""
     cached = " (cached)" if brief.stale else ""
-    label = f"This week’s read · on-chain index · {brief.date}{cached}"
+    label = f"This week’s read · Bitcoin Demand Index · {brief.date}{cached}"
     return f'''
 <div class="pillar-brief pillar-brief-headline">
   <div class="pillar-brief-eyebrow">{escape(label)}</div>
@@ -692,7 +692,7 @@ def _render_html(
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Milk Road On-chain Index · {latest.date.strftime('%Y-%m-%d')}</title>
+<title>Milk Road On-chain Dashboard · {latest.date.strftime('%Y-%m-%d')}</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 <style>
@@ -932,7 +932,7 @@ def _render_html(
 <body>
 
 <div class="meta-bar">
-  <span class="brand">MILK ROAD · ON-CHAIN INDEX</span>
+  <span class="brand">MILK ROAD · ON-CHAIN DASHBOARD</span>
   <span class="meta-right">
     <span>data {latest.date.strftime('%Y-%m-%d')}</span>
     <span>built {generated_at.strftime('%Y-%m-%d %H:%M UTC')}</span>
@@ -942,7 +942,7 @@ def _render_html(
 </div>
 
 <header class="hero">
-  <div class="hero-eyebrow">Milk Road On-chain Index · MROI · {latest.date.strftime('%Y-%m-%d')}</div>
+  <div class="hero-eyebrow">Bitcoin Demand Index · MROI technical series · {latest.date.strftime('%Y-%m-%d')}</div>
   <div class="hero-grid">
     <div class="hero-main">
       <div class="hero-row">
@@ -982,16 +982,16 @@ def _render_html(
       <div class="hero-secondary-note"><strong>BTC spot:</strong> <span class="mono">${latest.btc_price:,.0f}</span><br><strong>Valuation:</strong> {_format_score(latest.valuation)} diagnostic only — not an allocation input.</div>
     </aside>
   </div>
-  <p class="hero-story">The Milk Road On-chain Index tracks the conviction of meaningful BTC holders — long-term on-chain holders, ETF flows, and corporate treasuries — then translates that composite into a simple posture signal. Stay long while MROI is above zero; move to cash when it drops below −0.3; hold your current position in between.</p>
+  <p class="hero-story">The Bitcoin Demand Index tracks the conviction of meaningful BTC holders — long-term on-chain holders, ETF flows, and corporate treasuries — then translates that composite into a simple posture signal inside the broader Milk Road On-chain Dashboard. Stay long while the demand index is above zero; move to cash when it drops below −0.3; hold your current position in between.</p>
 </header>
 
 {brief_html}
 
-<div class="section-title"><span class="step-num">1</span>How the index has evolved</div>
+<div class="section-title"><span class="step-num">1</span>How the demand index has evolved</div>
 <div class="mrmi-chart">
   <div class="mrmi-chart-header">
-    <h3>Milk Road On-chain Index
-      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>How MROI works:</strong> MROI is the holder-conviction z-score. Green/amber/red backgrounds show LONG, HOLD, and CASH zones; the hero posture shows the current state.</span></span>
+    <h3>Bitcoin Demand Index
+      <span class="info-icon">{info_svg}<span class="tip-pop"><strong>How the signal works:</strong> the Bitcoin Demand Index is the holder-conviction z-score; <code>MROI</code> remains the internal technical handle. Green/amber/red backgrounds show LONG, HOLD, and CASH zones; the hero posture shows the current state.</span></span>
     </h3>
     <div class="range-tabs" aria-label="Global chart range">
       <button data-range="1y" class="active">1Y</button>
@@ -1000,9 +1000,9 @@ def _render_html(
       <button data-range="all">ALL</button>
     </div>
   </div>
-  <p class="mrmi-chart-subtitle">MROI over time; BTC can be toggled as a normalized reference overlay. Green is LONG, amber is HOLD, red is CASH.</p>
+  <p class="mrmi-chart-subtitle">Bitcoin Demand Index over time; BTC can be toggled as a normalized reference overlay. Green is LONG, amber is HOLD, red is CASH.</p>
   <div class="legend">
-    <span class="legend-item" data-series="pi"><span class="legend-dot" style="background:#fff"></span>MROI</span>
+    <span class="legend-item" data-series="pi"><span class="legend-dot" style="background:#fff"></span>Bitcoin Demand Index</span>
     <span class="legend-item" data-series="btc"><span class="legend-dot" style="background:#A78BFA"></span>BTC</span>
   </div>
   <div class="chart-container"><canvas id="historyChart"></canvas></div>
@@ -1017,21 +1017,21 @@ def _render_html(
   </div>
 </div>
 
-<div class="section-title"><span class="step-num">2</span>What drives the index<span class="pillar-chip holder">Decision inputs</span></div>
-<p class="section-intro"><strong>Holder conviction.</strong> MROI is driven by three cohorts: on-chain HODL behavior, Strategy treasury accumulation, and spot ETF flows. Click any row to open the input table and raw history behind the current z-score.</p>
+<div class="section-title"><span class="step-num">2</span>What drives the demand index<span class="pillar-chip holder">Decision inputs</span></div>
+<p class="section-intro"><strong>Holder conviction.</strong> The Bitcoin Demand Index is driven by three cohorts: on-chain HODL behavior, Strategy treasury accumulation, and spot ETF flows. Click any row to open the input table and raw history behind the current z-score.</p>
 <details class="drivers" open>
   <summary>
     <span><span class="status-dot green"></span>HOLDER CONVICTION COHORTS <span class="muted small">· On-chain HODL · MSTR DAT · ETF flows — click any row to expand</span></span>
   </summary>
   <div class="drivers-body">
-    <p class="details-copy">Latest MROI: <span class="mono" style="color:{_state_color(latest.holder_behavior)};">{_format_score(latest.holder_behavior)}</span> · {_state_label(latest.holder_behavior)}. These are the actual decision inputs.</p>
+    <p class="details-copy">Latest Bitcoin Demand Index: <span class="mono" style="color:{_state_color(latest.holder_behavior)};">{_format_score(latest.holder_behavior)}</span> · {_state_label(latest.holder_behavior)}. These are the actual decision inputs.</p>
     <p class="inline-disclosure"><strong>Strategy treasury cohort:</strong> Strategy is currently the corporate treasury input.</p>
     <div id="scorecard-holder"></div>
   </div>
 </details>
 
 <div class="section-title"><span class="step-num">3</span>Reference Library<span class="pillar-chip reference">Supplementary context</span></div>
-<p class="section-intro"><strong>Supplementary context indicators — not part of the decision rule.</strong> These valuation lenses help with BTC cycle awareness, but they do not drive the MROI posture.</p>
+<p class="section-intro"><strong>Supplementary context indicators — not part of the decision rule.</strong> These valuation lenses help with BTC cycle awareness, but they do not drive the Bitcoin Demand Index posture.</p>
 <div class="library">
   <table>
     <thead><tr><th>Indicator</th><th>Category</th><th>Latest</th><th>Notes</th></tr></thead>
@@ -1050,7 +1050,7 @@ def _render_html(
 </div>
 
 <footer>
-  Milk Road On-chain Index · Technical handle: <code>MROI</code> · Repo: <a href="{PROJECT_REPO_URL}">{PROJECT_REPO_URL}</a> · Last commit: <span class="mono">{escape(sha)}</span> · Last refresh UTC: <span class="mono">{generated_at.strftime('%Y-%m-%d %H:%M:%S')}</span> · Theory doc: {THEORY_VERSION}
+  Milk Road On-chain Dashboard · Core signal: Bitcoin Demand Index (<code>MROI</code> technical handle) · Repo: <a href="{PROJECT_REPO_URL}">{PROJECT_REPO_URL}</a> · Last commit: <span class="mono">{escape(sha)}</span> · Last refresh UTC: <span class="mono">{generated_at.strftime('%Y-%m-%d %H:%M:%S')}</span> · Theory doc: {THEORY_VERSION}
 </footer>
 
 <script>
@@ -1293,7 +1293,7 @@ function createReferenceChart(key) {{
 function buildPiDatasets(points) {{
   const datasets = [];
   if (visibleSeries.btc) datasets.push(lineDataset('BTC', normalizePrices(points.map(p => p.price)), '#A78BFA', {{ yAxisID: 'yPrice', order: 2 }}));
-  if (visibleSeries.pi) datasets.push(lineDataset('MROI', points.map(p => p.pi), '#ffffff', {{ yAxisID: 'y', order: 0 }}));
+  if (visibleSeries.pi) datasets.push(lineDataset('Bitcoin Demand Index', points.map(p => p.pi), '#ffffff', {{ yAxisID: 'y', order: 0 }}));
   return datasets;
 }}
 function renderPi() {{

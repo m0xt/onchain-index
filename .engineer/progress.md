@@ -264,3 +264,10 @@ Keep entries terse — this file is read by every stateless dispatch.
 - Commit: pending in this commit
 - Status: completed
 - Open thread for next dispatch: none
+
+## 2026-05-29T12:48:03Z — Bitcoin Demand Index naming pass
+- What: Renamed the public core signal/model to Bitcoin Demand Index while keeping the broader page as Milk Road On-chain Dashboard, refreshed the Claude brief prompt/archive, and regenerated dashboard/Atlas artifacts.
+- Files touched: AGENTS.md, README.md, DECISIONS.md, docs/architecture.md, docs/theory.md, docs/index.html, docs/dashboard.html, outputs/dashboard.html, briefs/2026-05-28/onchain.md, src/onchain_index/brief.py, src/onchain_index/build.py, src/onchain_index/build_index_page.py, src/onchain_index/data.py, src/onchain_index/__init__.py, pyproject.toml, tests/test_build.py, agent_docs/*.md, .engineer/progress.md
+- Commit: pending in this commit
+- Status: completed
+- Open thread for next dispatch: none

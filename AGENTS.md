@@ -2,7 +2,7 @@
 
 ## What this does
 
-Milk Road on-chain index is the product-facing BTC regime dashboard; `MROI` remains the technical math handle inside the `onchain-index` repo/package.
+Milk Road On-chain Dashboard is the product-facing BTC regime dashboard. Its core signal/model is the Bitcoin Demand Index; `MROI` remains the technical math handle inside the `onchain-index` repo/package.
 
 Production architecture is P4: `mroi()` returns `holder_behavior_composite(data)`, and `posture_state_machine()` maps that holder spine into binary `LONG` / `CASH` posture with a hold-prior-state noise band.
 
@@ -11,7 +11,7 @@ Production architecture is P4: `mroi()` returns `holder_behavior_composite(data)
 | Path | Purpose |
 |---|---|
 | `src/onchain_index/data.py` | Production data fetch layer: BMP, Farside ETF flows, Strategy holdings, Coinbase/Binance premium, cache + CLI summary. |
-| `src/onchain_index/composite.py` | Canonical MROI construction, holder cohorts, valuation diagnostics, P4 thresholds, and `posture_state_machine()`. |
+| `src/onchain_index/composite.py` | Bitcoin Demand Index (`MROI` technical series), holder cohorts, valuation diagnostics, P4 thresholds, and `posture_state_machine()`. |
 | `src/onchain_index/build.py` | Product dashboard renderer for `outputs/dashboard.html`, Pages copy at `docs/dashboard.html`, plus `.cache/status.json`. |
 | `src/onchain_index/brief.py` | Single Claude CLI-generated dashboard brief loader/generator, archived under `briefs/YYYY-MM-DD/onchain.md`. |
 | `src/onchain_index/build_index_page.py` | Generated Atlas at `docs/index.html`. |
