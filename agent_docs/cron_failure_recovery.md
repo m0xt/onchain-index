@@ -1,6 +1,6 @@
 # Cron failure recovery
 
-`scripts/refresh.sh` is the production entry point. It refreshes source data, rebuilds `docs/index.html`, mirrors it to `outputs/dashboard.html`, writes `.cache/status.json`, then commits tracked dashboard outputs through `~/ops/lib/cron-wrapper.sh`.
+`scripts/refresh.sh` is the production entry point. Hermes cron `onchain-index-refresh-daily` runs it every day at 22:30 Prague. It refreshes source data, rebuilds `docs/index.html`, mirrors it to `outputs/dashboard.html`, writes `.cache/status.json`, then commits tracked dashboard outputs through `~/ops/lib/cron-wrapper.sh`.
 
 Start every incident here:
 

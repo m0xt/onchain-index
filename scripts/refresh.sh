@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Refresh wrapper — LaunchAgent entry point.
+# Refresh wrapper — Hermes cron entry point.
 #
-# Runs on weekdays — see scripts/com.milkroad.onchain-index-refresh-daily.plist:
-#   · Mon–Fri 22:30 Prague — daily on-chain dashboard refresh, mirrored to the
+# Runs daily via Hermes cron `onchain-index-refresh-daily`:
+#   · Every day 22:30 Prague — daily on-chain dashboard refresh, mirrored to the
 #     macro-framework cron landscape for easy operations.
 #
 # Delegates boilerplate to ~/ops/lib/cron-wrapper.sh:
