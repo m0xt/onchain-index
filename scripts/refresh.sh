@@ -34,7 +34,6 @@ cron_wrapper_pull
 } 2>&1 | tee -a "$REFRESH_LOG"
 
 cron_wrapper_commit_outputs \
-    .cache/status.json \
     briefs \
     docs/dashboard.html \
     docs/index.html \

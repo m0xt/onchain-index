@@ -148,13 +148,13 @@ def latest_brief_dir(briefs_dir: Path = BRIEFS_DIR) -> Path | None:
     return briefs_dir / dates[-1].isoformat()
 
 
-def _most_recent_tuesday(today: date) -> date:
-    days_back = (today.weekday() - 1) % 7
+def _most_recent_monday(today: date) -> date:
+    days_back = today.weekday() % 7
     return today - timedelta(days=days_back)
 
 
 def _is_stale(briefs_dir: Path, today: date) -> bool:
-    cutoff = _most_recent_tuesday(today)
+    cutoff = _most_recent_monday(today)
     for brief_date in reversed(_list_brief_dates(briefs_dir)):
         if (briefs_dir / brief_date.isoformat() / BRIEF_FILENAME).exists():
             return brief_date < cutoff
@@ -218,7 +218,7 @@ def generate_brief(
     """Lazy-generate the weekly dashboard brief via the local Claude CLI."""
     today = today or date.today()
     if not force and not _is_stale(briefs_dir, today):
-        print("  On-chain brief: fresh (this week's Tuesday) — skipping.")
+        print("  On-chain brief: fresh (this week's Monday) — skipping.")
         return True
 
     prompt = USER_TEMPLATE.format(date=context.date, context=_context_text(context))

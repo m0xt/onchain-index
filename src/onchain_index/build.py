@@ -1362,6 +1362,7 @@ def build_dashboard(
     use_cache: bool = True,
     cache_dir: Path = DEFAULT_CACHE_DIR,
     output_root: Path = PROJECT_ROOT,
+    force_brief: bool = False,
 ) -> DashboardPaths:
     """Build ``outputs/dashboard.html``, Pages copy, and dashboard status."""
     paths = _paths(output_root)
@@ -1372,6 +1373,7 @@ def build_dashboard(
         brief = refresh_or_load_brief(
             _brief_context(latest, components),
             briefs_dir=output_root / "briefs",
+            force=force_brief,
         )
         html = _render_html(
             latest=latest,
@@ -1413,6 +1415,11 @@ def build_dashboard(
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Build the onchain-index dashboard.")
     parser.add_argument("--no-cache", action="store_true", help="Force fresh source fetches.")
+    parser.add_argument(
+        "--force-brief",
+        action="store_true",
+        help="Regenerate the weekly AI brief even if this week's brief exists.",
+    )
     parser.add_argument("--open", action="store_true", help="Open outputs/dashboard.html after build.")
     parser.add_argument(
         "--cache-dir",
@@ -1432,6 +1439,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         use_cache=not args.no_cache,
         cache_dir=cast(Path, args.cache_dir),
         output_root=cast(Path, args.output_root),
+        force_brief=bool(args.force_brief),
     )
     print(f"wrote {paths.outputs_dashboard}")
     print(f"pages {paths.docs_dashboard}")
