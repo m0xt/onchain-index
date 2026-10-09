@@ -10,9 +10,9 @@ Production architecture is P4: `mroi()` returns `holder_behavior_composite(data)
 
 | Path | Purpose |
 |---|---|
-| `src/onchain_index/data.py` | Production data fetch layer: BMP, Farside ETF flows, Strategy holdings, Coinbase/Binance premium, cache + CLI summary. |
+| `src/onchain_index/data.py` | Production data fetch layer: Coin Metrics Community, frozen BMP + BGeometrics 1Y HODL, Farside ETF flows, Strategy holdings, Coinbase/Binance premium, cache + CLI summary. No API key required. |
 | `src/onchain_index/composite.py` | Bitcoin Demand Index (`MROI` technical series), holder cohorts, valuation diagnostics, P4 thresholds, and `posture_state_machine()`. |
-| `src/onchain_index/build.py` | Product dashboard renderer for `outputs/dashboard.html`, Pages copy at `docs/dashboard.html`, plus `.cache/status.json`. |
+| `src/onchain_index/build.py` | Product dashboard renderer for `outputs/dashboard.html`, machine-readable `outputs/bdi.json`, Pages copy at `docs/dashboard.html`, plus `.cache/status.json`. |
 | `src/onchain_index/brief.py` | Single Claude CLI-generated dashboard brief loader/generator, archived under `briefs/YYYY-MM-DD/onchain.md`. |
 | `src/onchain_index/build_index_page.py` | Generated Atlas at `docs/index.html`. |
 | `src/onchain_index/backtest.py` | Lagged signal and walk-forward backtest helpers used by research/tests/dashboard summaries. |
@@ -29,9 +29,11 @@ Production architecture is P4: `mroi()` returns `holder_behavior_composite(data)
 | `briefs/` | Durable dated archive for the single generated on-chain brief. |
 | `docs/dashboard.html` | GitHub Pages copy of the generated full dashboard; rebuilt by `uv run python -m onchain_index.build`. |
 | `outputs/dashboard.html` | Generated product dashboard; rebuild with `uv run python -m onchain_index.build`. |
+| `outputs/bdi.json` | Generated daily BDI series committed with each refresh. Raw URL: `https://raw.githubusercontent.com/m0xt/onchain-index/main/outputs/bdi.json`. |
+| `data/hodl_1yr_pct_bmp_frozen.csv` | Frozen Bitcoin Magazine Pro 1Y+ HODL history through 2026-08-30, spliced to BGeometrics. |
 | `agent_docs/repo_map.md` | One-line-per-dir structural map for agents. |
 | `agent_docs/cron_failure_recovery.md` | LaunchAgent/dashboard refresh recovery runbook. |
-| `agent_docs/secrets.md` | BMP_API_KEY location, validation, and rotation contract. |
+| `agent_docs/secrets.md` | Optional `BGEOMETRICS_TOKEN` contract. No API key is required. |
 | `DECISIONS.md` | Append-only dated rationale for non-obvious project choices. |
 | `.cache/` | Gitignored raw fetch cache, status files, and local-only scratch data. |
 
@@ -64,12 +66,12 @@ Production architecture is P4: `mroi()` returns `holder_behavior_composite(data)
 - Fast gate: `uv run pytest`.
 - Lint gate: `uv run ruff check .`.
 - Type gate: `uv run pyright`.
-- Smoke tests import every package module and dry-run the data entry point with a dummy secret.
+- Smoke tests import every package module and dry-run the data entry point with no secret.
 
 ## Security
 
-- Required var: `BMP_API_KEY`.
-- Secret location: `~/ops/secrets/onchain-index/.env`.
+- Required var: none. The Bitcoin Magazine Pro subscription ended and `BMP_API_KEY` is not used.
+- Optional var: `BGEOMETRICS_TOKEN` at `~/ops/secrets/onchain-index/.env`. The free plan covers one daily refresh.
 - Never commit a real `.env`; `.env.example` is the only committed template.
 - Full contract: `agent_docs/secrets.md`.
 

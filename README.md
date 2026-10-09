@@ -30,4 +30,6 @@ uv run python -m onchain_index.build
 uv run python -m onchain_index.build_index_page
 ```
 
-Fresh data is cached in `.cache/raw_data.pkl` for 12 hours. `BMP_API_KEY` lives outside this repo at `~/ops/secrets/onchain-index/.env`; copy `.env.example` only as documentation, not as a real secret file.
+Fresh data is cached in `.cache/raw_data.pkl` for 12 hours. No API key is required. Market metrics come from Coin Metrics Community. The 1Y+ HODL share uses frozen Bitcoin Magazine Pro history in `data/hodl_1yr_pct_bmp_frozen.csv` through 2026-08-30, then BGeometrics. An optional `BGEOMETRICS_TOKEN` can live at `~/ops/secrets/onchain-index/.env`; the free plan is enough for one daily refresh. `.env.example` documents that optional variable and must not hold a real token.
+
+Every dashboard build also writes `outputs/bdi.json`: the latest Bitcoin Demand Index, posture, and full daily history, including MVRV-Z, Puell, and NUPL when those series exist.

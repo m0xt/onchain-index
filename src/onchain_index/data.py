@@ -28,12 +28,21 @@ RAW_CACHE_NAME = "raw_data.pkl"
 CACHE_MAX_AGE = timedelta(hours=12)
 OPS_SECRET_ENV = Path.home() / "ops" / "secrets" / "onchain-index" / ".env"
 
+# Legacy Atlas reference. The BMP subscription ended in 2026-09.
 BMP_BASE = "https://api.bitcoinmagazinepro.com"
+COINMETRICS_COMMUNITY_URL = "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics"
+COINMETRICS_METRICS = "PriceUSD,CapMrktCurUSD,CapMVRVCur,IssTotUSD,HashRate,AdrActCnt"
+BGEOMETRICS_HODL_1Y_URL = "https://api.bitcoin-data.com/v1/hodl-one-year"
+FROZEN_HODL_CSV = PROJECT_ROOT / "data" / "hodl_1yr_pct_bmp_frozen.csv"
+# Context-only columns with no free full-history source yet; shipped as NaN so the
+# Reference Library / Phase B table render "—" instead of failing.
+UNSOURCED_CONTEXT_COLUMNS: tuple[str, ...] = ("sth_mvrv", "rhodl_ratio", "lth_mvrv", "reserve_risk")
 FARSIDE_ETF_FLOW_URL = "https://farside.co.uk/bitcoin-etf-flow-all-data/"
 STRATEGY_TRACKER_MANIFEST_URL = "https://data.strategytracker.com/latest.json"
 STRATEGY_TRACKER_BASE = "https://data.strategytracker.com"
 COINBASE_CANDLES_URL = "https://api.exchange.coinbase.com/products/BTC-USD/candles"
 BINANCE_KLINES_URL = "https://api.binance.com/api/v3/klines"
+BINANCE_VISION_KLINES_URL = "https://data-api.binance.vision/api/v3/klines"
 COINBASE_PREMIUM_START = datetime(2023, 1, 1, tzinfo=UTC)
 START_DATE = "2012-01-01"
 
@@ -63,18 +72,20 @@ BMP_METRICS: dict[str, dict[str, str]] = {
 }
 
 
-def validate_secrets(env_file: Path = OPS_SECRET_ENV) -> str:
-    """Load and validate required secrets before network work starts."""
+def validate_secrets(env_file: Path = OPS_SECRET_ENV) -> str | None:
+    """Load optional secrets. No key is required since the BMP subscription ended.
+
+    ``BGEOMETRICS_TOKEN`` is optional: without it the free BGeometrics plan applies
+    (10 req/hour, 15/day, last 4 years), which is enough for one daily refresh.
+    """
     if env_file.exists():
         load_dotenv(env_file, override=False)
+    return os.environ.get("BGEOMETRICS_TOKEN", "").strip() or None
 
-    api_key = os.environ.get("BMP_API_KEY", "").strip()
-    if not api_key:
-        raise RuntimeError(
-            "BMP_API_KEY is missing. Add it to "
-            f"{env_file} or export BMP_API_KEY in the process environment."
-        )
-    return api_key
+
+def _series(frame: pd.DataFrame, column: str) -> pd.Series:
+    """Return one DataFrame column as a Series for pandas/pyright interop."""
+    return cast(pd.Series, frame[column])
 
 
 def _cache_path(cache_dir: Path | str) -> Path:
@@ -135,8 +146,17 @@ def _fetch_bmp_metric(
 
 
 def fetch_bmp(*, api_key: str | None = None, start_date: str = START_DATE) -> pd.DataFrame:
-    """Fetch on-chain indicators from Bitcoin Magazine Pro."""
-    resolved_api_key = api_key or validate_secrets()
+    """Fetch on-chain indicators from Bitcoin Magazine Pro.
+
+    Production refresh no longer calls this. ``fetch_all`` uses Coin Metrics
+    and BGeometrics. Calling it still requires ``BMP_API_KEY``.
+    """
+    resolved_api_key = (api_key or os.environ.get("BMP_API_KEY", "")).strip()
+    if not resolved_api_key:
+        raise RuntimeError(
+            "BMP_API_KEY is not set. Production data no longer uses Bitcoin Magazine Pro; "
+            "call fetch_all() instead."
+        )
     frames: list[pd.DataFrame] = []
 
     with requests.Session() as session:
@@ -156,16 +176,28 @@ def fetch_bmp(*, api_key: str | None = None, start_date: str = START_DATE) -> pd
     return cast(pd.DataFrame, merged)
 
 
+def _fetch_text(url: str, *, timeout: int = 30) -> str:
+    """GET text, using a browser TLS impersonation if Cloudflare returns 403."""
+    response = requests.get(url, headers=UA_HEADERS, timeout=timeout)
+    if response.status_code != 403:
+        response.raise_for_status()
+        return response.text
+    try:
+        from curl_cffi import requests as curl_requests
+    except ImportError as exc:  # pragma: no cover - declared dependency
+        raise RuntimeError("Farside returned 403 and curl_cffi is not installed.") from exc
+    impersonated = curl_requests.get(url, impersonate="chrome", timeout=timeout)
+    impersonated.raise_for_status()
+    text = impersonated.text
+    if not isinstance(text, str):
+        raise ValueError(f"Unexpected text response from {url}")
+    return text
+
+
 def fetch_etf_flows() -> pd.DataFrame:
     """Fetch Farside daily spot BTC ETF flows in $M."""
-    response = requests.get(
-        FARSIDE_ETF_FLOW_URL,
-        headers=UA_HEADERS,
-        timeout=30,
-    )
-    response.raise_for_status()
-
-    tables = pd.read_html(io.StringIO(response.text))
+    html = _fetch_text(FARSIDE_ETF_FLOW_URL, timeout=60)
+    tables = pd.read_html(io.StringIO(html))
     candidates = [table for table in tables if table.shape[0] > 100 and "Date" in table.columns]
     if not candidates:
         raise ValueError("Could not find Farside ETF flow table")
@@ -268,11 +300,12 @@ def _coinbase_daily_closes(start: datetime, end: datetime) -> pd.DataFrame:
 
 
 def _binance_daily_closes() -> pd.DataFrame:
-    response = requests.get(
-        BINANCE_KLINES_URL,
-        params={"symbol": "BTCUSDT", "interval": "1d", "limit": 1000},
-        timeout=30,
-    )
+    params = {"symbol": "BTCUSDT", "interval": "1d", "limit": 1000}
+    response = requests.get(BINANCE_KLINES_URL, params=params, timeout=30)
+    # api.binance.com returns 451 from some regions. The public market-data
+    # host serves the same klines.
+    if response.status_code == 451:
+        response = requests.get(BINANCE_VISION_KLINES_URL, params=params, timeout=30)
     response.raise_for_status()
     payload = response.json()
     if not isinstance(payload, list):
@@ -309,12 +342,94 @@ def fetch_coinbase_premium(
     return cast(pd.DataFrame, both[["premium_pct"]].sort_index())
 
 
-def fetch_all(*, use_cache: bool = True, cache_dir: Path | str = DEFAULT_CACHE_DIR) -> pd.DataFrame:
-    """Fetch all Phase A sources and return one merged daily DataFrame.
+def fetch_coinmetrics(start_date: str = START_DATE) -> pd.DataFrame:
+    """Daily BTC price/market metrics from Coin Metrics Community (no key; CC BY-NC 4.0).
 
-    The merged frame uses the BMP daily index as the spine, then adds:
-    `etf_net_flow_m`, `mstr_btc`, and `cb_premium_pct`. Raw source-specific
-    shapes remain available through the individual fetch functions.
+    Also derives the context metrics that BMP used to serve:
+    MVRV-Z = (market cap - realized cap) / expanding std(market cap);
+    Puell = daily issuance USD / its 365d mean; NUPL = 1 - realized/market cap.
+    """
+    rows: list[dict[str, object]] = []
+    url: str | None = COINMETRICS_COMMUNITY_URL
+    params: dict[str, str | int] | None = {
+        "assets": "btc",
+        "metrics": COINMETRICS_METRICS,
+        "frequency": "1d",
+        "start_time": start_date,
+        "page_size": 10000,
+    }
+    while url:
+        response = requests.get(url, params=params, timeout=60)
+        response.raise_for_status()
+        payload = response.json()
+        rows.extend(payload["data"])
+        next_url = payload.get("next_page_url")
+        url = next_url if isinstance(next_url, str) and next_url else None
+        params = None
+    raw = pd.DataFrame(rows)
+    raw.index = pd.to_datetime(raw["time"], utc=True).dt.tz_convert(None).dt.normalize()
+    raw.index.name = "date"
+    raw = raw[~raw.index.duplicated(keep="last")]
+    numeric = raw.drop(columns=["asset", "time"]).apply(pd.to_numeric, errors="coerce")
+    num = cast(pd.DataFrame, numeric)
+    market_cap = _series(num, "CapMrktCurUSD")
+    realized_cap = cast(pd.Series, market_cap / _series(num, "CapMVRVCur"))
+    issuance = _series(num, "IssTotUSD")
+    hashrate = _series(num, "HashRate")
+    addresses = _series(num, "AdrActCnt")
+    out = pd.DataFrame(index=num.index)
+    out["btc_price"] = _series(num, "PriceUSD")
+    out["market_cap"] = market_cap
+    out["realized_cap"] = realized_cap
+    out["mvrv_zscore"] = (market_cap - realized_cap) / market_cap.expanding().std()
+    out["nupl"] = 1 - realized_cap / market_cap
+    out["puell_multiple"] = issuance / issuance.rolling(365).mean()
+    out["hash_30dma"] = hashrate.rolling(30).mean()
+    out["hash_60dma"] = hashrate.rolling(60).mean()
+    out["adr_dma30"] = addresses.rolling(30).mean()
+    out["adr_dma365"] = addresses.rolling(365).mean()
+    return out.sort_index()
+
+
+def fetch_hodl_1y(*, token: str | None = None, frozen_csv: Path = FROZEN_HODL_CSV) -> pd.Series:
+    """1Y+ HODL share (%): frozen BMP history + BGeometrics /v1/hodl-one-year after it.
+
+    BGeometrics is level-shifted to the frozen BMP value on the splice date so the
+    30d change (the only thing the on-chain cohort uses) has no artificial jump.
+    """
+    frozen = cast(
+        pd.Series,
+        pd.read_csv(frozen_csv, index_col=0, parse_dates=True)["hodl_1yr_pct"].dropna(),
+    )
+    frozen_times = pd.Series(pd.to_datetime(frozen.index, utc=True))
+    frozen.index = frozen_times.dt.tz_convert(None).dt.normalize()
+    splice = cast(pd.Timestamp, frozen.index.max())
+    splice_start = (splice - timedelta(days=30)).strftime("%Y-%m-%d")
+    params: dict[str, str] = {"startday": splice_start, "size": "2000"}
+    if token:
+        params["token"] = token
+    response = requests.get(BGEOMETRICS_HODL_1Y_URL, params=params, headers=UA_HEADERS, timeout=60)
+    response.raise_for_status()
+    bg = pd.DataFrame(response.json())
+    live_index = pd.to_datetime(bg["d"], utc=True).dt.tz_convert(None).dt.normalize()
+    hodl_fraction = cast(pd.Series, pd.to_numeric(bg["hodlOneYear"], errors="coerce"))
+    live = pd.Series(hodl_fraction.to_numpy() * 100, index=live_index)
+    live = cast(pd.Series, live.loc[~live.index.duplicated(keep="last")]).dropna()
+    if splice not in live.index:
+        raise ValueError(f"BGeometrics hodl-one-year has no value on splice date {splice:%Y-%m-%d}")
+    offset = float(frozen.loc[splice] - live.loc[splice])
+    live_tail = cast(pd.Series, live[live.index > splice]) + offset
+    spliced = cast(pd.Series, pd.concat([frozen, live_tail]).sort_index())
+    spliced.name = "hodl_1yr_pct"
+    return spliced
+
+
+def fetch_all(*, use_cache: bool = True, cache_dir: Path | str = DEFAULT_CACHE_DIR) -> pd.DataFrame:
+    """Fetch all sources and return one merged daily DataFrame (no BMP).
+
+    Spine: Coin Metrics Community daily index. Adds the spliced 1Y+ HODL share,
+    `etf_net_flow_m`, `mstr_btc`, `cb_premium_pct`, and NaN placeholders for
+    context-only metrics that have no free full-history source yet.
     """
     cache_path = _cache_path(cache_dir)
     if use_cache and _cache_is_fresh(cache_path):
@@ -322,12 +437,19 @@ def fetch_all(*, use_cache: bool = True, cache_dir: Path | str = DEFAULT_CACHE_D
 
     cache_path.parent.mkdir(parents=True, exist_ok=True)
 
-    bmp = fetch_bmp()
+    token = validate_secrets()
+    market = fetch_coinmetrics()
+    hodl = fetch_hodl_1y(token=token)
     etf = fetch_etf_flows()
     strategy = fetch_strategy_holdings()
     premium = fetch_coinbase_premium()
 
-    merged = bmp.copy()
+    market_end = cast(pd.Timestamp, market.index.max())
+    hodl_end = cast(pd.Timestamp, hodl.index.max())
+    merged = market.loc[: min(market_end, hodl_end)].copy()
+    merged["hodl_1yr_pct"] = hodl.reindex(merged.index).ffill()
+    for column in UNSOURCED_CONTEXT_COLUMNS:
+        merged[column] = np.nan
     merged["etf_net_flow_m"] = etf["Total"].reindex(merged.index).fillna(0)
     merged["mstr_btc"] = strategy["btc_balance"].reindex(merged.index).ffill()
     merged["cb_premium_pct"] = premium["premium_pct"].reindex(merged.index)
@@ -364,9 +486,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    validate_secrets()
+    token = validate_secrets()
     if args.dry_run:
-        print(f"OK: BMP_API_KEY present; cache_dir={args.cache_dir}")
+        token_state = "set" if token else "not set (free plan)"
+        print(
+            f"OK: no required secrets; BGeometrics token {token_state}; cache_dir={args.cache_dir}"
+        )
         return 0
 
     frame = fetch_all(use_cache=not args.no_cache, cache_dir=args.cache_dir)

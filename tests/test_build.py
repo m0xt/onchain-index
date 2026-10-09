@@ -3,11 +3,14 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from onchain_index.composite import mroi
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _build_sample_frame() -> pd.DataFrame:
@@ -66,7 +69,7 @@ def test_build_entrypoint_writes_dashboard_and_status(tmp_path) -> None:
             "--output-root",
             str(output_root),
         ],
-        cwd="/Users/max/projects/onchain-index",
+        cwd=str(REPO_ROOT),
         check=False,
         capture_output=True,
         text=True,
@@ -99,6 +102,56 @@ def test_build_entrypoint_writes_dashboard_and_status(tmp_path) -> None:
     assert isinstance(status["last_mroi"], float)
     assert status["last_tier"] in {"CASH", "LONG"}
     assert status["last_error"] is None
+
+    bdi_path = output_root / "outputs" / "bdi.json"
+    payload = json.loads(bdi_path.read_text())
+    latest_date = str(mroi(frame).dropna().index[-1])[:10]
+    assert payload["as_of"] == latest_date
+    assert payload["generated_at"].endswith("Z")
+    assert payload["posture"] in {"CASH", "LONG"}
+    assert payload["bdi"] == payload["series"][-1]["bdi"]
+    assert payload["series"][-1]["date"] == latest_date
+    assert payload["series"][-1]["posture"] == payload["posture"]
+    assert payload["posture_since"] <= payload["as_of"]
+    row_keys = {
+        "date",
+        "bdi",
+        "on_chain",
+        "corporate_dat",
+        "institutional_etf",
+        "posture",
+        "btc_price",
+        "mvrv_z",
+        "puell",
+        "nupl",
+    }
+    assert set(payload["series"][0]) == row_keys
+    assert set(payload) == {
+        "as_of",
+        "generated_at",
+        "bdi",
+        "posture",
+        "posture_since",
+        "mvrv_z",
+        "puell",
+        "nupl",
+        "series",
+    }
+    for point in payload["series"]:
+        for key in (
+            "bdi",
+            "on_chain",
+            "corporate_dat",
+            "institutional_etf",
+            "btc_price",
+            "mvrv_z",
+            "puell",
+            "nupl",
+        ):
+            value = point[key]
+            if value is None:
+                continue
+            assert abs(value - round(value, 4)) < 1e-9
 
 
 def test_latest_brief_missing_is_none(tmp_path) -> None:

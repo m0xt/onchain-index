@@ -1,6 +1,6 @@
 # Cron failure recovery
 
-`scripts/refresh.sh` is the production entry point. Hermes cron `onchain-index-refresh-daily` runs it every day at 22:30 Prague. It refreshes source data, rebuilds `docs/index.html`, mirrors it to `outputs/dashboard.html`, writes `.cache/status.json`, then commits tracked dashboard outputs through `~/ops/lib/cron-wrapper.sh`.
+`scripts/refresh.sh` is the production entry point. Hermes cron `onchain-index-refresh-daily` runs it every day at 22:30 Prague. It runs `git pull --rebase --autostash` first, refreshes source data with no API key, rebuilds `docs/index.html`, writes `outputs/dashboard.html` and `outputs/bdi.json`, writes `.cache/status.json`, then commits those outputs through `~/ops/lib/cron-wrapper.sh`.
 
 Start every incident here:
 
@@ -18,7 +18,8 @@ uv run ruff check .
 
 Symptoms:
 - `python -m onchain_index.build --no-cache` fails before `outputs/dashboard.html` is updated.
-- Stack traces from Bitcoin Magazine Pro, Farside ETF flow reads, Strategy holdings, Yahoo/Coin Metrics, DNS, TLS, rate limits, or empty data frames.
+- Stack traces from Coin Metrics Community, BGeometrics HODL, Farside ETF flow reads, Strategy holdings, Coinbase/Binance premium, DNS, TLS, rate limits, or empty data frames. Farside HTTP 403 already retries with browser impersonation, and Binance HTTP 451 already retries `data-api.binance.vision`. A failure after those retries is a real source outage.
+- `outputs/bdi.json` missing after a run that otherwise updated the dashboard. `scripts/refresh.sh` commits that file with the dashboard.
 - `.cache/status.json` reports `last_mroi: null` and a non-null `last_error`.
 
 Recovery:
