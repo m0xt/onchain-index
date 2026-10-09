@@ -4,21 +4,22 @@ Milk Road On-chain Dashboard is a BTC regime dashboard. Its core signal/model is
 
 ## Current pipeline
 
-1. `validate_secrets()` loads `BMP_API_KEY` from `~/ops/secrets/onchain-index/.env` or the process environment and fails before network work if it is missing.
-2. `fetch_bmp()` pulls Bitcoin Magazine Pro daily metrics from 2012-01-01 onward.
-3. `fetch_etf_flows()` pulls daily US spot BTC ETF flows from Farside.
-4. `fetch_strategy_holdings()` pulls Strategy/MSTR BTC holdings from strategytracker.com.
-5. `fetch_coinbase_premium()` compares Coinbase BTC-USD and Binance BTCUSDT daily closes from 2023 onward for Reference Library context.
-6. `fetch_all()` merges source frames onto the BMP daily date index and caches the result at `.cache/raw_data.pkl` for 12 hours.
-7. `holder_behavior_cohorts()` computes the three production holder cohorts with lagged rolling z-scores.
-8. `holder_behavior_composite()` equal-weights the available holder cohorts by date.
-9. `mroi()` returns that holder composite as the Bitcoin Demand Index (`MROI` technical series).
-10. `posture_state_machine()` maps the Bitcoin Demand Index to the sticky P4 posture.
-11. `build_dashboard()` writes `outputs/dashboard.html`, copies it to `docs/dashboard.html` for GitHub Pages, and writes `.cache/status.json`.
-12. `build_index_page()` writes `docs/index.html`, the separate Atlas for challenging constants, source contracts, backtest assumptions, and docs links.
-13. `scripts/refresh.sh` runs both builders on the LaunchAgent cadence and lets `~/ops/lib/cron-wrapper.sh` commit tracked outputs.
+1. `validate_secrets()` loads an optional `BGEOMETRICS_TOKEN` from `~/ops/secrets/onchain-index/.env` or the process environment. No key is required.
+2. `fetch_coinmetrics()` pulls Coin Metrics Community daily price, market cap, MVRV, issuance, hashrate, and active addresses from 2012-01-01 and derives MVRV-Z, NUPL, and Puell.
+3. `fetch_hodl_1y()` reads frozen Bitcoin Magazine Pro 1Y+ HODL history from `data/hodl_1yr_pct_bmp_frozen.csv` through 2026-08-30, then appends BGeometrics `hodl-one-year` level-shifted to the frozen value on the splice date.
+4. `fetch_etf_flows()` pulls daily US spot BTC ETF flows from Farside. A Cloudflare 403 retries through `curl_cffi` Chrome impersonation.
+5. `fetch_strategy_holdings()` pulls Strategy/MSTR BTC holdings from strategytracker.com.
+6. `fetch_coinbase_premium()` compares Coinbase BTC-USD and Binance BTCUSDT daily closes from 2023 onward for Reference Library context. Binance HTTP 451 falls back to `data-api.binance.vision`, which serves the same public klines.
+7. `fetch_all()` merges those frames on the Coin Metrics daily index and caches the result at `.cache/raw_data.pkl` for 12 hours. STH MVRV, RHODL, LTH MVRV, and Reserve Risk stay as NaN context columns.
+8. `holder_behavior_cohorts()` computes the three production holder cohorts with lagged rolling z-scores.
+9. `holder_behavior_composite()` equal-weights the available holder cohorts by date.
+10. `mroi()` returns that holder composite as the Bitcoin Demand Index (`MROI` technical series).
+11. `posture_state_machine()` maps the Bitcoin Demand Index to the sticky P4 posture.
+12. `build_dashboard()` writes `outputs/dashboard.html`, copies it to `docs/dashboard.html` for GitHub Pages, writes compact `outputs/bdi.json`, and writes `.cache/status.json`.
+13. `build_index_page()` writes `docs/index.html`, the separate Atlas for challenging constants, source contracts, backtest assumptions, and docs links.
+14. `scripts/refresh.sh` rebases onto origin, runs both builders, and lets `~/ops/lib/cron-wrapper.sh` commit the dashboard, `outputs/bdi.json`, and docs.
 
-HTTP errors intentionally fail loud. Missing source columns should be fixed at the parser/source-contract layer, not hidden behind placeholder values.
+HTTP errors intentionally fail loud. `UNSOURCED_CONTEXT_COLUMNS` (STH MVRV, RHODL, LTH MVRV, Reserve Risk) stay NaN until a free full-history source exists. Any other missing source column should be fixed at the parser, not hidden behind a placeholder.
 
 ## Production signal path
 
@@ -38,7 +39,7 @@ The holder spine has three epoch-aware cohorts. Each cohort contributes when its
 
 | Cohort | Production transform | Coverage gate | Source |
 |---|---|---|---|
-| On-chain holders | `-rolling_zscore(hodl_1yr_pct.diff(30))` | 2012 onward | Bitcoin Magazine Pro / Glassnode-class HODL share |
+| On-chain holders | `-rolling_zscore(hodl_1yr_pct.diff(30))` | 2012 onward | Frozen BMP HODL through 2026-08-30, then BGeometrics `hodl-one-year` |
 | Corporate DAT | `rolling_zscore(mstr_btc.diff(30))` | `MSTR_START = 2020-08-10` | StrategyTracker / Strategy treasury history |
 | Institutional ETF | `rolling_zscore(etf_net_flow_m.rolling(30).sum())` | `ETF_START = 2024-01-11` | Farside spot BTC ETF flows |
 
@@ -123,9 +124,10 @@ See the Phase G-P reports in `reports/` and `docs/theory.md` for the evidence tr
 
 ## Operational posture
 
-- Required secret: `BMP_API_KEY`.
+- Required secret: none. Optional `BGEOMETRICS_TOKEN`; the free BGeometrics plan covers the daily HODL fetch.
 - Main data cache: `.cache/raw_data.pkl`.
 - Dashboard output: `outputs/dashboard.html`, served on LAN port `8002` by `com.milkroad.onchain-index-serve`.
+- Machine-readable series: `outputs/bdi.json` (`as_of`, `bdi`, `posture`, `posture_since`, valuation context, and full daily `series`). Published at `https://raw.githubusercontent.com/m0xt/onchain-index/main/outputs/bdi.json`.
 - GitHub Pages dashboard copy: `docs/dashboard.html`.
 - Atlas: `docs/index.html`, served on LAN port `8012` by `com.milkroad.onchain-index-docs-serve`.
 - Daily refresh: `scripts/refresh.sh`, weekday 22:30 Prague.

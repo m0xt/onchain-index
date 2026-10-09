@@ -103,6 +103,7 @@ class DashboardPaths:
     docs_index: Path
     docs_dashboard: Path
     outputs_dashboard: Path
+    outputs_bdi: Path
     status_json: Path
 
 
@@ -128,6 +129,7 @@ def _paths(output_root: Path = PROJECT_ROOT) -> DashboardPaths:
         docs_index=output_root / "docs" / "index.html",
         docs_dashboard=output_root / "docs" / "dashboard.html",
         outputs_dashboard=output_root / "outputs" / "dashboard.html",
+        outputs_bdi=output_root / "outputs" / "bdi.json",
         status_json=output_root / ".cache" / "status.json",
     )
 
@@ -154,6 +156,14 @@ def _json_float(value: object) -> float | None:
     except (TypeError, ValueError):
         return None
     return number if math.isfinite(number) else None
+
+
+def _round4(value: object) -> float | None:
+    """Round a finite number to 4 decimal places for the compact BDI export."""
+    number = _json_float(value)
+    if number is None:
+        return None
+    return float(f"{number:.4f}")
 
 
 def _latest_valid_index(score: pd.Series) -> pd.Timestamp:
@@ -614,7 +624,7 @@ def _render_html(
                 "transform_label": "30d delta",
                 "transform_unit": "pp",
                 "desc": "Tracks whether long-term on-chain holders are adding or distributing supply; the final cohort score uses the inverted z-score of the 30-day HODL-share change.",
-                "source": "Bitcoin Magazine Pro",
+                "source": "Frozen BMP HODL through 2026-08-30, then BGeometrics",
             },
             "corporate_dat": {
                 "label": "MSTR DAT",
@@ -655,7 +665,7 @@ def _render_html(
                 "field": "raw_mvrv_zscore",
                 "unit": "",
                 "note": "Market value to realized value, z-scored variant.",
-                "source": "Bitcoin Magazine Pro",
+                "source": "Coin Metrics Community",
             },
             "sth_mvrv": {
                 "label": "STH MVRV",
@@ -663,7 +673,7 @@ def _render_html(
                 "field": "raw_sth_mvrv",
                 "unit": "x",
                 "note": "Short-term holder cost-basis pressure.",
-                "source": "Bitcoin Magazine Pro",
+                "source": "Unavailable",
             },
             "rhodl_ratio": {
                 "label": "RHODL Ratio",
@@ -671,7 +681,7 @@ def _render_html(
                 "field": "raw_rhodl_ratio",
                 "unit": "",
                 "note": "Realized-value age-band valuation oscillator.",
-                "source": "Bitcoin Magazine Pro",
+                "source": "Unavailable",
             },
             "puell_multiple": {
                 "label": "Puell Multiple",
@@ -679,7 +689,7 @@ def _render_html(
                 "field": "raw_puell_multiple",
                 "unit": "x",
                 "note": "Daily mining issuance revenue versus its 365-day average.",
-                "source": "Bitcoin Magazine Pro",
+                "source": "Coin Metrics Community",
             },
         },
         separators=(",", ":"),
@@ -1036,14 +1046,14 @@ def _render_html(
   <table>
     <thead><tr><th>Indicator</th><th>Category</th><th>Latest</th><th>Notes</th></tr></thead>
     <tbody>
-      <tr class="lib-row" onclick="toggleReference('mvrv_zscore')"><td><span class="ind-name">MVRV-Z</span></td><td class="muted small">Valuation</td><td class="value mono" data-lib-latest="mvrv_zscore">—</td><td class="muted small">Market value to realized value, z-scored variant. Source: Bitcoin Magazine Pro.</td></tr>
-      <tr class="expanded-row" id="exp-lib-mvrv_zscore"><td colspan="4"><div class="chart-wrap"><canvas id="canvas-lib-mvrv_zscore"></canvas></div><div class="chart-desc">Market value to realized value, z-scored variant. Source: Bitcoin Magazine Pro.</div></td></tr>
-      <tr class="lib-row" onclick="toggleReference('sth_mvrv')"><td><span class="ind-name">STH MVRV</span></td><td class="muted small">Valuation</td><td class="value mono" data-lib-latest="sth_mvrv">—</td><td class="muted small">Short-term holder cost-basis pressure. Source: Bitcoin Magazine Pro.</td></tr>
-      <tr class="expanded-row" id="exp-lib-sth_mvrv"><td colspan="4"><div class="chart-wrap"><canvas id="canvas-lib-sth_mvrv"></canvas></div><div class="chart-desc">Short-term holder cost-basis pressure. Source: Bitcoin Magazine Pro.</div></td></tr>
-      <tr class="lib-row" onclick="toggleReference('rhodl_ratio')"><td><span class="ind-name">RHODL Ratio</span></td><td class="muted small">Valuation</td><td class="value mono" data-lib-latest="rhodl_ratio">—</td><td class="muted small">Realized-value age-band valuation oscillator. Source: Bitcoin Magazine Pro.</td></tr>
-      <tr class="expanded-row" id="exp-lib-rhodl_ratio"><td colspan="4"><div class="chart-wrap"><canvas id="canvas-lib-rhodl_ratio"></canvas></div><div class="chart-desc">Realized-value age-band valuation oscillator. Source: Bitcoin Magazine Pro.</div></td></tr>
-      <tr class="lib-row" onclick="toggleReference('puell_multiple')"><td><span class="ind-name">Puell Multiple</span></td><td class="muted small">Valuation</td><td class="value mono" data-lib-latest="puell_multiple">—</td><td class="muted small">Daily mining issuance revenue versus its 365-day average. Source: Bitcoin Magazine Pro.</td></tr>
-      <tr class="expanded-row" id="exp-lib-puell_multiple"><td colspan="4"><div class="chart-wrap"><canvas id="canvas-lib-puell_multiple"></canvas></div><div class="chart-desc">Daily mining issuance revenue versus its 365-day average. Source: Bitcoin Magazine Pro.</div></td></tr>
+      <tr class="lib-row" onclick="toggleReference('mvrv_zscore')"><td><span class="ind-name">MVRV-Z</span></td><td class="muted small">Valuation</td><td class="value mono" data-lib-latest="mvrv_zscore">—</td><td class="muted small">Market value to realized value, z-scored variant. Source: Coin Metrics Community.</td></tr>
+      <tr class="expanded-row" id="exp-lib-mvrv_zscore"><td colspan="4"><div class="chart-wrap"><canvas id="canvas-lib-mvrv_zscore"></canvas></div><div class="chart-desc">Market value to realized value, z-scored variant. Source: Coin Metrics Community.</div></td></tr>
+      <tr class="lib-row" onclick="toggleReference('sth_mvrv')"><td><span class="ind-name">STH MVRV</span></td><td class="muted small">Valuation</td><td class="value mono" data-lib-latest="sth_mvrv">—</td><td class="muted small">Short-term holder cost-basis pressure. Source: unavailable.</td></tr>
+      <tr class="expanded-row" id="exp-lib-sth_mvrv"><td colspan="4"><div class="chart-wrap"><canvas id="canvas-lib-sth_mvrv"></canvas></div><div class="chart-desc">Short-term holder cost-basis pressure. Source: unavailable.</div></td></tr>
+      <tr class="lib-row" onclick="toggleReference('rhodl_ratio')"><td><span class="ind-name">RHODL Ratio</span></td><td class="muted small">Valuation</td><td class="value mono" data-lib-latest="rhodl_ratio">—</td><td class="muted small">Realized-value age-band valuation oscillator. Source: unavailable.</td></tr>
+      <tr class="expanded-row" id="exp-lib-rhodl_ratio"><td colspan="4"><div class="chart-wrap"><canvas id="canvas-lib-rhodl_ratio"></canvas></div><div class="chart-desc">Realized-value age-band valuation oscillator. Source: unavailable.</div></td></tr>
+      <tr class="lib-row" onclick="toggleReference('puell_multiple')"><td><span class="ind-name">Puell Multiple</span></td><td class="muted small">Valuation</td><td class="value mono" data-lib-latest="puell_multiple">—</td><td class="muted small">Daily mining issuance revenue versus its 365-day average. Source: Coin Metrics Community.</td></tr>
+      <tr class="expanded-row" id="exp-lib-puell_multiple"><td colspan="4"><div class="chart-wrap"><canvas id="canvas-lib-puell_multiple"></canvas></div><div class="chart-desc">Daily mining issuance revenue versus its 365-day average. Source: Coin Metrics Community.</div></td></tr>
     </tbody>
   </table>
   <div class="library-footer">Library entries do not drive the headline posture — they are context indicators that explain cycle narratives around the decision rule.</div>
@@ -1352,6 +1362,74 @@ renderAllCharts();
 </html>
 """
 
+def _posture_since(tiers: pd.Series, as_of: pd.Timestamp, posture: str) -> str:
+    """Return the first date of the current posture run, inclusive."""
+    history = tiers.loc[:as_of].dropna()
+    since = as_of
+    for idx in history.index[::-1]:
+        if str(history.loc[idx]) != posture:
+            break
+        since = cast(pd.Timestamp, idx)
+    return since.strftime("%Y-%m-%d")
+
+
+def bdi_document(
+    data: pd.DataFrame,
+    *,
+    components: pd.DataFrame,
+    score: pd.Series,
+    tiers: pd.Series,
+    generated_at: datetime,
+) -> dict[str, Any]:
+    """Machine-readable Bitcoin Demand Index history for downstream tools.
+
+    Valuation context (MVRV-Z, Puell, NUPL) is the latest raw level plus the
+    same field on every daily row. Scores and prices are rounded to 4 decimals.
+    """
+    as_of = _latest_valid_index(score)
+    posture = str(tiers.astype("object").loc[as_of])
+    series: list[dict[str, Any]] = []
+    for idx, value in score.dropna().items():
+        ts = cast(pd.Timestamp, idx)
+        tier_value = tiers.loc[ts]
+        if pd.isna(tier_value):
+            continue
+        series.append(
+            {
+                "date": ts.strftime("%Y-%m-%d"),
+                "bdi": _round4(value),
+                "on_chain": _round4(components.loc[ts, "cohort_on_chain"]),
+                "corporate_dat": _round4(components.loc[ts, "cohort_corporate_dat"]),
+                "institutional_etf": _round4(components.loc[ts, "cohort_institutional_etf"]),
+                "posture": str(tier_value),
+                "btc_price": _round4(data.loc[ts, "btc_price"]) if "btc_price" in data.columns else None,
+                "mvrv_z": _round4(data.loc[ts, "mvrv_zscore"]) if "mvrv_zscore" in data.columns else None,
+                "puell": _round4(data.loc[ts, "puell_multiple"]) if "puell_multiple" in data.columns else None,
+                "nupl": _round4(data.loc[ts, "nupl"]) if "nupl" in data.columns else None,
+            }
+        )
+    if not series:
+        raise ValueError("Bitcoin Demand Index series is empty")
+    latest_row = series[-1]
+    return {
+        "as_of": as_of.strftime("%Y-%m-%d"),
+        "generated_at": generated_at.isoformat().replace("+00:00", "Z"),
+        "bdi": latest_row["bdi"],
+        "posture": posture,
+        "posture_since": _posture_since(tiers, as_of, posture),
+        "mvrv_z": latest_row["mvrv_z"],
+        "puell": latest_row["puell"],
+        "nupl": latest_row["nupl"],
+        "series": series,
+    }
+
+
+def _write_bdi(paths: DashboardPaths, payload: dict[str, Any]) -> None:
+    paths.outputs_bdi.parent.mkdir(parents=True, exist_ok=True)
+    text = json.dumps(payload, separators=(",", ":"), allow_nan=False)
+    paths.outputs_bdi.write_text(text + "\n", encoding="utf-8")
+
+
 def _write_status(paths: DashboardPaths, payload: dict[str, Any]) -> None:
     paths.status_json.parent.mkdir(parents=True, exist_ok=True)
     paths.status_json.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
@@ -1389,6 +1467,16 @@ def build_dashboard(
         paths.outputs_dashboard.write_text(html, encoding="utf-8")
         paths.docs_dashboard.parent.mkdir(parents=True, exist_ok=True)
         paths.docs_dashboard.write_bytes(paths.outputs_dashboard.read_bytes())
+        _write_bdi(
+            paths,
+            bdi_document(
+                data,
+                components=components,
+                score=score,
+                tiers=tiers,
+                generated_at=generated_at,
+            ),
+        )
         _write_status(
             paths,
             {
@@ -1442,6 +1530,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         force_brief=bool(args.force_brief),
     )
     print(f"wrote {paths.outputs_dashboard}")
+    print(f"bdi {paths.outputs_bdi}")
     print(f"pages {paths.docs_dashboard}")
     print(f"status {paths.status_json}")
     if args.open:

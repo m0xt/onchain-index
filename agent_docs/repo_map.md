@@ -6,9 +6,9 @@
 - `DECISIONS.md` — dated rationale for durable decisions.
 - `pyproject.toml` / `uv.lock` — uv-managed package, tests, lint, type-check config.
 - `src/onchain_index/` — importable production package.
-- `src/onchain_index/data.py` — source fetchers, 12h cache, CLI summary.
+- `src/onchain_index/data.py` — source fetchers (Coin Metrics, frozen BMP + BGeometrics HODL, Farside, Strategy, premium), 12h cache, CLI summary. No API key required.
 - `src/onchain_index/composite.py` — Bitcoin Demand Index (`MROI` technical series), valuation diagnostics, P4 thresholds, sizing tiers, and `posture_state_machine()`.
-- `src/onchain_index/build.py` — product dashboard renderer for `outputs/dashboard.html`, Pages copy at `docs/dashboard.html`, plus `.cache/status.json`.
+- `src/onchain_index/build.py` — product dashboard renderer for `outputs/dashboard.html` and `outputs/bdi.json`, Pages copy at `docs/dashboard.html`, plus `.cache/status.json`.
 - `src/onchain_index/brief.py` — single Claude CLI-generated dashboard brief loader/generator, archived under `briefs/YYYY-MM-DD/onchain.md`.
 - `src/onchain_index/build_index_page.py` — generated Atlas at `docs/index.html`.
 - `src/onchain_index/backtest.py` — signal construction/backtest helpers used by research and dashboard summaries.
@@ -20,7 +20,9 @@
 - `docs/index.html` — generated Atlas; rebuild with `uv run python -m onchain_index.build_index_page`.
 - `briefs/` — durable dated archive for the single generated on-chain brief.
 - `docs/dashboard.html` — GitHub Pages copy of the generated full dashboard; rebuilt by `uv run python -m onchain_index.build`.
+- `data/hodl_1yr_pct_bmp_frozen.csv` — frozen Bitcoin Magazine Pro 1Y+ HODL history through 2026-08-30.
 - `outputs/dashboard.html` — generated product dashboard; rebuild with `uv run python -m onchain_index.build`.
+- `outputs/bdi.json` — generated machine-readable BDI series; rewritten by the same build and committed by `scripts/refresh.sh`.
 - `agent_docs/` — terse operational contracts for agents.
 - `scripts/` — launchd service plists and operational wrappers.
 - `.cache/` — gitignored local cache/status/scratch data; safe to delete and rebuild.

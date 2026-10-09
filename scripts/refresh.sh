@@ -12,13 +12,25 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."   # repo root
 
+# Pull before the pipeline. Python imports happen after this, so even a process
+# that started on the previous script runs the new fetch/build code. If this
+# file itself changed, re-exec once so the updated commit list runs too.
+# --autostash keeps a dirty outputs/bdi.json (left by a script that did not yet
+# commit that file) from blocking the pull. No API key is required.
+before_pull="$(git rev-parse HEAD)"
+git pull --rebase --autostash
+if [[ "${ONCHAIN_INDEX_REFRESH_REEXEC:-}" != 1 && "$before_pull" != "$(git rev-parse HEAD)" ]]; then
+    export ONCHAIN_INDEX_REFRESH_REEXEC=1
+    exec /bin/bash "$0" "$@"
+fi
+
 PROJECT_NAME=onchain-index
 LAUNCHD_LOG="$PWD/.cache/launchd-refresh-daily.log"
 REFRESH_LOG="$PWD/.cache/refresh.log"
 STATUS_FILE="$PWD/.cache/cron-status.json"
 COMMIT_AUTHOR_NAME="Mac mini refresh"
 COMMIT_AUTHOR_EMAIL="refresh@onchain-index.local"
-SUCCESS_SUMMARY="refresh ok (brief + dashboard + Pages dashboard + docs rebuild)"
+SUCCESS_SUMMARY="refresh ok (brief + dashboard + bdi.json + Pages dashboard + docs rebuild)"
 if [[ -f .venv/bin/activate ]]; then
     source .venv/bin/activate
 fi
@@ -38,4 +50,5 @@ cron_wrapper_commit_outputs \
     docs/dashboard.html \
     docs/index.html \
     outputs/dashboard.html \
+    outputs/bdi.json \
     -- "refresh $(date -u +%FT%TZ)"

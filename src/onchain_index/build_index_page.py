@@ -48,12 +48,14 @@ from onchain_index.composite import (
 )
 from onchain_index.cost import COST_ESTIMATES, MODEL_PRICES_USD_PER_MTOK
 from onchain_index.data import (
+    BGEOMETRICS_HODL_1Y_URL,
     BINANCE_KLINES_URL,
     BMP_BASE,
     BMP_METRICS,
     CACHE_MAX_AGE,
     COINBASE_CANDLES_URL,
     COINBASE_PREMIUM_START,
+    COINMETRICS_COMMUNITY_URL,
     DEFAULT_CACHE_DIR,
     FARSIDE_ETF_FLOW_URL,
     PROJECT_ROOT,
@@ -429,7 +431,10 @@ def render_decision_card() -> str:
 
 def render_data_card() -> str:
     source_rows = [
-        ["Bitcoin Magazine Pro", esc(BMP_BASE), esc(f"metrics from {START_DATE}")],
+        ["Coin Metrics Community", esc(COINMETRICS_COMMUNITY_URL), esc(f"price, caps, issuance, hashrate, addresses from {START_DATE}")],
+        ["BGeometrics", esc(BGEOMETRICS_HODL_1Y_URL), "1Y+ HODL share after the frozen splice"],
+        ["Frozen BMP HODL", "data/hodl_1yr_pct_bmp_frozen.csv", "1Y+ HODL history through 2026-08-30"],
+        ["Bitcoin Magazine Pro (legacy)", esc(BMP_BASE), "subscription ended 2026-09; not used by refresh"],
         ["Farside", esc(FARSIDE_ETF_FLOW_URL), "spot BTC ETF net flows"],
         ["StrategyTracker", esc(STRATEGY_TRACKER_MANIFEST_URL), "MSTR BTC holdings"],
         ["Coinbase", esc(COINBASE_CANDLES_URL), esc(f"premium leg from {COINBASE_PREMIUM_START.date()}")],
@@ -447,7 +452,8 @@ def render_data_card() -> str:
         <div class="card-body">
           <div class="meta compact">{pill(f"cache: {DEFAULT_CACHE_DIR.name}/{RAW_CACHE_NAME}")}{pill(f"max age: {cache_hours:.0f}h")}</div>
           {render_table(["Source", "Endpoint", "Role"], source_rows)}
-          <details><summary>BMP metric column map</summary>{render_table(["Metric", "Local columns"], metric_rows)}</details>
+          <details><summary>Legacy BMP metric column map</summary>{render_table(["Metric", "Local columns"], metric_rows)}</details>
+          <p class="hint">Machine-readable series: <code>outputs/bdi.json</code>, rewritten on every dashboard build. No API key is required. <code>BGEOMETRICS_TOKEN</code> is optional.</p>
         </div>
       </article>"""
 

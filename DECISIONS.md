@@ -39,3 +39,7 @@ Reason: Phase G–P research exhausted valuation overrides, BTC/equity spines, s
 ## 2026-05-29 — Renamed core signal to Bitcoin Demand Index
 
 Reason: Martin chose “Bitcoin Demand Index” as the public name for the core signal/model. The broader page remains Milk Road On-chain Dashboard because future charts may cover other on-chain stats. `MROI` remains the internal technical handle and repo/package identifiers stay `onchain-index` for now.
+
+## 2026-10-09 — Dropped Bitcoin Magazine Pro; publish outputs/bdi.json
+
+Reason: The BMP subscription ended and `validate_secrets()` hard-failed without `BMP_API_KEY`, so the daily refresh stopped after 2026-08-31. Martin approved replacing it. Price, market cap, MVRV, issuance, hashrate, and active addresses now come from Coin Metrics Community (no key). MVRV-Z, Puell, and NUPL are derived from those series. 1Y+ HODL keeps frozen BMP history through 2026-08-30 in `data/hodl_1yr_pct_bmp_frozen.csv` and appends BGeometrics `hodl-one-year`, level-shifted on the splice date so the 30-day change has no artificial jump. STH MVRV, RHODL, LTH MVRV, and Reserve Risk have no free full-history source and ship as NaN context columns. `BGEOMETRICS_TOKEN` is optional. Every build writes compact `outputs/bdi.json` and `scripts/refresh.sh` commits it after `git pull --rebase --autostash`.
